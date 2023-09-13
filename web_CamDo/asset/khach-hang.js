@@ -1,5 +1,6 @@
 ﻿$(document).ready(function () {
   function get_ds_kh() {
+    $('#ds-kh').html('Đang tải ds khách hàng...');
     $.post("api.aspx",
       {
         action: "ds_kh"
@@ -23,6 +24,7 @@
           s += "</tr>";
         }
         s += "</table>";
+        s += "Danh sách gồm " + L.length + " khách hàng";
         $('#ds-kh').html(s);  //cho chuỗi html trong biến s vào thẻ có id=ds-kh
       });
   }
@@ -36,28 +38,27 @@
       typeAnimated: true,
       draggable: true,
       columnClass: 's',
-      useBootstrap: false,
       title: 'Thêm khách hàng mới!',
       content: '<table>' +
         '<tr>' +
-        '<td>Tên khách hàng:</td>' +
-        '<td><input type="text" placeholder="Nhập tên vào đây" id="kh-tenkh" required /></td>' +
+        '<td align=right>Tên khách hàng:</td>' +
+        '<td><input type="text" id="kh-tenkh" required /></td>' +
         '</tr>' +
         '<tr>' +
-        '<td>SĐT:</td>' +
-        '<td><input type="text" placeholder="Nhập sđt vào đây" id="kh-sdt" required /></td>' +
+        '<td align=right>SĐT:</td>' +
+        '<td><input type="text" id="kh-sdt" required /></td>' +
         '</tr>' +
         '<tr>' +
-        '<td>Địa chỉ:</td>' +
-        '<td><input type="text" placeholder="Nhập đc vào đây" id="kh-diachi" required /></td>' +
+        '<td align=right>Địa chỉ:</td>' +
+        '<td><input type="text" id="kh-diachi" required /></td>' +
         '</tr>' +
         '<tr>' +
-        '<td>CCCD:</td>' +
-        '<td><input type="text" placeholder="Nhập cccd vào đây" id="kh-cccd" required /></td>' +
+        '<td align=right>CCCD:</td>' +
+        '<td><input type="text" id="kh-cccd" required /></td>' +
         '</tr></table>',
       buttons: {
         formSubmit: {
-          text: 'Gửi lên mây',
+          text: 'Thêm Khách hàng vào CSDL',
           btnClass: 'btn-blue',
           action: function () {
             //lấy được thông tin mà người dùng nhập vào
@@ -85,7 +86,6 @@
                   $.dialog({
                     title: 'Báo lỗi',
                     type: 'red',
-                    useBootstrap: false,
                     content: json.error,
                   });
                 }
@@ -93,8 +93,12 @@
             return false;// ko đóng dialog bố
           }
         },
-        cancel: function () {
-          //close
+        cancel: {
+          text: 'Đóng',
+          btnClass: 'btn-red',
+          action: function () {
+            //close
+          }
         },
       },
       onContentReady: function () {

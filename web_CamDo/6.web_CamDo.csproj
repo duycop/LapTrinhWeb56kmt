@@ -62,13 +62,17 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="api.aspx" />
+    <Content Include="asset\bootstrap.bundle.min.js" />
+    <Content Include="asset\bootstrap.min.css" />
     <Content Include="index.html" />
-    <Content Include="jquery-confirm.css" />
-    <Content Include="jquery-confirm.js" />
-    <Content Include="jquery.min.js" />
+    <Content Include="asset\jquery-confirm.css" />
+    <Content Include="asset\jquery-confirm.js" />
+    <Content Include="asset\jquery.min.js" />
     <Content Include="khach-hang.html" />
-    <Content Include="js_kh.js" />
-    <Content Include="mystyle.css" />
+    <Content Include="asset\khach-hang.js" />
+    <Content Include="asset\mystyle.css" />
+    <Content Include="tra-tien.html" />
+    <Content Include="vay-tien.html" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
