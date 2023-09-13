@@ -64,6 +64,7 @@
     <Content Include="api.aspx" />
     <Content Include="asset\bootstrap.bundle.min.js" />
     <Content Include="asset\bootstrap.min.css" />
+    <Content Include="cam_do.sql" />
     <Content Include="index.html" />
     <Content Include="asset\jquery-confirm.css" />
     <Content Include="asset\jquery-confirm.js" />
