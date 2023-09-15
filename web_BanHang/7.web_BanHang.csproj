@@ -76,6 +76,7 @@
     <Content Include="khach-hang.html" />
     <Content Include="nha-cung-cap.html" />
     <Content Include="index.html" />
+    <Content Include="sql_QL_BanHang.sql" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
