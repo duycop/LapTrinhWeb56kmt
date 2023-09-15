@@ -17,6 +17,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "4.test_thoithiet", "test_th
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "5.web_tbc", "web_tbc\5.web_tbc.csproj", "{BC82FB73-8853-4A2A-92E2-AEAC9A55AB8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "7.web_BanHang", "web_BanHang\7.web_BanHang.csproj", "{C06A4999-2F24-4629-9B75-EB8EB4591D2F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D0F8DCEB-6B7D-4D6F-A9A9-6D6084A6F20E}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +58,10 @@ Global
 		{BC82FB73-8853-4A2A-92E2-AEAC9A55AB8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC82FB73-8853-4A2A-92E2-AEAC9A55AB8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BC82FB73-8853-4A2A-92E2-AEAC9A55AB8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C06A4999-2F24-4629-9B75-EB8EB4591D2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C06A4999-2F24-4629-9B75-EB8EB4591D2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C06A4999-2F24-4629-9B75-EB8EB4591D2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C06A4999-2F24-4629-9B75-EB8EB4591D2F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

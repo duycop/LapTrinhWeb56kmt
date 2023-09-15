@@ -1,0 +1,21 @@
+﻿table.vien_den td, table.vien_den th {
+    border: 1px solid black;
+    padding: 5px;
+}
+
+
+table.vien_den {
+    border-collapse: collapse;
+}
+
+tr.row-hover:hover {
+    background-color: yellow;
+}
+
+table.vien_den td:first-child, table.vien_den tr:first-child {
+    text-align: center;
+}
+
+.btn-float-left {
+    float:left !important;
+}
