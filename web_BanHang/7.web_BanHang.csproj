@@ -68,6 +68,9 @@
     <Content Include="asset\jquery-confirm.js" />
     <Content Include="asset\jquery.min.js" />
     <Content Include="asset\ban-hang.js" />
+    <Content Include="asset\nhan-vien.js" />
+    <Content Include="asset\nha-cung-cap.js" />
+    <Content Include="asset\nhap-hang.js" />
     <Content Include="asset\khach-hang.js" />
     <Content Include="asset\mystyle.css" />
     <Content Include="ban-hang.html" />
