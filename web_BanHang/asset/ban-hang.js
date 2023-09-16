@@ -14,11 +14,11 @@
     let content = '<table width="100%"><tr><th colspan=2 style="text-align:center"><h1>HÓA ĐƠN BÁN HÀNG</h1></th></tr>' +
       '<tr>' +
       '<td width="20%">Nhân viên: </td>' +
-      '<td>' + hd.tennv + ' (' + hd.sdtnv + ')</td>' +
+      '<td>' + hd.tennv + ' ' + hd.sdtnv + '</td>' +
       '</tr>' +
       '<tr>' +
       '<td>Khách hàng: </td>' +
-      '<td>' + hd.tenkh + ' (' + hd.sdtkh + ')</td>' +
+      '<td>' + hd.tenkh + ' ' + hd.sdtkh + '</td>' +
       '</tr>' +
       '<tr>' +
       '<td>Ngày bán: </td>' +
@@ -101,8 +101,8 @@
             for (let hd of data_hoadon) {
               s += "<tr class='row-hoa-don-ban row-hover' data-mahdb='" + hd.mahdb + "'>";
               s += "<td>" + hd.mahdb + "</td>";
-              s += "<td>" + hd.tennv + " (" + hd.sdtnv + ")</td>";
-              s += "<td>" + hd.tenkh + " (" + hd.sdtkh + ")</td>";
+              s += "<td>" + hd.tennv + " " + hd.sdtnv + "</td>";
+              s += "<td>" + hd.tenkh + " " + hd.sdtkh + "</td>";
               s += "<td>" + hd.ngayban.replace('T', ' ') + "</td>";
               s += "<td align=right>" + hd.tongtien + "</td>";
               s += "</tr>";
@@ -163,7 +163,7 @@
     }
     let option_nhanvien = '';
     for (let item of data_ds_nv) {
-      option_nhanvien += '<option value="' + item.manv + '">' + item.tennv + ' (' + item.sdt + ')</option>';
+      option_nhanvien += '<option value="' + item.manv + '">' + item.tennv + ' ' + item.sdt + '</option>';
     }
     let content = '<table width="100%">' +
       '<tr>' +
@@ -371,7 +371,9 @@
       },
     });
   }
-  $('#btn-add-hoa-don-ban-hang').click(function () { form_add_hoa_don_ban_hang() });
+  $('#btn-add-hoa-don-ban-hang').click(function () {
+    form_add_hoa_don_ban_hang()
+  });
   get_ds_hoa_don_ban(); //gọi luôn
   get_ds_kh();
   get_ds_nv();

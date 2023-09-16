@@ -7,22 +7,25 @@ using System.Diagnostics;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+#pragma warning disable S101 // Types should be named in PascalCase
+#pragma warning disable S3260 // Non-derived "private" classes and records should be "sealed"
+#pragma warning disable S4487 // Unread "private" fields should be removed
 
 namespace web_BanHang
 {
     public partial class api : System.Web.UI.Page
     {
         private const string cnStr = "Server=LAPTOP-DUYCOP\\SQLEXPRESS;Database=QL_BanHang;User Id=sa;Password=123;";
-
         private class Data_reply
+
         {
             public bool ok; //true/false => báo thêm thành công hay ko
             public string msg; //nếu có lỗi thì chi tiết báo lỗi ở đây
         }
-
         private class Data_ChiTiet_HoaDonBan
         {
             public int mahh, sl;
+
             public string tenhh, dvt;
             public double dongia, thanhtien;
             public bool LoadRow(DataRow r, ref Exception ex)
@@ -44,7 +47,6 @@ namespace web_BanHang
                 return true;
             }
         }
-
         private class Data_HoaDonBan
         {
             public int mahdb, makh, manv;
@@ -78,12 +80,10 @@ namespace web_BanHang
                 return true;
             }
         }
-
         private class Data_ds_HoaDonBan : Data_reply
         {
             public List<Data_HoaDonBan> hoadon;
         }
-
         private class Data_KhachHang
         {
             public int makh;
@@ -105,12 +105,10 @@ namespace web_BanHang
                 }
             }
         }
-
         private class Data_ds_KhachHang : Data_reply
         {
             public List<Data_KhachHang> khachhang;
         }
-
         private class Data_NhanVien
         {
             public int manv;
@@ -132,12 +130,10 @@ namespace web_BanHang
                 }
             }
         }
-
         private class Data_ds_NhanVien : Data_reply
         {
             public List<Data_NhanVien> nhanvien;
         }
-
         private class HangHoa
         {
             public int mahh;
@@ -160,17 +156,14 @@ namespace web_BanHang
                 return true;
             }
         }
-
         private class Data_HangHoa : Data_reply
         {
             public HangHoa hanghoa;
         }
-
         private class Data_ds_HangHoa : Data_reply
         {
             public List<HangHoa> hanghoa;
         }
-
         private void add_hoa_don_ban()
         {
             //lấy data gửi lên, ở dạng json string với format như class Data_HoaDonBan
@@ -275,7 +268,6 @@ namespace web_BanHang
             //gửi json text về trình duyệt
             this.Response.Write(json);
         }
-
         private void get_ds_hoa_don_ban()
         {
             Data_ds_HoaDonBan L = new Data_ds_HoaDonBan();
@@ -343,7 +335,6 @@ namespace web_BanHang
             string json = JsonConvert.SerializeObject(L);
             this.Response.Write(json);
         }
-
         private void get_ds_kh()
         {
             Data_ds_KhachHang L = new Data_ds_KhachHang();
@@ -383,7 +374,6 @@ namespace web_BanHang
             string json = JsonConvert.SerializeObject(L);
             this.Response.Write(json);
         }
-
         private void get_ds_nv()
         {
             Data_ds_NhanVien L = new Data_ds_NhanVien();
@@ -423,7 +413,6 @@ namespace web_BanHang
             string json = JsonConvert.SerializeObject(L);
             this.Response.Write(json);
         }
-
         private void get_1_hang_hoa()
         {
             Data_HangHoa L = new Data_HangHoa();
@@ -468,7 +457,6 @@ namespace web_BanHang
             string json = JsonConvert.SerializeObject(L);
             this.Response.Write(json);
         }
-
         private void get_ds_hh()
         {
             Data_ds_HangHoa L = new Data_ds_HangHoa();
@@ -540,3 +528,6 @@ namespace web_BanHang
         }
     }
 }
+#pragma warning restore S4487 // Unread "private" fields should be removed
+#pragma warning restore S3260 // Non-derived "private" classes and records should be "sealed"
+#pragma warning restore S101 // Types should be named in PascalCase
