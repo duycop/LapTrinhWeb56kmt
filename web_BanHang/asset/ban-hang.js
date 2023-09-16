@@ -34,9 +34,9 @@
       });
   }
   function show_chitiet_hoadon(mahd) {
-    var hd = null;
-    for (var i in data_hoadon) if (data_hoadon[i].mahdb == mahd) hd = data_hoadon[i];
-    var content = '<table width="100%">' +
+    let hd = null;
+    for (let i in data_hoadon) if (data_hoadon[i].mahdb == mahd) hd = data_hoadon[i];
+    let content = '<table width="100%">' +
       '<tr>' +
       '<td width="20%">Nhân viên: </td>' +
       '<td>' + hd.tennv + ' (' + hd.sdtnv + ')</td>' +
@@ -53,8 +53,8 @@
       '<table class="vien_den" width="100%">' +
       '<tr><th>STT</th><th>Tên Hàng</th><th>ĐVT</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th></tr>';
     //maHH, TenHH, DVT, DonGiaBan, SoLuongBan, ThanhTien
-    var stt = 0;
-    for (var hh of hd.chitiet) {
+    let stt = 0;
+    for (let hh of hd.chitiet) {
       stt++;
       content += '<tr>' +
         '<td align=center>' + (stt) + '</td>' +
@@ -106,12 +106,12 @@
     return dformat;
   }
   function form_add_hoa_don_ban_hang() {
-    var option_khachhang = '';
-    for (var item of data_ds_kh) {
+    let option_khachhang = '';
+    for (let item of data_ds_kh) {
       option_khachhang += '<option value="' + item.makh + '">' + item.tenkh + ' (' + item.sdt + ')</option>';
     }
-    var option_nhanvien = '';
-    for (var item of data_ds_nv) {
+    let option_nhanvien = '';
+    for (let item of data_ds_nv) {
       option_nhanvien += '<option value="' + item.manv + '">' + item.tennv + ' (' + item.sdt + ')</option>';
     }
     var content = '<table width="100%">' +
@@ -132,8 +132,8 @@
       '<thead>' +
       '<tr><th width=10>STT</th><th width=150>Mã hàng</th><th>Tên hàng</th><th width=30>ĐVT</th><th width=100>Đơn giá</th><th width=100>SL</th><th width=100>Thành tiền</th><th width=10>Xóa</th></tr>' +
       '</thead>';
-    var stt = 1;
-    var one_row = function (stt) {
+    let stt = 1;
+    let one_row = function (stt) {
       return '<tr id="row-' + stt + '">' +
         '<td align=center class="frm-stt">' + stt + '</td>' +
         '<td align=left><div class="input-group input-group"><input type="text" class="frm-mahh form-control" /><button class="btn-search-hh btn btn-success" type="submit">&gt;</button></div></td>' +
@@ -151,6 +151,46 @@
       '<td align=right id="tongtien">0</td><td></td>' +
       '</tr></tfoot></table></div>';
     content += '</td></tr></table>';
+
+    var get_hh_from_id=function(id){
+      var mahh = $('#row-' + id + ' .frm-mahh').val();
+      var hh = null;
+      for (var item of data_ds_hh) {
+        if (item.mahh == mahh) {
+          hh = item;
+          break;
+        }
+      }
+      return hh;
+    }
+    var update_tongtien = function () {
+      $('#frm-body tr').each(function (i, tr) {
+        var idr = $(tr).id;
+        var dg = $('#' + idr + ' .frm-dongia').text();
+        var sl = $('#' + idr + ' .frm-sl').val();
+        console.log([dg,sl]);
+      });
+    }
+    var btn_tra_cuu = function (id) {
+      var hh = get_hh_from_id(id);
+      $('#row-' + id + ' .frm-tenhh').html(hh ? hh.tenhh : '');
+      $('#row-' + id + ' .frm-dvt').html(hh ? hh.dvt : '');
+      $('#row-' + id + ' .frm-dongia').html(hh ? hh.dongia : '');
+      var sl = $('#row-' + id + ' .frm-sl').val();
+      if (hh)
+        hh.thanhtien = parseInt(sl) * parseFloat(hh.dongia);
+      $('#row-' + id + ' .frm-thanhtien').html(hh ? hh.thanhtien : '');
+      update_tongtien();
+    }
+    var change_soluong = function (id) {
+      var hh = get_hh_from_id(id);
+      if (hh) {
+        var sl = $('#row-' + id + ' .frm-sl').val();
+        hh.thanhtien = parseInt(sl) * parseFloat(hh.dongia);
+      }
+      $('#row-' + id + ' .frm-thanhtien').html(hh ? hh.thanhtien : '');
+      update_tongtien();
+    }
     var timer_time_now;
     $.confirm({
       bgOpacity: 0.85,
