@@ -1,6 +1,5 @@
 ﻿$(document).ready(function () {
-
-
+  var xoa_co_loi, wait_xoa_xong;
   function sort_table(id, fn, pageLength_) {
     var pageLength = 10;
     if (pageLength_) pageLength = pageLength_;
@@ -73,8 +72,10 @@
         }
         s += '</tbody></table>';
         $('#all-sv-here').html(s);
-        //dùng thư viện datatable.min.js
+        //dùng thư viện datatable.min.js để cho phép bảng đc sắp xếp
         sort_table('#ds-sv');
+
+        $('.nut-xoa-sv').off('click'); //fix bug
         $('.nut-xoa-sv').click(function () { xoa_sv_da_chon(); });
         $('.chk-chon-sv').on('change', function () {
           var masv = $(this).data('masv')
@@ -86,8 +87,6 @@
         })
       });
   }
-
-  var xoa_co_loi, wait_xoa_xong;
   function xoa_sv_da_chon() {
 
     var mang_se_xoa = [];
@@ -178,5 +177,6 @@
       });
     }
   }
+
   load_all_sv(); //call nó ngay khi tải trang xong
 });

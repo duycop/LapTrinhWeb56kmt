@@ -134,7 +134,6 @@ namespace demo_Delete
                 case "data_chart":
                     data_chart();
                     break;
-
             }
         }
     }
