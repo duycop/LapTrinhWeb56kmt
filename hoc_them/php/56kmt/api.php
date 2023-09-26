@@ -12,7 +12,7 @@
 		if($row){
 			$ho = @$row["ho"];
 			$ten= @$row["ten"];
-		echo "Sinh viên $ho $ten có điểm là {$row['diem']}";
+			echo "Sinh viên $ho $ten có điểm là {$row['diem']}";
 		}else{
 			echo "ko tồn tại mã sv này";
 		}
