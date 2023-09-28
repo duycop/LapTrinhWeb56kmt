@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Demo Nodered</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">
+    <link rel="manifest" href="icon/site.webmanifest">
+
+    <script src="asset/jquery.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link href="asset/bootstrap.min.css" rel="stylesheet" />
+    <script src="asset/bootstrap.bundle.min.js"></script>
+    <link href="asset/jquery-confirm.css" rel="stylesheet" />
+    <script src="asset/jquery-confirm.js"></script>
+    <link href="asset/mystyle.css" rel="stylesheet" />
+    <script src="asset/code-nodered.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="jumbotron p-3 my-3 bg-primary text-white khong-in">
+            <h2 id="app-title">DÙng nodered api</h2>
+            <p id="app-sologan">
+                Siêu mát, nhanh chóng, chi phí thì hợp lý!
+            </p>
+            <a href="/" class="btn btn-warning">Trang chủ</a>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <button class="btn btn-primary btn-sode">Xem KQXS</button>
+                <div id="kq"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                Chọn cảm biến:
+                <select id="choice-sensor"></select>
+            </div>
+            <!--<div class="col-md-4">
+                <button class="btn btn-primary btn-sensor">Xem giá trị cảm biến</button>
+            </div>-->
+            <div class="col-md-9">
+                <div id="kq-ss"></div>
+                <div id="chart-div"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

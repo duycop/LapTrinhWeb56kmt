@@ -1,0 +1,371 @@
+﻿[
+  {
+    "id": "e08db1a071d6fafb",
+    "type": "tab",
+    "label": "Flow 1",
+    "disabled": false,
+    "info": "",
+    "env": []
+  },
+  {
+    "id": "c70076b166786185",
+    "type": "subflow",
+    "name": "Subflow 1",
+    "info": "",
+    "in": [],
+    "out": []
+  },
+  {
+    "id": "127d5b4751b8ad8c",
+    "type": "subflow",
+    "name": "Lấy số đề",
+    "info": "",
+    "category": "",
+    "in": [
+      {
+        "x": 60,
+        "y": 80,
+        "wires": [
+          {
+            "id": "3fc92ee10dfdaaa2"
+          }
+        ]
+      }
+    ],
+    "out": [
+      {
+        "x": 540,
+        "y": 80,
+        "wires": [
+          {
+            "id": "09c13233ea2de0d9",
+            "port": 0
+          }
+        ]
+      }
+    ],
+    "env": [],
+    "meta": {},
+    "color": "#DDAA99"
+  },
+  {
+    "id": "c3594b5abffa3c8f",
+    "type": "group",
+    "z": "e08db1a071d6fafb",
+    "name": "XSMB API",
+    "style": {
+      "label": true
+    },
+    "nodes": [
+      "18451c7c1f68fa27",
+      "46c10e3c30157454"
+    ],
+    "x": 34,
+    "y": 39,
+    "w": 592,
+    "h": 82
+  },
+  {
+    "id": "f3a23eb4d58c091e",
+    "type": "group",
+    "z": "e08db1a071d6fafb",
+    "name": "Sensor API",
+    "style": {
+      "label": true
+    },
+    "nodes": [
+      "9297951b519e819c",
+      "e5be067b928571ae",
+      "f76791aebc74902c",
+      "ada2f99d9a5e3c26",
+      "21ff933afdf5aa52",
+      "44648f492ebdacd2"
+    ],
+    "x": 34,
+    "y": 139,
+    "w": 592,
+    "h": 122
+  },
+  {
+    "id": "9ed23652b98df2a0",
+    "type": "MSSQL-CN",
+    "tdsVersion": "7_4",
+    "name": "mat bao",
+    "server": "103.15.50.63",
+    "port": "49259",
+    "encyption": true,
+    "trustServerCertificate": true,
+    "database": "tnut",
+    "useUTC": true,
+    "connectTimeout": "15000",
+    "requestTimeout": "15000",
+    "cancelTimeout": "5000",
+    "pool": "5",
+    "parseJSON": false,
+    "enableArithAbort": true
+  },
+  {
+    "id": "3fc92ee10dfdaaa2",
+    "type": "http request",
+    "z": "127d5b4751b8ad8c",
+    "name": "Vào URL",
+    "method": "GET",
+    "ret": "txt",
+    "paytoqs": "ignore",
+    "url": "https://xsmn.mobi/xsmb-xo-so-mien-bac.html",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 200,
+    "y": 80,
+    "wires": [
+      [
+        "09c13233ea2de0d9"
+      ]
+    ]
+  },
+  {
+    "id": "09c13233ea2de0d9",
+    "type": "html",
+    "z": "127d5b4751b8ad8c",
+    "name": "get data",
+    "property": "payload",
+    "outproperty": "payload",
+    "tag": ".title-bor-c1 h2:first, .v-gdb:first",
+    "ret": "text",
+    "as": "single",
+    "x": 380,
+    "y": 80,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "18451c7c1f68fa27",
+    "type": "http in",
+    "z": "e08db1a071d6fafb",
+    "g": "c3594b5abffa3c8f",
+    "name": "",
+    "url": "/sode",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 130,
+    "y": 80,
+    "wires": [
+      [
+        "24cd715756bbc2f6"
+      ]
+    ]
+  },
+  {
+    "id": "9297951b519e819c",
+    "type": "MSSQL",
+    "z": "e08db1a071d6fafb",
+    "g": "f3a23eb4d58c091e",
+    "mssqlCN": "9ed23652b98df2a0",
+    "name": "get 1 sensor",
+    "outField": "payload",
+    "returnType": 0,
+    "throwErrors": 1,
+    "query": "select * from sensor where id=@id\r\n",
+    "modeOpt": "queryMode",
+    "modeOptType": "query",
+    "queryOpt": "payload",
+    "queryOptType": "editor",
+    "paramsOpt": "",
+    "paramsOptType": "editor",
+    "rows": "rows",
+    "rowsType": "msg",
+    "parseMustache": false,
+    "params": [
+      {
+        "output": false,
+        "name": "id",
+        "type": "int",
+        "valueType": "msg",
+        "value": "payload.id",
+        "options": {
+          "nullable": true,
+          "primary": false,
+          "identity": false,
+          "readOnly": false
+        }
+      }
+    ],
+    "x": 310,
+    "y": 180,
+    "wires": [
+      [
+        "e5be067b928571ae"
+      ]
+    ]
+  },
+  {
+    "id": "e5be067b928571ae",
+    "type": "change",
+    "z": "e08db1a071d6fafb",
+    "g": "f3a23eb4d58c091e",
+    "name": "",
+    "rules": [
+      {
+        "t": "set",
+        "p": "payload",
+        "pt": "msg",
+        "to": "payload[0]",
+        "tot": "msg"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 480,
+    "y": 180,
+    "wires": [
+      [
+        "ada2f99d9a5e3c26"
+      ]
+    ]
+  },
+  {
+    "id": "f76791aebc74902c",
+    "type": "http in",
+    "z": "e08db1a071d6fafb",
+    "g": "f3a23eb4d58c091e",
+    "name": "",
+    "url": "/get_sensor",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 140,
+    "y": 180,
+    "wires": [
+      [
+        "9297951b519e819c"
+      ]
+    ]
+  },
+  {
+    "id": "46c10e3c30157454",
+    "type": "http response",
+    "z": "e08db1a071d6fafb",
+    "g": "c3594b5abffa3c8f",
+    "name": "trả lời",
+    "statusCode": "200",
+    "headers": {
+      "Access-Control-Allow-Origin": "*"
+    },
+    "x": 550,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "ada2f99d9a5e3c26",
+    "type": "http response",
+    "z": "e08db1a071d6fafb",
+    "g": "f3a23eb4d58c091e",
+    "name": "trả lời",
+    "statusCode": "200",
+    "headers": {
+      "Access-Control-Allow-Origin": "*"
+    },
+    "x": 550,
+    "y": 220,
+    "wires": []
+  },
+  {
+    "id": "21ff933afdf5aa52",
+    "type": "http in",
+    "z": "e08db1a071d6fafb",
+    "g": "f3a23eb4d58c091e",
+    "name": "",
+    "url": "/list_sensor",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 140,
+    "y": 220,
+    "wires": [
+      [
+        "44648f492ebdacd2"
+      ]
+    ]
+  },
+  {
+    "id": "44648f492ebdacd2",
+    "type": "MSSQL",
+    "z": "e08db1a071d6fafb",
+    "g": "f3a23eb4d58c091e",
+    "mssqlCN": "9ed23652b98df2a0",
+    "name": "get all sensor",
+    "outField": "payload",
+    "returnType": 0,
+    "throwErrors": 1,
+    "query": "select id,name from sensor\r\n",
+    "modeOpt": "queryMode",
+    "modeOptType": "query",
+    "queryOpt": "payload",
+    "queryOptType": "editor",
+    "paramsOpt": "",
+    "paramsOptType": "editor",
+    "rows": "rows",
+    "rowsType": "msg",
+    "parseMustache": false,
+    "params": [],
+    "x": 310,
+    "y": 220,
+    "wires": [
+      [
+        "ada2f99d9a5e3c26"
+      ]
+    ]
+  },
+  {
+    "id": "24cd715756bbc2f6",
+    "type": "http request",
+    "z": "e08db1a071d6fafb",
+    "name": "Vào URL",
+    "method": "GET",
+    "ret": "txt",
+    "paytoqs": "ignore",
+    "url": "https://xsmn.mobi/xsmb-xo-so-mien-bac.html",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 280,
+    "y": 80,
+    "wires": [
+      [
+        "7a84308c88ace4dd"
+      ]
+    ]
+  },
+  {
+    "id": "7a84308c88ace4dd",
+    "type": "html",
+    "z": "e08db1a071d6fafb",
+    "name": "get data",
+    "property": "payload",
+    "outproperty": "payload",
+    "tag": ".title-bor-c1 h2:first, .v-gdb:first",
+    "ret": "text",
+    "as": "single",
+    "x": 420,
+    "y": 80,
+    "wires": [
+      [
+        "46c10e3c30157454"
+      ]
+    ]
+  }
+]
