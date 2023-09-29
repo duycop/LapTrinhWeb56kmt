@@ -46,6 +46,14 @@ namespace web_CamDo
             cm.CommandType = CommandType.StoredProcedure;
             //truyền các tham số để chuẩn bị chạy sp_
             cm.Parameters.Add("@action", SqlDbType.NVarChar, 50).Value = "ds_kh";
+
+
+            //SqlParameter param_Rep = cm.Parameters.Add("@rep", SqlDbType.Bit);
+            //param_Rep.Direction = ParameterDirection.Output;
+
+            //SqlParameter param_Detail = cm.Parameters.Add("@detail", SqlDbType.NVarChar,4000);
+            //param_Detail.Direction = ParameterDirection.Output;
+
             //thực thi sp_ , loại action này trả về dữ liệu, hứng vào dr
             SqlDataReader dr = cm.ExecuteReader();
             //dt tạo trống để chuẩn bị load tất cả từ dr
