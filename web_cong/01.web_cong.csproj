@@ -6,16 +6,16 @@
     <ProductVersion>
     </ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{8F8433ED-C754-46C7-B95C-682D001CAD8B}</ProjectGuid>
+    <ProjectGuid>{958E3F4B-BEF3-4F34-B733-594A9D0E37F4}</ProjectGuid>
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>web_cong_nhanh</RootNamespace>
-    <AssemblyName>web_cong_nhanh</AssemblyName>
+    <RootNamespace>web_cong</RootNamespace>
+    <AssemblyName>web_cong</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <UseIISExpress>true</UseIISExpress>
     <Use64BitIISExpress />
-    <IISExpressSSLPort>44378</IISExpressSSLPort>
+    <IISExpressSSLPort>44374</IISExpressSSLPort>
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
@@ -57,26 +57,23 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="api.aspx" />
-    <Content Include="index.html" />
-    <Content Include="jquery.min.js" />
-    <Content Include="mycode.js" />
+    <Content Include="default.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="api.aspx.cs">
-      <DependentUpon>api.aspx</DependentUpon>
+    <Compile Include="default.aspx.cs">
+      <DependentUpon>default.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="api.aspx.designer.cs">
-      <DependentUpon>api.aspx</DependentUpon>
+    <Compile Include="default.aspx.designer.cs">
+      <DependentUpon>default.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MathTool\0.MathTool.csproj">
+    <ProjectReference Include="..\MathTool\00.MathTool.csproj">
       <Project>{a9653f59-3ec2-4d6c-825b-d7751a8d55ce}</Project>
-      <Name>0.MathTool</Name>
+      <Name>00.MathTool</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
@@ -92,9 +89,9 @@
         <WebProjectProperties>
           <UseIIS>True</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>52822</DevelopmentServerPort>
+          <DevelopmentServerPort>59640</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>https://localhost:44378/</IISUrl>
+          <IISUrl>https://localhost:44374/</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>
