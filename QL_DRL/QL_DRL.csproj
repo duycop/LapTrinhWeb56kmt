@@ -79,6 +79,7 @@
     <Content Include="icon\favicon-32x32.png" />
     <Content Include="icon\favicon.ico" />
     <Content Include="index.html" />
+    <Content Include="QL_DRL.sql" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
