@@ -1,6 +1,7 @@
 ﻿$(document).ready(function () {
+  //$(".canh_quat").draggable()
+  //$("#bom1, #bom2").draggable()
   //$(".time").draggable()
-
   $('.nut-dk').click(function () {
     var bomid = $(this).data('bomid');
     var muongi = $(this).data('muongi'); //on off === class muốn hướng tới
@@ -8,8 +9,20 @@
     //bom tại id=bomid : on thì: phải chứa class on => css làm hết phần còn lại
     var id = '#bom' + bomid;
     $(id).removeClass(dao_muon).addClass(muongi);
+  });  
+  $('.bom').click(function () {
+    var bomid = $(this).data('bomid');
+    //lấy đc trạng thái hiện tại
+    //gửi yêu cầu đảo trạng thái hiện tại hoặc ko cần lấy hiện tại, yêu cầu db đảo
+    $.post('api.aspx',
+      {
+        action: 'control_invert',
+        id: bomid
+      },
+      function (data) {
+        //chả cần làm gì
+      });
   });
-
   function monitor() {
     $.post('api.aspx',
       {
@@ -27,12 +40,12 @@
             //hh:mm:ss
             var ss = bom.ss;
             var mm = parseInt(ss / 60) % 60;
-            var hh = parseInt(ss/60 / 60) % 24;
+            var hh = parseInt(ss / 60 / 60) % 24;
             var time = '';
             if (hh > 0) time = hh + "<sup>h</sup>";
-            time += mm + "'" + ss%60+'"';
-            var str = "Đã " + muongi+" "+time +" trước";
-            $(id+' .time').html(str)
+            time += mm + "'" + ss % 60 + '"';
+            var str = "Đã " + muongi + " " + time + " trước";
+            $(id + ' .time').html(str)
           }
         } else {
           console.log(json.msg);
@@ -40,23 +53,5 @@
       }
     );
   }
-
-  $('.bom').click(function () {
-    var bomid = $(this).data('bomid');
-    //lấy đc trạng thái hiện tại
-    //gửi yêu cầu đảo trạng thái hiện tại
-
-    //hoặc ko cần lấy hiện tại, yêu cầu db đảo
-    $.post('api.aspx',
-      {
-        action: 'control_invert',
-        id: bomid
-      },
-      function (data) {
-        //chả làm gì
-      });
-  });
-
   setInterval(function () { monitor();  }, 1000);
-
 }); //end ready

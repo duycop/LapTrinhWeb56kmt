@@ -1,69 +1,44 @@
 ﻿.bom {
     background-image: url('/images/vo_bom.png');
     background-size: 187px 285px;
-    width: 187px;
-    height: 285px;
+    width: 187px; height: 285px;
 }
-
 .canh_quat {
     background-image: url('/images/canh_quat.PNG');
     background-size: 134px 134px;
-    width: 134px;
-    height: 134px;
+    width: 134px; height: 134px;
     position: relative;
-    left: 35px;
-    top: 92px;
+    left: 35px; top: 92px;
 }
-
 #bom1 {
-    position: relative;
-    left: 14px;
-    top: 4px;
+    position: relative; left: 14px; top: 4px;
 }
-
 #bom2 {
-    position: relative;
-    left: 247px;
-    top: -280px;
+    position: relative; left: 247px; top: -280px;
 }
-
 .bom.on {
-    background-image: url('/images/bom_on.PNG');
-    
+    background-image: url('/images/bom_on.PNG');    
 }
-
     .bom.on .canh_quat {
         -webkit-animation: spin 4s linear infinite;
         -moz-animation: spin 4s linear infinite;
         animation: spin 4s linear infinite;
     }
-
 @-moz-keyframes spin {
-    100% {
-        -moz-transform: rotate(360deg);
-    }
+    100% { -moz-transform: rotate(360deg); }
 }
-
 @-webkit-keyframes spin {
-    100% {
-        -webkit-transform: rotate(360deg);
-    }
+    100% { -webkit-transform: rotate(360deg); }
 }
-
 @keyframes spin {
     100% {
         -webkit-transform: rotate(360deg);
         transform: rotate(360deg);
     }
 }
-
 .bom.off {
     background-image: url('/images/bom_off.PNG');
 }
-
 .time {
-    position: relative;
-    left: 8px;
-    top: 151px;
-    text-align:center;
+    position: relative; left: 8px; top: 151px; text-align:center;
 }
