@@ -12,7 +12,6 @@ namespace QL_DRL
     public partial class api : System.Web.UI.Page
     {
         private const string cnStr = "Server=127.0.0.1;Database=QL_DRL;User Id=sa;Password=123;";
-        
         class Reply
         {
             public bool ok;
@@ -125,7 +124,6 @@ namespace QL_DRL
                 case "check_cc":
                     check_cc();
                     break;
-
             }
         }
     }

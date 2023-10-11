@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Demo IOT</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">
+
+    <script src="asset/jquery.min.js"></script>
+
+    <link href="asset/jquery-ui.min.css" rel="stylesheet" />
+    <script src="asset/jquery-ui.min.js"></script>
+
+    <link href="asset/jquery-confirm.css" rel="stylesheet" />
+    <script src="asset/jquery-confirm.js"></script>
+
+    <link href="asset/bootstrap.min.css" rel="stylesheet" />
+    <script src="asset/bootstrap.bundle.min.js"></script>
+
+    <link href="asset/mystyle.css" rel="stylesheet" />
+    <script src="asset/code_iot.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="jumbotron p-3 my-3 bg-primary text-white khong-in">
+            <h2 id="app-title">Demo monitor + control Pump</h2>
+            <p id="app-sologan">
+                Siêu mát, nhanh chóng, chi phí thì hợp lý!
+            </p>
+            <a href="/" class="btn btn-warning">Trang chủ</a>
+            <!--<button class="btn btn-info nut-dk" data-bomid="1" data-muongi="on">Bom1 on</button>
+            <button class="btn btn-danger nut-dk" data-bomid="1" data-muongi="off">Bom1 off</button>
+            <button class="btn btn-info nut-dk" data-bomid="2" data-muongi="on">Bom2 on</button>
+            <button class="btn btn-danger nut-dk" data-bomid="2" data-muongi="off">Bom2 off</button>-->
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                Thiết kê giao diện : mô tả được bơm + trạng thái bơm + cho phép điều khiển
+                <div class="bom" id="bom1" data-bomid="1">
+                    <div class="canh_quat"></div>
+                    <div class="time"></div>
+                </div>
+
+                <div class="bom" id="bom2" data-bomid="2">
+                    <div class="canh_quat"></div>
+                    <div class="time"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
