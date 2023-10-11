@@ -2,8 +2,10 @@
   //$(".canh_quat").draggable()
   //$("#bom1, #bom2").draggable()
   //$(".time").draggable()
-  $('.nut-dk').click(function () {
-    var bomid = $(this).data('bomid');
+
+  //4 nút sinh ra để test css
+  $('.nut-dk').click(function () {       //4 nút này đã xóa khỏi html
+    var bomid = $(this).data('bomid');   //lấy giá trị thuộc tính html5
     var muongi = $(this).data('muongi'); //on off === class muốn hướng tới
     var dao_muon = (muongi == 'on' ? 'off' : 'on');
     //bom tại id=bomid : on thì: phải chứa class on => css làm hết phần còn lại
@@ -14,20 +16,19 @@
     var bomid = $(this).data('bomid');
     //lấy đc trạng thái hiện tại
     //gửi yêu cầu đảo trạng thái hiện tại hoặc ko cần lấy hiện tại, yêu cầu db đảo
-    $.post('api.aspx',
-      {
-        action: 'control_invert',
-        id: bomid
+    $.post('api.aspx',  //gửi tới api
+      {                             //chỗ này là dữ liệu gửi tới API
+        action: 'control_invert',   //gửi 2 giá biến là active và id
+        id: bomid                   //sau dấu hai chấm (:) là giá trị
       },
       function (data) {
         //chả cần làm gì
+        //vì hàm monitor sẽ cập nhật kết quả
+        console.log(data); //xem log kết quả thôi
       });
   });
   function monitor() {
-    $.post('api.aspx',
-      {
-        action: 'monitor'
-      },
+    $.post('api.aspx', { action: 'monitor' }, //gửi đi action
       function (data) {
         //console.log(data); //ok debug ra console đúng ý rồi
         var json = JSON.parse(data);
@@ -48,7 +49,7 @@
             $(id + ' .time').html(str)
           }
         } else {
-          console.log(json.msg);
+          console.log(json.msg); //xem log khi có lỗi
         }
       }
     );
