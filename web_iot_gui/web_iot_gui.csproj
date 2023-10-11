@@ -87,6 +87,7 @@
     <Content Include="images\canh_quat.PNG" />
     <Content Include="images\vo_bom.PNG" />
     <Content Include="index.html" />
+    <Content Include="SQL_IOT_GUI.sql" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>

@@ -12,6 +12,7 @@
     var id = '#bom' + bomid;
     $(id).removeClass(dao_muon).addClass(muongi);
   });  
+
   $('.bom').click(function () {
     var bomid = $(this).data('bomid');
     //lấy đc trạng thái hiện tại

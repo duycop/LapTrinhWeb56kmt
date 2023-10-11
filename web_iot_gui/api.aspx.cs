@@ -16,7 +16,6 @@ namespace web_iot_gui
         {
             public int id, status, ss;
         }
-
         class Reply
         {
             public bool ok;
