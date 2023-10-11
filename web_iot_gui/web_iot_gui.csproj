@@ -52,6 +52,7 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="abc.aspx" />
     <Content Include="asset\node-red-export.json" />
     <Content Include="icon\site.webmanifest" />
     <None Include="packages.config" />
@@ -88,9 +89,17 @@
     <Content Include="images\vo_bom.PNG" />
     <Content Include="index.html" />
     <Content Include="SQL_IOT_GUI.sql" />
+    <Content Include="test.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="abc.aspx.cs">
+      <DependentUpon>abc.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="abc.aspx.designer.cs">
+      <DependentUpon>abc.aspx</DependentUpon>
+    </Compile>
     <Compile Include="api.aspx.cs">
       <DependentUpon>api.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -99,6 +108,13 @@
       <DependentUpon>api.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="test.aspx.cs">
+      <DependentUpon>test.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="test.aspx.designer.cs">
+      <DependentUpon>test.aspx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
