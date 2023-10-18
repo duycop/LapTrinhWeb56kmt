@@ -61,14 +61,28 @@ namespace TamTien
                 return 0;
             }
         }
+        /// <summary>
+        /// Hàm điều khiển vào/ra tắm
+        /// </summary>
+        /// <param name="action">Action là vao_tam or tam_xong</param>
         void control(string action)
         {
             Reply reply = new Reply();
             try
             {
                 int role=get_role();
+                /* role list
+                 * role=1 : guest  == view only
+                 * role=2 : member ==> xem được số lượt của mình (bán vé tháng)
+                 * role=3 : manager => view, thống kê, control: vào/ra tắm
+                 * rome=100 : Admin
+                 */
                 if (role > 1)
                 {
+                    /* guest ko đc control,
+                     * trên cấp guest mới đc control
+                     * hết rồi
+                     */
                     SqlServer db = new SqlServer();
                     SqlCommand cm = db.GetCmd("SP_Phong", action);
                     cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
@@ -177,10 +191,6 @@ namespace TamTien
                         cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
                         cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["ck"].Value;
                     }
-                    else
-                    {
-                        reply.msg = $"quyền là {role}";
-                    }
                 }
 
                 if (cm != null)
@@ -192,8 +202,7 @@ namespace TamTien
                 }
                 else
                 {
-                    reply.ok = false;
-                    
+                    reply.ok = false;                    
                 }
             }
             catch (Exception ex)
@@ -270,6 +279,7 @@ namespace TamTien
                 case "do_change_pw":
                 case "add_user":
                 case "delete_user":
+                case "set_pw":
                     auth_user(action);
                     break;
             }

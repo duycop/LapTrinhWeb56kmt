@@ -57,7 +57,7 @@
   }
   function control(action, id) {
     if (!logined) {
-      alert_not_login();
+      alert_not_login(); //khi vào để điều khiển tại hàm control
       return;
     }
 
@@ -110,7 +110,7 @@
           cancel: {
             text: '<i class="fa fa-circle-xmark"></i> Cancel',
             keys: ['esc', 'c', 'C'],
-            btnClass: 'btn-red',
+            btnClass: 'btn-red',            
           }
         }
       });
@@ -131,7 +131,7 @@
 
     $('.nam,.nu').click(function () {
       if (!logined) {
-        alert_not_login();
+        alert_not_login(); //mỗi khi click vào để điều khiển từng phòng tắm nam nữ
         return;
       }
 
@@ -152,7 +152,7 @@
           content: 'Xác nhận đã tắm xong phòng ' + id + ' ??',
           buttons: {
             ok: {
-              text: '<i class="fa fa-circle-check"></i> Tắm xong P.' + id,
+              text: '<i class="fa fa-shower"></i> Tắm xong P.' + id,
               btnClass: 'btn-blue',
               keys: ['enter', 't', 'x', 'T', 'X'],
               action: function () {
@@ -234,7 +234,7 @@
           autoClose: 'ok|30000',
           buttons: {
             ok: {
-              text: '<i class="fa fa-circle-check"></i> Vào tắm P.' + id,
+              text: '<i class="fa fa-person-booth"></i> Vào tắm P.' + id,
               btnClass: 'btn-blue btn-blink',
               keys: ['enter', 'v', 't', 'V', 'T'],
               action: function () {
@@ -332,7 +332,9 @@
         for (var index in this.queue) {
           var item = this.queue[index];
           if (item.id == itemX.id) {
-            this.queue.splice(index, 1);
+            if (item.vip == undefined) {
+              this.queue.splice(index, 1);
+            }
             return;
           }
         }
@@ -358,12 +360,12 @@
       });                             //hết hàm xử lý stop
   }//hết hàm playSound
   function play_tts(txt) {              //nhận txt là chuỗi cần tts
-    //$.post(mp3,  //gọi API tạo tts
-    //  { text: txt },                     //truyền lên chuỗi cần tts
-    //  function (json) {             //nhận về tên file mp3
-    //    var tts = JSON.parse(json);
-    //    playSound(mp3 + tts.fn, txt);  //play url=file này trong thư mục mp3
-    //  });//end ajax post
+    $.post(mp3,  //gọi API tạo tts
+      { text: txt },                     //truyền lên chuỗi cần tts
+      function (json) {             //nhận về tên file mp3
+        var tts = JSON.parse(json);
+        playSound(mp3 + tts.fn, txt);  //play url=file này trong thư mục mp3
+      });//end ajax post
   }
   function update_status(json) {
     if (json.ok) {
@@ -440,7 +442,7 @@
             columnClass: 'l',
             type: 'purple',
             escapeKey: 'ok',
-            title: '<div class="badge bg-primary"><i class="fa fa-flag-checkered"></i> Thống kê chi tiết ngày ' + date + '</div>',
+            title: '<div class="badge bg-primary"><i class="fa fa-calendar-days"></i> Thống kê chi tiết ngày ' + date + '</div>',
             content: content,
             buttons: {
               ok: {
@@ -450,14 +452,14 @@
             }
           });
         } else {
-          bao_loi(json);
+          bao_loi(json); //báo lỗi khi thong_ke_tong_hop
         }
       }
     );
   }
   function thong_ke() {
     if (!logined) {
-      alert_not_login();
+      alert_not_login();  //khi thống kê thì phải có quyền
       return;
     }
     $.post(api,
@@ -480,7 +482,7 @@
             closeIcon: true,
             type: 'purple',
             escapeKey: 'ok',
-
+            columnClass: 'm',
             title: '<div class="badge bg-primary"><i class="fa fa-flag-checkered"></i> Thống kê tổng hợp</div>',
             content: content,
             buttons: {
@@ -498,7 +500,7 @@
             }
           });
         } else {
-          bao_loi(json);
+          bao_loi(json); //báo lỗi khi thong_ke
         }
       }
     );
@@ -561,7 +563,7 @@
                   list_user();  //sau khi add_user thì tải lại
                   dialog_add.close(); //đóng thằng dialog_add lại
                 } else {
-                  bao_loi(json);
+                  bao_loi(json); //báo lỗi khi add_user
                 }
               });
             return false; // ko đóng
@@ -570,7 +572,7 @@
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc'],
-          btnClass: 'btn-red',
+          btnClass: 'btn-red',          
         }
       }
     });
@@ -618,9 +620,10 @@
               },
               function (json) {
                 if (json.ok) {
+
                   dialog_set_pw.close(); //đóng thằng dialog_set_pw lại
                 } else {
-                  bao_loi(json);
+                  bao_loi(json); //báo lỗi khi set_pw
                 }
               });
             return false; // ko đóng
@@ -629,7 +632,7 @@
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc'],
-          btnClass: 'btn-red',
+          btnClass: 'btn-red',          
         }
       }
     });
@@ -637,7 +640,7 @@
   function delete_user(uid) {
     let uid_logined = get_store('uid');
     if (uid_logined == uid) {
-      bao_loi({ ok: 0, msg: "Không tự xóa mình được!" })
+      bao_loi({ ok: 0, msg: "Không tự xóa mình được!" }); //báo lỗi khi tự xóa
       return;
     }
     $.confirm({
@@ -658,7 +661,7 @@
               if (json.ok) {
                 list_user(); //sau khi delete_user thì tải lại
               } else {
-                bao_loi(json);
+                bao_loi(json); //báo lỗi khi delete_user
               }
             });
           }
@@ -666,7 +669,7 @@
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc', 'c', 'C'],
-          btnClass: 'btn-red',
+          btnClass: 'btn-red',          
         }
       }
     });
@@ -703,7 +706,7 @@
           }
         });
       } else {
-        bao_loi(json);
+        bao_loi(json); //báo lỗi khi list_user
       }
     });//end get list_user
   }
@@ -754,7 +757,7 @@
                   toastr["info"](json.msg)
                 dialog_change_pw.close();
               } else {
-                bao_loi(json)
+                bao_loi(json) //báo lỗi khi do_change_pw
               }
             });
             return false;//ko đóng
@@ -788,7 +791,7 @@
   }
   function admin_panel() {
     if (!logined) {
-      alert_not_login();
+      alert_not_login(); // khi vào chức năng của admin
       return;
     }
     $.alert({
@@ -820,7 +823,7 @@
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc', 'c', 'C'],
-          btnClass: 'btn-red',
+          btnClass: 'btn-red',          
         }
       },
       onContentReady: function () {
@@ -927,7 +930,7 @@
         },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
-          btnClass: 'btn-red',
+          btnClass: 'btn-red',          
         },
       },
       onClose: function () {

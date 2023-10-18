@@ -52,6 +52,8 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="db_sql\hotbath_data_only.sql" />
+    <Content Include="db_sql\hotbath_struct_only.sql" />
     <Content Include="icon\site.webmanifest" />
     <Content Include="api.ashx" />
     <None Include="packages.config" />
