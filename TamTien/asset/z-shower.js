@@ -69,6 +69,7 @@
       function (json) {
         if (json.ok) {
           dialog.close();
+          monitor('monitor', update_status);
         } else {
           toastr["warning"](json.msg);
         }
@@ -90,15 +91,16 @@
 
   function alert_not_login() {
     if (!logined) {
-      $.alert({
-        title: '<div class="badge bg-primary">Bạn chưa đăng nhập</div>',
+      $.confirm({
+        title: '<div class="badge bg-primary"><i class="fa fa-clipboard-check"></i> Bạn chưa đăng nhập</div>',
         content: 'Hãy đăng nhập để điều khiển',
+        type: 'red',
         closeIcon: true,
         columnClass: 's',
         escapeKey: 'cancel',
         buttons: {
           ok: {
-            text: 'Đăng nhập luôn',
+            text: '<i class="fa fa-circle-check"></i> Đăng nhập luôn',
             btnClass: 'btn-blue',
             keys: ['enter', 'n'],
             action: function () {
@@ -106,7 +108,7 @@
             }
           },
           cancel: {
-            text: 'Cancel',
+            text: '<i class="fa fa-circle-xmark"></i> Cancel',
             keys: ['esc', 'c', 'C'],
             btnClass: 'btn-red',
           }
@@ -133,6 +135,8 @@
         return;
       }
 
+      if (user_info == null || user_info.role <= 1) return;
+
       var id = $(this).data('pid');
       var tam = $(this).hasClass('tam');
 
@@ -141,14 +145,15 @@
 
         var dang_tam = {
           closeIcon: true,
-          columnClass: 's',
+          type: 'blue',
+          columnClass: 'm',
           escapeKey: 'cancel',
-          title: '<div class="badge bg-primary">Phòng&nbsp;' + id + '&nbsp;đã&nbsp;tắm&nbsp;xong?</div>',
+          title: '<div class="badge bg-primary"><i class="fa fa-shower"></i> Phòng&nbsp;' + id + '&nbsp;đã&nbsp;tắm&nbsp;xong?</div>',
           content: 'Xác nhận đã tắm xong phòng ' + id + ' ??',
           buttons: {
             ok: {
+              text: '<i class="fa fa-circle-check"></i> Tắm xong P.' + id,
               btnClass: 'btn-blue',
-              text: 'Tắm xong P.' + id,
               keys: ['enter', 't', 'x', 'T', 'X'],
               action: function () {
                 control('tam_xong', id);
@@ -157,7 +162,7 @@
             },
             nham: {
               btnClass: 'btn-warning',
-              text: '<span title="Nhầm có thể hủy trong vòng 2 phút">Nhầm</span>',
+              text: '<span title="Nhầm có thể hủy trong vòng 2 phút"><i class="fa fa-rotate-left"></i> Nhầm</span>',
               keys: ['n', 'N'],
               isHidden: true,
               isDisabled: true,
@@ -168,7 +173,7 @@
             },
             mp3: {
               btnClass: 'btn-info',
-              text: 'Loa',
+              text: '<i class="fa fa-volume-high"></i> Loa',
               keys: ['m', 'p', '3', 'M', 'P'],
               action: function () {
                 Q.clear();
@@ -176,8 +181,8 @@
               }
             },
             cancel: {
+              text: '<i class="fa fa-circle-xmark"></i> Cancel',
               btnClass: 'btn-red',
-              text: 'Cancel',
               keys: ['esc', 'c', 'C'],
               action: function () {
                 dialog.close();
@@ -199,7 +204,7 @@
               }
             }
           }
-        };
+        };  //hết var dang_tam
 
         var auto = false, nham = false;
         for (var item of data.data) {
@@ -217,19 +222,20 @@
           dang_tam.autoClose = "ok|30000";
           dang_tam.buttons.ok.btnClass = "btn-blue btn-blink";
         }
-        dialog = $.alert(dang_tam);
+        dialog = $.confirm(dang_tam);
       } else {
         //phòng trống
         var phong_trong = {
           closeIcon: true,
+          type: 'blue',
           escapeKey: 'cancel',
-          title: '<div class="badge bg-primary">Vào tắm Phòng ' + id + '?</div>',
+          title: '<div class="badge bg-primary"><i class="fa fa-shower"></i> Vào tắm Phòng ' + id + '?</div>',
           content: 'Xác nhận vào tắm mới?',
           autoClose: 'ok|30000',
           buttons: {
             ok: {
+              text: '<i class="fa fa-circle-check"></i> Vào tắm P.' + id,
               btnClass: 'btn-blue btn-blink',
-              text: 'Vào tắm P.' + id,
               keys: ['enter', 'v', 't', 'V', 'T'],
               action: function () {
                 control('vao_tam', id);
@@ -238,7 +244,7 @@
             },
             mp3: {
               btnClass: 'btn-info',
-              text: 'Loa',
+              text: '<i class="fa fa-volume-high"></i> Loa',
               keys: ['m', 'p', '3', 'M', 'P'],
               action: function () {
                 Q.clear();
@@ -246,8 +252,8 @@
               }
             },
             cancel: {
+              text: '<i class="fa fa-circle-xmark"></i> Cancel',
               btnClass: 'btn-red jconfirm-closeIcon',
-              text: 'Cancel',
               keys: ['esc', 'c', 'C'],
               action: function () {
                 dialog.close();
@@ -258,7 +264,7 @@
             move_dialog();
           }
         };
-        dialog = $.alert(phong_trong);
+        dialog = $.confirm(phong_trong);
       }
     })
   }
@@ -350,14 +356,14 @@
         //bỏ đánh dấu bận => hết bận
         setTimeout(function () { gtts_playing = 0; }, 3000);//nghỉ 3 giây mới nói tiếp
       });                             //hết hàm xử lý stop
-  }                                   //hết hàm playSound
+  }//hết hàm playSound
   function play_tts(txt) {              //nhận txt là chuỗi cần tts
-    $.post(mp3,  //gọi API tạo tts
-      { text: txt },                     //truyền lên chuỗi cần tts
-      function (json) {             //nhận về tên file mp3
-        var tts = JSON.parse(json);
-        playSound(mp3 + tts.fn, txt);  //play url=file này trong thư mục mp3
-      });//end ajax post
+    //$.post(mp3,  //gọi API tạo tts
+    //  { text: txt },                     //truyền lên chuỗi cần tts
+    //  function (json) {             //nhận về tên file mp3
+    //    var tts = JSON.parse(json);
+    //    playSound(mp3 + tts.fn, txt);  //play url=file này trong thư mục mp3
+    //  });//end ajax post
   }
   function update_status(json) {
     if (json.ok) {
@@ -393,6 +399,62 @@
       toastr["warning"](json.msg); //xem log khi có lỗi
     }
   }
+
+  function thong_ke_tong_hop(date) {
+    $.post(api,
+      {
+        action: 'report_detail',
+        date: date,
+      },
+      function (json) {
+        if (json.ok) {
+          var content = '<table class="table table-hover table-striped">';
+          content += '<thead><tr class="table-info fw-bold">' +
+            '<td align=center>stt</td>' +
+            '<td align=center>Phòng</td>' +
+            '<td align=center>Giờ vào</td>' +
+            '<td align=center>Giờ ra</td>' +
+            '<td align=center>Số phút</td>' +
+            '<td align=center>Hủy</td>' +
+            '</tr></thead><tbody>';
+          var stt = 0;
+          for (var item of json.data) {
+            var t1 = item.tin.split(' '); if (t1.length > 1) t1 = t1[1];
+            var t2 = item.tout.split(' '); if (t2.length > 1) t2 = t2[1]; else t2 = '(đang tắm)';
+            var nhanh = ['bg-info', 'Tắm siêu nhanh'];
+            if (item.use > 10 && item.use <= 15) nhanh = ['bg-primary', 'Tắm nhanh'];
+            if (item.use > 15 && item.use <= 20) nhanh = ['bg-warning', 'Tắm hơi chậm'];
+            if (item.use > 20) nhanh = ['bg-danger', 'Tắm rất chậm'];
+            content += '<tr class="' + (item.huy ? 'table-danger' : '') + '">' +
+              '<td align=center>' + (++stt) + '</td>' +
+              '<td align=center><span class="badge rounded-pill ' + (item.loai ? 'bg-primary' : 'bg-info') + '">' + (item.loai ? 'Nam' : 'Nữ') + ' ' + item.pid + '</span></td>' +
+              '<td align=center>' + t1 + '</td>' +
+              '<td align=center>' + t2 + '</td>' +
+              '<td align=center><span class="badge rounded-pill ' + nhanh[0] + '" title="' + nhanh[1] + '">' + item.use + '</span></td>' +
+              '<td align=center>' + (item.huy ? 'Hủy' : '') + '</td>' +
+              '</tr>'
+          }
+          content += '</tbody></table>';
+          $.confirm({
+            closeIcon: true,
+            columnClass: 'l',
+            type: 'purple',
+            escapeKey: 'ok',
+            title: '<div class="badge bg-primary"><i class="fa fa-flag-checkered"></i> Thống kê chi tiết ngày ' + date + '</div>',
+            content: content,
+            buttons: {
+              ok: {
+                text: '<i class="fa fa-circle-xmark"></i> Đóng lại',
+                btnClass: 'btn-info',
+              }
+            }
+          });
+        } else {
+          bao_loi(json);
+        }
+      }
+    );
+  }
   function thong_ke() {
     if (!logined) {
       alert_not_login();
@@ -414,14 +476,16 @@
           }
           content += '<tr class="table-warning fw-bold"><td align=right colspan=2>Tổng:</td><td align=center><span class="badge rounded-pill bg-primary">' + tam + '</span></td><td align=center><span class="badge rounded-pill bg-danger">' + huy + '</span></td></tr>';
           content += '</tbody></table>';
-          $.alert({
+          $.confirm({
             closeIcon: true,
+            type: 'purple',
             escapeKey: 'ok',
-            title: '<div class="badge bg-primary">Thống kê tổng hợp</div>',
+
+            title: '<div class="badge bg-primary"><i class="fa fa-flag-checkered"></i> Thống kê tổng hợp</div>',
             content: content,
             buttons: {
               ok: {
-                text: 'Đóng lại',
+                text: '<i class="fa fa-circle-xmark"></i> Đóng lại',
                 btnClass: 'btn-info',
               }
             },
@@ -429,62 +493,298 @@
               move_dialog();
               $('.btn-report-detail').click(function () {
                 var date = $(this).data('date');
-                $.post(api,
-                  {
-                    action: 'report_detail',
-                    date: date,
-                  },
-                  function (json) {
-                    var content = '<table class="table table-hover table-striped">';
-                    content += '<thead><tr class="table-info fw-bold">' +
-                      '<td align=center>stt</td>' +
-                      '<td align=center>Phòng</td>' +
-                      '<td align=center>Giờ vào</td>' +
-                      '<td align=center>Giờ ra</td>' +
-                      '<td align=center>Số phút</td>' +
-                      '<td align=center>Hủy</td>' +
-                      '</tr></thead><tbody>';
-                    var stt = 0;
-                    for (var item of json.data) {
-                      var t1 = item.tin.split(' '); if (t1.length > 1) t1 = t1[1];
-                      var t2 = item.tout.split(' '); if (t2.length > 1) t2 = t2[1]; else t2 = '(đang tắm)';
-                      var nhanh = ['bg-info','Tắm siêu nhanh'];
-                      if (item.use > 10 && item.use <= 15) nhanh = ['bg-primary','Tắm nhanh'];
-                      if (item.use > 15 && item.use <= 20) nhanh = ['bg-warning','Tắm hơi chậm'];
-                      if (item.use > 20) nhanh = ['bg-danger','Tắm rất chậm'];
-                      content += '<tr class="' + (item.huy ? 'table-danger' : '') + '">' +
-                        '<td align=center>' + (++stt) + '</td>' +
-                        '<td align=center><span class="badge rounded-pill ' + (item.loai ? 'bg-primary' : 'bg-info') + '">' + (item.loai ? 'Nam' : 'Nữ') + ' ' + item.pid + '</span></td>' +
-                        '<td align=center>' + t1 + '</td>' +
-                        '<td align=center>' + t2 + '</td>' +
-                        '<td align=center><span class="badge rounded-pill ' + nhanh[0] + '" title="'+nhanh[1]+'">' + item.use + '</span></td>' +
-                        '<td align=center>' + (item.huy ? 'Hủy' : '') + '</td>' +
-                        '</tr>'
-                    }
-                    content += '</tbody></table>';
-                    $.alert({
-                      closeIcon: true,
-                      columnClass: 'l',
-                      escapeKey: 'ok',
-                      title: '<div class="badge bg-primary">Thống kê chi tiết ngày ' + date + '</div>',
-                      content: content,
-                      buttons: {
-                        ok: {
-                          text: 'Đóng lại',
-                          btnClass: 'btn-info',
-                        }
-                      }
-                    });
-                  }
-                );
+                thong_ke_tong_hop(date);
               });
             }
           });
         } else {
-          toastr["warning"](json.msg);
+          bao_loi(json);
         }
       }
     );
+  }
+
+  var all_quyen;
+
+  function add_new_user() {
+    var all_option_roles = '';
+    for (var item of all_quyen) {
+      all_option_roles += '<option value="' + item.role + '">' + item.rolename + '</option>'
+    }
+    var html_4input = `
+      <div class="mb-3 mt-3">
+        <label for="nhap-uid" class="form-label">uid:</label>
+        <input type="text" class="form-control" id="nhap-uid" placeholder="Nhập uid">
+      </div>
+      <div class="mb-3 mt-3">
+        <label for="nhap-pwd" class="form-label">Password:</label>
+        <input type="password" class="form-control" id="nhap-pwd" placeholder="Nhập Password">
+      </div>
+      <div class="mb-3 mt-3">
+        <label for="nhap-fullname" class="form-label">Fullname:</label>
+        <input type="text" class="form-control" id="nhap-fullname" placeholder="Nhập Fullname">
+      </div>
+      <div class="mb-3 mt-3">
+        <label for="nhap-role" class="form-label">Role:</label>
+        <select class="form-select" id="nhap-role" >`+ all_option_roles + `</select>
+    </div>
+    `;
+    var dialog_add = $.confirm({
+      title: '<div class="badge bg-primary"><i class="fa fa-user-plus"></i> Add new user</div>',
+      content: html_4input,
+      closeIcon: true,
+      type: 'blue',
+      columnClass: 's',
+      escapeKey: 'cancel',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-user-plus"></i> Thêm user',
+          btnClass: 'btn-blue',
+          action: function () {
+            //lấy đc 4 thông tin trên form
+            //gửi đi
+            //tùy theo phản hồi: OK=1 => tải lại ds user
+            var uid = $('#nhap-uid').val();
+            var pwd = $('#nhap-pwd').val();
+            var fullname = $('#nhap-fullname').val();
+            var role = $('#nhap-role').val();
+            $.post(api,
+              {
+                action: 'add_user',
+                adduid: uid,
+                pw: pwd,
+                name: fullname,
+                role: role
+              },
+              function (json) {
+                if (json.ok) {
+                  list_user();  //sau khi add_user thì tải lại
+                  dialog_add.close(); //đóng thằng dialog_add lại
+                } else {
+                  bao_loi(json);
+                }
+              });
+            return false; // ko đóng
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      }
+    });
+  }
+  function set_pw(uid) {
+    //set pw: ko tự set pw mà phải change_pw
+    let uid_logined = get_store('uid');
+    if (uid_logined == uid) {
+      do_change_pw();
+      return;
+    }
+    //người khác thì set ok
+    //cần 1 form nhập pw mới, (ko cần pw cũ)
+    var html_input = `
+      <div class="mb-3 mt-3">
+        <label for="set-uid" class="form-label">uid:</label>
+        <input type="text" class="form-control" id="set-uid" value="`+ uid + `" disabled>
+      </div>
+      <div class="mb-3 mt-3">
+        <label for="set-pwd" class="form-label">Password mới:</label>
+        <input type="password" class="form-control" id="set-pwd" placeholder="Nhập Password">
+      </div>
+    `;
+    var dialog_set_pw = $.confirm({
+      title: '<div class="badge bg-primary"><i class="fa fa-key"></i> Set password mới cho user</div>',
+      content: html_input,
+      closeIcon: true,
+      type: 'red',
+      columnClass: 's',
+      escapeKey: 'cancel',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-key"></i> Set password',
+          btnClass: 'btn-blue',
+          action: function () {
+            //lấy đc 1 thông tin trên form
+            //gửi đi
+            //tùy theo phản hồi: OK=1 => tải lại ds user
+            var pwd = $('#set-pwd').val();
+            $.post(api,
+              {
+                action: 'set_pw',
+                edit_uid: uid,
+                edit_pwd: pwd,
+              },
+              function (json) {
+                if (json.ok) {
+                  dialog_set_pw.close(); //đóng thằng dialog_set_pw lại
+                } else {
+                  bao_loi(json);
+                }
+              });
+            return false; // ko đóng
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      }
+    });
+  }
+  function delete_user(uid) {
+    let uid_logined = get_store('uid');
+    if (uid_logined == uid) {
+      bao_loi({ ok: 0, msg: "Không tự xóa mình được!" })
+      return;
+    }
+    $.confirm({
+      title: '<div class="badge bg-primary"><i class="fa fa-circle-question"></i> Xác nhận xóa?</div>',
+      content: 'Bạn có chắc muốn xóa user <b>' + uid + '</b> ?',
+      closeIcon: true,
+      type: 'red',
+      columnClass: 's',
+      escapeKey: 'cancel',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-circle-check"></i> ok Xóa đi',
+          btnClass: 'btn-blue',
+          keys: ['enter', 'x', 'X'],
+          action: function () {
+            //gửi đi api: y/c xóa
+            $.post(api, { action: 'delete_user', deluid: uid }, function (json) {
+              if (json.ok) {
+                list_user(); //sau khi delete_user thì tải lại
+              } else {
+                bao_loi(json);
+              }
+            });
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc', 'c', 'C'],
+          btnClass: 'btn-red',
+        }
+      }
+    });
+  }
+
+  function list_user() {
+    $.post(api, { action: 'list_user' }, function (json) {
+      if (json.ok) {
+        all_quyen = json.quyen;
+        var s = '<h4>Danh sách user</h4>' +
+          '<table class="table table-hover"><thead><tr class="table-info"><th>STT</th><th>uid</th><th>fullname</th><th>Role</th><th>Last login</th><th>Action</th></tr></thead><tbody>';
+        var stt = 0;
+        for (var item of json.data) {
+          s += '<tr>';
+          s += '<td align="center">' + (++stt) + '</td>';
+          s += '<td>' + item.uid + '</td>';
+          s += '<td>' + item.fullname + '</td>';
+          s += '<td>' + item.rolename + '</td>';
+          s += '<td>' + item.last + '</td>';
+          var action = '<button class="btn btn-sm btn-warning btn-action-user" data-action="set_pw" data-uid="' + item.uid + '" title="Set password"><i class="fa fa-key"></i></button>';
+          action += ' <button class="btn btn-sm btn-danger btn-action-user" data-action="delete_user" data-uid="' + item.uid + '" title="Delete user"><i class="fa fa-user-xmark"></i></button>';
+          s += '<td>' + action + '</td></tr>';
+          s += '</tr>';
+        }
+        s += '</tbody></table>';
+        $('#list-user').html(s);
+        $('.btn-action-user').click(function () {
+          var action = $(this).data('action');
+          var uid = $(this).data('uid');
+          if (action == 'delete_user') {
+            delete_user(uid);
+          } else if (action == 'set_pw') {
+            set_pw(uid);
+          }
+        });
+      } else {
+        bao_loi(json);
+      }
+    });//end get list_user
+  }
+
+  function do_change_pw() {
+    //show tên , uid : ko cần nhập
+    //nhập lại pwd, và pwd mới (pwd2)
+    //gửi đi: action='do_change_pw',  uid (cookie  tự gửi), pwd, pwd2
+    let uid = get_store('uid');
+    var content = `
+      <div class="mb-3 mt-3">
+        <label for="old-uid" class="form-label">uid:</label>
+        <input type="text" class="form-control" id="old-uid" value="`+ uid + `" disabled>
+      </div>
+      <div class="mb-3 mt-3">
+        <label for="old-pwd" class="form-label">Password cũ:</label>
+        <input type="password" class="form-control" id="old-pwd" placeholder="Nhập Password cũ">
+      </div>
+      <div class="mb-3 mt-3">
+        <label for="new-pwd" class="form-label">Password mới:</label>
+        <input type="password" class="form-control" id="new-pwd" placeholder="Nhập Password mới">
+      </div>
+    `;
+    var dialog_change_pw = $.confirm({
+      title: '<div class="badge bg-primary"><i class="fa fa-key"></i> Đổi mật khẩu</div>',
+      content: content,
+      closeIcon: true,
+      type: 'red',
+      columnClass: 's',
+      escapeKey: 'cancel',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-key"></i> Đổi mật khẩu',
+          btnClass: 'btn-blue',
+          action: function () {
+            var pwd = $('#old-pwd').val();
+            var pwd2 = $('#new-pwd').val();
+            $.post(api, {
+              action: 'do_change_pw',
+              pwd: pwd,
+              pwd2: pwd2,
+            }, function (json) {
+              if (json.ok) {
+                //cần lưu cookie mới
+                setLocal("ck", json.cookie)
+                setCookie('ck', json.cookie, 30);
+                if (json.msg != null && json.msg != "")
+                  toastr["info"](json.msg)
+                dialog_change_pw.close();
+              } else {
+                bao_loi(json)
+              }
+            });
+            return false;//ko đóng
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          btnClass: 'btn-red',
+        }
+      }
+    });
+  }
+  function bao_loi(json) {
+    if (!json.ok)
+      if (json.msg != null && json.msg != '') {
+        toastr["warning"]("<b>Thông báo lỗi</b><br>" + json.msg)
+        $.confirm({
+          icon: 'fa fa-warning',
+          title: 'Thông báo lỗi',
+          type: 'red',
+          content: json.msg,
+          autoClose: "ok|3000",
+          buttons: {
+            ok: {
+              text: '<i class="fa fa-circle-check"></i> OK',
+              btnClass: 'btn-danger',
+            }
+          }
+        });
+      }
   }
   function admin_panel() {
     if (!logined) {
@@ -492,72 +792,49 @@
       return;
     }
     $.alert({
-      title: '<div class="badge bg-primary">Xin chào <b>' + user_info.fullname + '</b></div>',
+      title: '<div class="badge bg-primary"><i class="fa fa-user"></i> Xin chào <b>' + user_info.fullname + '</b></div>',
       content: '<div id="list-user"></div><p>Các tính năng dành cho bạn</p>',
       closeIcon: true,
+      type: 'blue',
       columnClass: 'm',
       escapeKey: 'cancel',
       buttons: {
         add_user: {
-          text: 'Thêm user',
+          text: '<i class="fa fa-user-plus"></i> Thêm user',
           btnClass: 'btn-primary',
           isHidden: true,
           action: function () {
-            alert('Nếu là admin thì hiện form thêm user mới');
+            //console.log(all_quyen);
+            add_new_user();
             return false; //ko đóng dialog
           }
         },
         change_pw: {
-          text: 'Đổi mật khẩu',
+          text: '<i class="fa fa-key"></i> Đổi mật khẩu',
           btnClass: 'btn-blue',
           action: function () {
-            alert('đổi mật khẩu của người dùng hiện tại, chưa code');
+            do_change_pw();
             return false; //ko đóng dialog
           }
         },
         cancel: {
-          text: 'Close',
+          text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc', 'c', 'C'],
           btnClass: 'btn-red',
         }
       },
       onContentReady: function () {
-        if (user_info.role == 100)//nếu là admin
+        if (user_info.role == 100 || user_info.role == 3)//nếu đủ quyền
         {
           this.buttons.add_user.show();
-          $.post(api, { action: 'list_user' }, function (json) {
-            if (json.ok) {
-              var s = '<h4>Danh sách user</h4>' +
-                '<table class="table table-hover"><thead><tr class="table-info"><th>STT</th><th>uid</th><th>fullname</th><th>Role</th><th>Last login</th><th>Action</th></tr></thead><tbody>';
-              var stt = 0;
-              for (var item of json.data) {
-                s += '<tr>';
-                s += '<td align="center">' + (++stt) + '</td>';
-                s += '<td>' + item.uid + '</td>';
-                s += '<td>' + item.fullname + '</td>';
-                s += '<td>' + item.rolename + '</td>';
-                s += '<td>' + item.last + '</td>';
-                var action = '<button class="btn btn-sm btn-warning btn-action-user" data-action="change-pw" data-uid="' + item.uid + '">PW</button>';
-                action += ' <button class="btn btn-sm btn-danger btn-action-user" data-action="del-user" data-uid="' + item.uid + '">Del</button>';
-                s += '<td>' + action + '</td></tr>';
-                s += '</tr>';
-              }
-              s += '</tbody></table>';
-              $('#list-user').html(s);
-              $('.btn-action-user').click(function () {
-                var action = $(this).data('action');
-                var uid = $(this).data('uid');
-                alert(['coding', action, uid,]);
-              });
-            }
-          })
+          list_user(); //khi admin_panel show lần đầu
         }
       }
     });
   }
   function load_gui() {
     if (logined) {
-      $('.login_info').html("Xin chào&nbsp;<b>" + user_info.fullname + "</b>");
+      $('.login_info').html("<i class='fa fa-user'></i> Xin chào&nbsp;<b>" + user_info.fullname + "</b>");
       $('#cmdLogin').hide();
       $('#cmdLogout,.login_info, .btn-thong-ke').removeClass('not-show');
       $('#cmdLogout,.login_info, .btn-thong-ke').show();
@@ -592,7 +869,7 @@
       escapeKey: 'cancel',
       buttons: {
         formSubmit: {
-          text: 'Login',
+          text: '<i class="fa fa-circle-check"></i> Login',
           btnClass: 'btn-blue cmd-submit',
           action: function () {
             let uid = this.$content.find('.uid').val();
@@ -605,13 +882,6 @@
               this.$content.find('.pwd').focus();
               return false;
             }
-            let dialog_wait_login = $.confirm({
-              title: 'Submit and Process...',
-              content: 'Please wait a few second...',
-              buttons: {
-                ok: {}
-              }
-            });
             $.post(api,
               {
                 action: "do_login",
@@ -619,7 +889,6 @@
                 pwd: pwd,
               },
               function (json) {
-                dialog_wait_login.close();
                 logined = json.ok;
                 if (logined) {
                   user_info = json;
@@ -627,7 +896,7 @@
                   localStorage.logined = JSON.stringify(json);
                   setLocal("uid", json.uid)
                   setLocal("ck", json.cookie)
-                  setCookie('uid', json.uid);
+                  setCookie('uid', json.uid, 30);
                   setCookie('ck', json.cookie, 30);
                   dialogLogin.close();
                 } else {
@@ -640,7 +909,7 @@
                     escapeKey: 'OK',
                     buttons: {
                       OK: {
-                        text: 'Close',
+                        text: '<i class="fa fa-circle-check"></i> Close',
                         keys: ['enter', 't'],
                         btnClass: 'btn-red',
                         action: function () {
@@ -657,7 +926,7 @@
           }
         },
         cancel: {
-          text: 'Close',
+          text: '<i class="fa fa-circle-xmark"></i> Close',
           btnClass: 'btn-red',
         },
       },
@@ -734,7 +1003,7 @@
             localStorage.logined = JSON.stringify(json);
             setLocal("uid", json.uid)
             setLocal("ck", json.cookie)
-            setCookie('uid', json.uid);
+            setCookie('uid', json.uid, 30);
             setCookie('ck', json.cookie, 30);
           }
           load_gui();
@@ -763,7 +1032,7 @@
       "hideMethod": "fadeOut"
     }
     monitor('monitor', draw_init)
-    setInterval(function () { monitor('monitor', update_status); }, 500);
+    setInterval(function () { monitor('monitor', update_status); }, 1000);
     //ngăn menu phải
     if (document.addEventListener) {
       document.addEventListener('contextmenu', function (e) {

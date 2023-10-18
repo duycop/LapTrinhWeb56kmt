@@ -61,10 +61,21 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+    <Content Include="webfonts\fa-brands-400.ttf" />
+    <Content Include="webfonts\fa-brands-400.woff2" />
+    <Content Include="webfonts\fa-regular-400.ttf" />
+    <Content Include="webfonts\fa-regular-400.woff2" />
+    <Content Include="webfonts\fa-solid-900.ttf" />
+    <Content Include="webfonts\fa-solid-900.woff2" />
+    <Content Include="webfonts\fa-v4compatibility.ttf" />
+    <Content Include="webfonts\fa-v4compatibility.woff2" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="asset\fontawesome.all.min.css" />
     <Content Include="asset\bootstrap.bundle.min.js" />
     <Content Include="asset\bootstrap.min.css" />
+    <Content Include="asset\fontawesome.css" />
+    <Content Include="asset\fontawesome.min.css" />
     <Content Include="asset\jquery-confirm.min.css" />
     <Content Include="asset\jquery-confirm.min.js" />
     <Content Include="asset\jquery-ui.min.css" />
@@ -84,6 +95,7 @@
     <Content Include="icon\favicon-16x16.png" />
     <Content Include="icon\favicon-32x32.png" />
     <Content Include="icon\favicon.ico" />
+    <Content Include="icon\flag-checkered-solid.svg" />
     <Content Include="images\nam_tam.png" />
     <Content Include="images\nu_tam.png" />
     <Content Include="images\phong_trong.png" />
