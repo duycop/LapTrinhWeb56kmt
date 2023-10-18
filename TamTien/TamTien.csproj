@@ -63,6 +63,8 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+    <Content Include="images\nam_bot.png" />
+    <Content Include="images\nam_tam_18.png" />
     <Content Include="webfonts\fa-brands-400.ttf" />
     <Content Include="webfonts\fa-brands-400.woff2" />
     <Content Include="webfonts\fa-regular-400.ttf" />
