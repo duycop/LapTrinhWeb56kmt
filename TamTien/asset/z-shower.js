@@ -1,7 +1,7 @@
 ﻿$(document).ready(function () {
   const api = '/api.ashx';
   const mp3 = '/mp3/';
-  var dialog, data, logined = false, user_info;
+  var dialog, data, logined = false, user_info, all_quyen;
 
   //--begin ck---
   function setCookie(name, value, days) {
@@ -44,6 +44,53 @@
   }
 
   //--end ck---
+
+  function sort_table(id, fn, pageLength_) {
+    $('.jconfirm-holder').width($('.jconfirm-open').width());
+    let pageLength = 10;
+    if (pageLength_) pageLength = pageLength_;
+    if (!fn) fn = "Export";
+    $(id).DataTable({
+      dom: 'Bfrtip',
+      "pageLength": pageLength,
+      buttons: [
+        {
+          extend: 'copyHtml5',
+          title: fn
+        },
+        {
+          extend: 'excelHtml5',
+          title: fn
+        }
+      ],
+      "order": [],
+      "language": {
+        "decimal": "",
+        "emptyTable": "Không có dữ liệu",
+        "info": "Hiển thị từ dòng _START_ đến dòng _END_ trong tổng số _TOTAL_ dòng",
+        "infoEmpty": "Showing 0 to 0 of 0 entries",
+        "infoFiltered": "(filtered from _MAX_ total entries)",
+        "infoPostFix": "",
+        "thousands": ",",
+        "lengthMenu": "Show _MENU_ entries",
+        "loadingRecords": "Loading...",
+        "processing": "Processing...",
+        "search": "Tìm kiếm:",
+        "zeroRecords": "Không tìm thấy lớp nào phù hợp",
+        "paginate": {
+          "first": "Trang đầu",
+          "last": "Trang cuối",
+          "next": "Trang sau",
+          "previous": "Trang trước"
+        },
+        "aria": {
+          "sortAscending": ": Sắp xếp tăng dần",
+          "sortDescending": ": Sắp xếp giảm dần"
+        }
+      }
+    });
+    $('.jconfirm-holder').width($('.jconfirm-open').width());
+  }
   function monitor(action, callback) {
     $.post(api,
       {
@@ -60,6 +107,7 @@
       alert_not_login(); //khi vào để điều khiển tại hàm control
       return;
     }
+    if (user_info == null || user_info.role < 3) return;
 
     $.post(api,
       {
@@ -92,10 +140,14 @@
   function alert_not_login() {
     if (!logined) {
       $.confirm({
-        title: '<div class="badge bg-primary"><i class="fa fa-clipboard-check"></i> Bạn chưa đăng nhập</div>',
+        animateFromElement: false,
+        typeAnimated: false,
+        icon: 'fa fa-clipboard-check',
+        title: 'Bạn chưa đăng nhập',
         content: 'Hãy đăng nhập để điều khiển',
         type: 'red',
         closeIcon: true,
+        closeIconClass: 'fa fa-close',
         columnClass: 's',
         escapeKey: 'cancel',
         buttons: {
@@ -110,7 +162,7 @@
           cancel: {
             text: '<i class="fa fa-circle-xmark"></i> Cancel',
             keys: ['esc', 'c', 'C'],
-            btnClass: 'btn-red',            
+            btnClass: 'btn-red',
           }
         }
       });
@@ -135,7 +187,7 @@
         return;
       }
 
-      if (user_info == null || user_info.role <= 1) return;
+      if (user_info == null || user_info.role < 3) return;
 
       var id = $(this).data('pid');
       var tam = $(this).hasClass('tam');
@@ -144,11 +196,15 @@
         //đang có người tắm
 
         var dang_tam = {
+          animateFromElement: false,
+          typeAnimated: false,
           closeIcon: true,
+          closeIconClass: 'fa fa-close',
           type: 'blue',
           columnClass: 'm',
           escapeKey: 'cancel',
-          title: '<div class="badge bg-primary"><i class="fa fa-shower"></i> Phòng&nbsp;' + id + '&nbsp;đã&nbsp;tắm&nbsp;xong?</div>',
+          icon: 'fa fa-shower',
+          title: 'Phòng&nbsp;' + id + '&nbsp;đã&nbsp;tắm&nbsp;xong?',
           content: 'Xác nhận đã tắm xong phòng ' + id + ' ??',
           buttons: {
             ok: {
@@ -220,22 +276,26 @@
           dang_tam.autoClose = "nham|30000";
         } else if (auto) {
           dang_tam.autoClose = "ok|30000";
-          dang_tam.buttons.ok.btnClass = "btn-blue btn-blink";
+          dang_tam.buttons.ok.btnClass = "btn-blue";
         }
         dialog = $.confirm(dang_tam);
       } else {
         //phòng trống
         var phong_trong = {
+          animateFromElement: false,
+          typeAnimated: false,
+          icon: 'fa fa-shower',
+          title: 'Vào tắm Phòng ' + id + '?',
+          content: 'Xác nhận vào tắm mới?',
           closeIcon: true,
+          closeIconClass: 'fa fa-close',
           type: 'blue',
           escapeKey: 'cancel',
-          title: '<div class="badge bg-primary"><i class="fa fa-shower"></i> Vào tắm Phòng ' + id + '?</div>',
-          content: 'Xác nhận vào tắm mới?',
           autoClose: 'ok|30000',
           buttons: {
             ok: {
               text: '<i class="fa fa-person-booth"></i> Vào tắm P.' + id,
-              btnClass: 'btn-blue btn-blink',
+              btnClass: 'btn-blue',
               keys: ['enter', 'v', 't', 'V', 'T'],
               action: function () {
                 control('vao_tam', id);
@@ -347,7 +407,7 @@
     if (gtts_playing) return;         //nếu đang bận playing thì thoát
     var audio = new Audio(url);     //tạo đối tượng để chuẩn bị play
     audio.play().then(() => {       //gọi play() và khi thực sự play thì:
-      gtts_playing = 1;             //đánh dấu đang play        
+      gtts_playing = 1;             //đánh dấu đang play
       toastr["info"]("Đang nói ra loa, hãy bật loa!<br>" + txt);
     }).catch(e => {
       console.log(e);
@@ -367,6 +427,18 @@
         playSound(mp3 + tts.fn, txt);  //play url=file này trong thư mục mp3
       });//end ajax post
   }
+
+  var last_status = null;
+  function isChangeStatus(new_item) {
+    if (last_status) {
+      for (var item of last_status.data) {
+        if (item.id == new_item.id) {
+          return item.tt != new_item.tt;
+        }
+      }
+    }
+    return true;
+  }
   function update_status(json) {
     if (json.ok) {
       var het_gio = [];
@@ -380,8 +452,10 @@
             het_gio.push(item.id);
           }
         } else {
-          $('#p' + item.id).removeClass('tam').removeClass('over');
-          $('#p' + item.id + ' .time').html('P' + item.id);
+          if (isChangeStatus(item)) {
+            $('#p' + item.id).removeClass('tam').removeClass('over');
+            $('#p' + item.id + ' .time').html('P' + item.id);
+          }
           Q.remove(item);
         }
       }
@@ -397,12 +471,13 @@
         var txt = 'Hết giờ phòng tắm ' + item.id;
         play_tts(txt);
       }
+      last_status = json;
     } else {
       toastr["warning"](json.msg); //xem log khi có lỗi
     }
   }
 
-  function thong_ke_tong_hop(date) {
+  function thong_ke_chi_tiet(date) {
     $.post(api,
       {
         action: 'report_detail',
@@ -410,14 +485,14 @@
       },
       function (json) {
         if (json.ok) {
-          var content = '<table class="table table-hover table-striped">';
+          var content = '<table id="thong-ke-chi-tiet" class="table table-hover table-striped">';
           content += '<thead><tr class="table-info fw-bold">' +
-            '<td align=center>stt</td>' +
-            '<td align=center>Phòng</td>' +
-            '<td align=center>Giờ vào</td>' +
-            '<td align=center>Giờ ra</td>' +
-            '<td align=center>Số phút</td>' +
-            '<td align=center>Hủy</td>' +
+            '<th align=center>stt</th>' +
+            '<th align=center>Phòng</th>' +
+            '<th align=center>Giờ vào</th>' +
+            '<th align=center>Giờ ra</th>' +
+            '<th align=center>Số phút</th>' +
+            '<th align=center>Note</th>' +
             '</tr></thead><tbody>';
           var stt = 0;
           for (var item of json.data) {
@@ -433,22 +508,29 @@
               '<td align=center>' + t1 + '</td>' +
               '<td align=center>' + t2 + '</td>' +
               '<td align=center><span class="badge rounded-pill ' + nhanh[0] + '" title="' + nhanh[1] + '">' + item.use + '</span></td>' +
-              '<td align=center>' + (item.huy ? 'Hủy' : '') + '</td>' +
+              '<td align=center>' + (item.huy ? '<span class="badge rounded-pill bg-warning">Hủy</span>' : nhanh[1]) + '</td>' +
               '</tr>'
           }
           content += '</tbody></table>';
           $.confirm({
+            animateFromElement: false,
+            typeAnimated: false,
+            icon: 'fa fa-calendar-days',
+            title: 'Thống kê chi tiết ngày ' + date + '',
+            content: content,
             closeIcon: true,
+            closeIconClass: 'fa fa-close',
             columnClass: 'l',
             type: 'purple',
             escapeKey: 'ok',
-            title: '<div class="badge bg-primary"><i class="fa fa-calendar-days"></i> Thống kê chi tiết ngày ' + date + '</div>',
-            content: content,
             buttons: {
               ok: {
                 text: '<i class="fa fa-circle-xmark"></i> Đóng lại',
                 btnClass: 'btn-info',
               }
+            },
+            onContentReady: function () {
+              sort_table('#thong-ke-chi-tiet', 'Thống kê chi tiết ngày ' + date, 10);
             }
           });
         } else {
@@ -468,23 +550,35 @@
       },
       function (json) {
         if (json.ok) {
-          var content = '<table class="table table-hover">';
-          content += '<thead><tr class="table-info fw-bold"><td align=center>STT</td><td align=center>Ngày</td><td align=center>Số lượt tắm</td><td align=center>Số lượt hủy</td></tr></thead><tbody>';
+          var content = '<table id="thong-ke-tong-hop" class="table table-hover" title="Click vào mỗi dòng để xem chi tiết từng ngày">';
+          content += '<thead>' +
+            '<tr class="table-info fw-bold">' +
+            '<th align=center>STT</th>' +
+            '<th align=center>Ngày</th>' +
+            '<th align=center>Số lượt tắm</th>' +
+            '<th align=center>Số lượt hủy</th>' +
+            '</tr>' +
+            '</thead>' +
+            '<tbody>';
           var tam = 0, huy = 0, stt = 0;
           for (var item of json.data) {
             content += '<tr class="btn-report-detail" data-date="' + item.date + '"><td align=center>' + (++stt) + '</td><td align=center>' + item.date + '</td><td align=center><span class="badge rounded-pill bg-primary">' + item.tam + '</span></td><td align=center><span class="badge rounded-pill bg-danger">' + item.huy + '</span></td></tr>';
             tam += item.tam;
             huy += item.huy;
           }
-          content += '<tr class="table-warning fw-bold"><td align=right colspan=2>Tổng:</td><td align=center><span class="badge rounded-pill bg-primary">' + tam + '</span></td><td align=center><span class="badge rounded-pill bg-danger">' + huy + '</span></td></tr>';
+          content += '<tr class="table-warning fw-bold"><td align=center>' + (++stt) + '</td><td align=right>Tổng:</td><td align=center><span class="badge rounded-pill bg-primary">' + tam + '</span></td><td align=center><span class="badge rounded-pill bg-danger">' + huy + '</span></td></tr>';
           content += '</tbody></table>';
           $.confirm({
+            animateFromElement: false,
+            typeAnimated: false,
+            icon: 'fa fa-flag-checkered',
+            title: 'Thống kê tổng hợp',
+            content: content,
             closeIcon: true,
+            closeIconClass: 'fa fa-close',
             type: 'purple',
             escapeKey: 'ok',
             columnClass: 'm',
-            title: '<div class="badge bg-primary"><i class="fa fa-flag-checkered"></i> Thống kê tổng hợp</div>',
-            content: content,
             buttons: {
               ok: {
                 text: '<i class="fa fa-circle-xmark"></i> Đóng lại',
@@ -495,8 +589,9 @@
               move_dialog();
               $('.btn-report-detail').click(function () {
                 var date = $(this).data('date');
-                thong_ke_tong_hop(date);
+                thong_ke_chi_tiet(date);
               });
+              sort_table('#thong-ke-tong-hop', 'Thống kê tổng hợp', 10);
             }
           });
         } else {
@@ -505,8 +600,6 @@
       }
     );
   }
-
-  var all_quyen;
 
   function add_new_user() {
     var all_option_roles = '';
@@ -532,9 +625,13 @@
     </div>
     `;
     var dialog_add = $.confirm({
-      title: '<div class="badge bg-primary"><i class="fa fa-user-plus"></i> Add new user</div>',
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-user-plus',
+      title: 'Add new user',
       content: html_4input,
       closeIcon: true,
+      closeIconClass: 'fa fa-close',
       type: 'blue',
       columnClass: 's',
       escapeKey: 'cancel',
@@ -572,7 +669,7 @@
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc'],
-          btnClass: 'btn-red',          
+          btnClass: 'btn-red',
         }
       }
     });
@@ -597,9 +694,13 @@
       </div>
     `;
     var dialog_set_pw = $.confirm({
-      title: '<div class="badge bg-primary"><i class="fa fa-key"></i> Set password mới cho user</div>',
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-key',
+      title: 'Set password mới cho user',
       content: html_input,
       closeIcon: true,
+      closeIconClass: 'fa fa-close',
       type: 'red',
       columnClass: 's',
       escapeKey: 'cancel',
@@ -620,7 +721,7 @@
               },
               function (json) {
                 if (json.ok) {
-
+                  bao_ok(json);
                   dialog_set_pw.close(); //đóng thằng dialog_set_pw lại
                 } else {
                   bao_loi(json); //báo lỗi khi set_pw
@@ -632,7 +733,7 @@
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc'],
-          btnClass: 'btn-red',          
+          btnClass: 'btn-red',
         }
       }
     });
@@ -644,12 +745,17 @@
       return;
     }
     $.confirm({
-      title: '<div class="badge bg-primary"><i class="fa fa-circle-question"></i> Xác nhận xóa?</div>',
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-circle-question',
+      title: 'Xác nhận xóa?',
       content: 'Bạn có chắc muốn xóa user <b>' + uid + '</b> ?',
       closeIcon: true,
+      closeIconClass: 'fa fa-close',
       type: 'red',
       columnClass: 's',
       escapeKey: 'cancel',
+      autoClose: 'cancel|15000',
       buttons: {
         ok: {
           text: '<i class="fa fa-circle-check"></i> ok Xóa đi',
@@ -669,7 +775,7 @@
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc', 'c', 'C'],
-          btnClass: 'btn-red',          
+          btnClass: 'btn-red',
         }
       }
     });
@@ -731,9 +837,13 @@
       </div>
     `;
     var dialog_change_pw = $.confirm({
-      title: '<div class="badge bg-primary"><i class="fa fa-key"></i> Đổi mật khẩu</div>',
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-key',
+      title: 'Đổi mật khẩu',
       content: content,
       closeIcon: true,
+      closeIconClass: 'fa fa-close',
       type: 'red',
       columnClass: 's',
       escapeKey: 'cancel',
@@ -770,15 +880,39 @@
       }
     });
   }
+
+  function bao_ok(json) {
+    if (json.ok)
+      if (json.msg != null && json.msg != '') {
+        toastr["info"]("<b>Thông báo</b><br>" + json.msg)
+        $.confirm({
+          animateFromElement: false,
+          typeAnimated: false,
+          icon: 'fa fa-circle-check',
+          title: 'Thông báo',
+          content: json.msg,
+          type: 'green',
+          autoClose: "ok|3000",
+          buttons: {
+            ok: {
+              text: '<i class="fa fa-circle-check"></i> OK',
+              btnClass: 'btn-danger',
+            }
+          }
+        });
+      }
+  }
   function bao_loi(json) {
     if (!json.ok)
       if (json.msg != null && json.msg != '') {
         toastr["warning"]("<b>Thông báo lỗi</b><br>" + json.msg)
         $.confirm({
+          animateFromElement: false,
+          typeAnimated: false,
           icon: 'fa fa-warning',
           title: 'Thông báo lỗi',
-          type: 'red',
           content: json.msg,
+          type: 'red',
           autoClose: "ok|3000",
           buttons: {
             ok: {
@@ -794,10 +928,14 @@
       alert_not_login(); // khi vào chức năng của admin
       return;
     }
-    $.alert({
-      title: '<div class="badge bg-primary"><i class="fa fa-user"></i> Xin chào <b>' + user_info.fullname + '</b></div>',
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-user',
+      title: 'Xin chào <b>' + user_info.fullname + '</b>',
       content: '<div id="list-user"></div><p>Các tính năng dành cho bạn</p>',
       closeIcon: true,
+      closeIconClass: 'fa fa-close',
       type: 'blue',
       columnClass: 'm',
       escapeKey: 'cancel',
@@ -823,7 +961,7 @@
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc', 'c', 'C'],
-          btnClass: 'btn-red',          
+          btnClass: 'btn-red',
         }
       },
       onContentReady: function () {
@@ -855,9 +993,14 @@
     if (!uidck) uidck = '';
     if (uidck === undefined) uidck = '';
     let dialogLogin = $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-key',
+      title: 'Login system',
+      type: 'blue',
       lazyOpen: true,
       closeIcon: true,
-      title: '<div class="badge bg-primary"><i class="fa fa-key" aria-hidden="true"></i> Login system</div>',
+      closeIconClass: 'fa fa-close',
       content: '' +
         '<form action="" class="formName">' +
         '<div class="form-group">' +
@@ -905,8 +1048,12 @@
                 } else {
                   load_gui();
                   $.confirm({
+                    animateFromElement: false,
+                    typeAnimated: false,
+                    icon: 'fa fa-warning',
                     title: 'Warning',
                     escapeKey: 'ok',
+                    type: 'red',
                     content: json.msg,
                     autoClose: 'OK|5000',
                     escapeKey: 'OK',
@@ -930,7 +1077,7 @@
         },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
-          btnClass: 'btn-red',          
+          btnClass: 'btn-red',
         },
       },
       onClose: function () {
@@ -1037,11 +1184,11 @@
     monitor('monitor', draw_init)
     setInterval(function () { monitor('monitor', update_status); }, 1000);
     //ngăn menu phải
-    if (document.addEventListener) {
-      document.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-      }, false);
-    }
+    //if (document.addEventListener) {
+    //  document.addEventListener('contextmenu', function (e) {
+    //    e.preventDefault();
+    //  }, false);
+    //}
     $('.btn-thong-ke').click(function () { thong_ke(); });
     $('#cmdLogin').click(function () { do_login() });
     $('#cmdLogout').click(function () { do_logout(); });

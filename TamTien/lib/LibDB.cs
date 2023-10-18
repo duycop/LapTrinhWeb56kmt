@@ -132,8 +132,8 @@ namespace TamTien
                 using (SqlCommand cm = new SqlCommand(sql))
                 {
                     cm.CommandType = CommandType.StoredProcedure;
-                    cm.Parameters.Add("@input", SqlDbType.NVarChar, -1).Value = a;
-                    cm.Parameters.Add("@output", SqlDbType.NVarChar, -1).Value = b;
+                    cm.Parameters.Add("@input", SqlDbType.NVarChar, 4000).Value = a;
+                    cm.Parameters.Add("@output", SqlDbType.NVarChar, 4000).Value = b;
                     int n = RunSQL(cm);
                     if (n != 1) LogFile(LogFilePath, $"LogMsg Can not a={a}, b={b}");
                 }

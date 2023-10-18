@@ -4,13 +4,27 @@
     <meta charset="utf-8" />
     <title>Tắm Tiên</title>
 
+    <meta name="author" content="Đỗ Duy Cốp">
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name=apple-mobile-web-app-capable content=yes>
+    <meta name="mobile-web-app-capable" content="yes">
+
     <link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
 
     <script src="asset/jquery.min.js"></script>
+
+    <link href="asset/datatables.min.css" rel="stylesheet" />
+    <script src="asset/datatables.min.js"></script>
+
     <link href="asset/fontawesome.all.min.css" rel="stylesheet" />
     <link href="asset/fontawesome.min.css" rel="stylesheet" />
+
     <link href="asset/bootstrap.min.css" rel="stylesheet" />
     <script src="asset/bootstrap.bundle.min.js"></script>
 
@@ -23,10 +37,9 @@
     <link href="asset/toastr.min.css" rel="stylesheet" />
     <script src="asset/toastr.min.js"></script>
 
+
     <link href="asset/z-style.css" rel="stylesheet" />
     <script src="asset/z-shower.js"></script>
-    <!--<script src="asset/zz.js"></script>-->
-    <!--<script src="asset/z-shower.min.js"></script>-->
 </head>
 <body>
     <div class="container-fluid">
@@ -42,9 +55,9 @@
                                     <p>
                                         <a href="/" class="btn btn-warning"><i class="fa fa-house"></i> Trang chủ</a>
                                         <button class="btn btn-info btn-thong-ke not-show"><i class="fa fa-flag-checkered"></i> Thống kê</button>
-                                        <button class="btn btn-info float-end me-2 ms-auto not-show" id="cmdLogin"><i class="fa fa-key"></i> Đăng nhập</button>
-                                        <button class="btn btn-danger float-end me-2 ms-auto not-show" id="cmdLogout"><i class="fa fa-circle-xmark"></i> Logout</button>
-                                        <span class="login_info float-end me-2 ms-auto"></span>
+                                        <button class="btn btn-info me-2 ms-auto not-show float-end" id="cmdLogin"><i class="fa fa-key"></i> Đăng nhập</button>
+                                        <button class="btn btn-danger float-end me-2 ms-auto " id="cmdLogout"><i class="fa fa-circle-xmark"></i> Logout</button>
+                                        <span class="login_info me-2 ms-auto float-end"></span>
                                     </p>
                                 </div>
                             </td>
