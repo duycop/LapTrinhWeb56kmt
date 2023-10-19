@@ -178,9 +178,9 @@
         $('#p' + item.id).prop("title", "Phòng nữ " + item.id)
       }
       $('#p' + item.id).data('pid', item.id);
-      $('#p' + item.id).html('<div class="time">P' + item.id + '</div><div class="bot"></div>');
+      $('#p' + item.id).html('<div class="time">P' + item.id + '</div><span class="bot"></span><span class="voi"></span>');
     }
-    $('.bot').draggable();
+    //$('.voi,.bot').draggable();
     $('.nam,.nu').click(function () {
       if (!logined) {
         alert_not_login(); //mỗi khi click vào để điều khiển từng phòng tắm nam nữ

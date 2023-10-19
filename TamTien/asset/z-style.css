@@ -8,10 +8,10 @@
     background-position: 0 22px;
     background-repeat: no-repeat;
     width: 85px;
-    height: 200px;
-   /* -webkit-user-select: none;
+    height: 200px !important;
+    -webkit-user-select: none;
     -ms-user-select: none;
-    user-select: none;*/
+    user-select: none;
     margin: 0;
     padding: 0;
 }
@@ -32,27 +32,53 @@
     background-image: url('/images/nu_tam.png');
 }
 
-.nam.tam .bot {
-    background-image: url('/images/nam_bot.png');
+.bot {
     background-size: 32px 40px;
     background-repeat: no-repeat;
     width: 32px;
     height: 40px;
     position: relative;
-    left: 25px;
-    top: 80px;
-    animation: MoveDownUp 60s linear infinite;
+    left: 14px;
+    top: -28px;
+    display: inline-block;
 }
-@keyframes MoveDownUp {
+.voi {
+    background-size: 30px 150px;
+    background-repeat: no-repeat;
+    width: 30px;
+    height: 150px;
+    opacity: 0.6;
+    position: relative;
+    display: inline-block;
+    left: -20px;
+    top: 14px;
+}
+
+.nam.tam .bot {
+    background-image: url('/images/nam_bot.png');
+    animation: MoveDown 60s linear infinite;
+}
+
+.tam .voi {
+    background-image: url('/images/water-drop.gif');
+    transform: rotate(-8deg);
+    -moz-transform: rotate(-8deg);
+    -webkit-transform: rotate(-8deg);
+    -o-transform: rotate(-8deg);
+    -ms-transform: rotate(-8deg);
+}
+
+@keyframes MoveDown {
     0% {
-        top: 80px;
+        top: -28px;
         opacity:1;
     }
     60% {
+        top: 5px;
         opacity: 1;
     }
     100% {
-        top: 135px;
+        top: 25px;
         opacity: 0
     }
 }
