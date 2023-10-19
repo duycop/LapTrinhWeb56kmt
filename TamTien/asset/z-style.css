@@ -29,7 +29,7 @@
 }
 
 .nu.tam {
-    background-image: url('/images/nu_tam.png');
+    background-image: url('/images/nu_tam_18.png');
 }
 
 .bot {
@@ -38,9 +38,38 @@
     width: 32px;
     height: 40px;
     position: relative;
+    display: inline-block;
+
+}
+
+.nam.tam .bot {
+    background-image: url('/images/nam_bot.png');
+    animation: MoveDown 10s linear infinite;
     left: 14px;
     top: -28px;
-    display: inline-block;
+}
+.nu.tam .bot {
+    background-image: url('/images/nam_bot.png');
+    animation: MoveDown 10s linear infinite;
+    left: 18px;
+    top: -28px;
+}
+
+@keyframes MoveDown {
+    0% {
+        top: -28px;
+        opacity: 1;
+    }
+
+    80% {
+        top: 0px;
+        opacity: 1;
+    }
+
+    100% {
+        top: 25px;
+        opacity: 0
+    }
 }
 .voi {
     background-size: 30px 150px;
@@ -54,11 +83,6 @@
     top: 14px;
 }
 
-.nam.tam .bot {
-    background-image: url('/images/nam_bot.png');
-    animation: MoveDown 60s linear infinite;
-}
-
 .tam .voi {
     background-image: url('/images/water-drop.gif');
     transform: rotate(-8deg);
@@ -68,20 +92,6 @@
     -ms-transform: rotate(-8deg);
 }
 
-@keyframes MoveDown {
-    0% {
-        top: -28px;
-        opacity:1;
-    }
-    60% {
-        top: 5px;
-        opacity: 1;
-    }
-    100% {
-        top: 25px;
-        opacity: 0
-    }
-}
 
 .tam .time {
     background-color: yellow !important;
