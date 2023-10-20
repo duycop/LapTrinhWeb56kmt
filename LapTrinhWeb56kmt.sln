@@ -13,26 +13,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "03.web_cong_nhanh", "web_co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "01.web_cong", "web_cong\01.web_cong.csproj", "{958E3F4B-BEF3-4F34-B733-594A9D0E37F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "04.test_thoithiet", "test_thoithiet\04.test_thoithiet.csproj", "{C4504E13-37AA-43EB-A150-AF54E2F618FA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "04.web test_thoithiet", "test_thoithiet\04.web test_thoithiet.csproj", "{C4504E13-37AA-43EB-A150-AF54E2F618FA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "05.web_tbc", "web_tbc\05.web_tbc.csproj", "{BC82FB73-8853-4A2A-92E2-AEAC9A55AB8E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "07.web_BanHang", "web_BanHang\07.web_BanHang.csproj", "{C06A4999-2F24-4629-9B75-EB8EB4591D2F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D0F8DCEB-6B7D-4D6F-A9A9-6D6084A6F20E}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "08.demo_Delete", "demo_Delete\08.demo_Delete.csproj", "{15D2602B-74F1-4329-833C-AC24DE7B92A4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "09.web_nodered", "web_nodered\09.web_nodered.csproj", "{26C85AA7-D61F-4F92-BD1F-051AE94AD8F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "10.QL_DRL", "QL_DRL\10.QL_DRL.csproj", "{3BEE096A-1D49-4824-833D-33EFAC171DC3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "10.web QL_DRL", "QL_DRL\10.web QL_DRL.csproj", "{3BEE096A-1D49-4824-833D-33EFAC171DC3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "11.web_iot_gui", "web_iot_gui\11.web_iot_gui.csproj", "{0D4F4F5E-1C11-4CD5-9F28-6118AE958A1B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TamTien", "TamTien\TamTien.csproj", "{A40E7E7B-7097-47DA-8458-EFBF25944F8C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "12.web TamTien", "TamTien\12.web TamTien.csproj", "{A40E7E7B-7097-47DA-8458-EFBF25944F8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "13. do an", "do an\13. do an.csproj", "{29FB33CB-00DD-4440-992F-6EE181CD985A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -92,6 +89,10 @@ Global
 		{A40E7E7B-7097-47DA-8458-EFBF25944F8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A40E7E7B-7097-47DA-8458-EFBF25944F8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A40E7E7B-7097-47DA-8458-EFBF25944F8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29FB33CB-00DD-4440-992F-6EE181CD985A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29FB33CB-00DD-4440-992F-6EE181CD985A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29FB33CB-00DD-4440-992F-6EE181CD985A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29FB33CB-00DD-4440-992F-6EE181CD985A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
