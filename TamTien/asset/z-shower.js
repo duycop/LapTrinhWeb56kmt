@@ -1,6 +1,21 @@
 ﻿$(document).ready(function () {
+  const setting = {
+    tab_title: "Tắm Tiên",
+    app_title: "Hệ thống quản lý tắm nóng lạnh",
+    app_sologan: "Siêu nóng, nhanh chóng, chi phí thì hợp lý!",
+    het_gio: "Hết giờ phòng tắm ",
+    dong_cua: "Phòng tắm đóng cửa, tất cả về thôi",
+    tts_delay: 30,
+    huy_delay: 120,
+    time_tam: 15,
+    monitor_interval: 1,
+  }
+  const default_setting = {};
+  for (var item in setting) default_setting[item] = setting[item];
+
   const api = '/api.ashx';
-  const mp3 = '/mp3/';
+  const mp3 = 'https://tientam.duckdns.org/mp3/';
+
   var dialog, data, logined = false, user_info, all_quyen;
 
   //--begin ck---
@@ -103,10 +118,7 @@
     );
   }
   function control(action, id) {
-    if (!logined) {
-      alert_not_login(); //khi vào để điều khiển tại hàm control
-      return;
-    }
+    if (alert_not_login()) return; //khi control phải login trước
     if (user_info == null || user_info.role < 3) return;
 
     $.post(api,
@@ -166,7 +178,29 @@
           }
         }
       });
+      return true;
     }
+    return false;
+  }
+  function play_nomal(id) {
+    Q.clear();
+    Q.enqueue({ id: id, text: setting.het_gio + ' ' + id });
+  }
+  function play_vip(id) {
+    Q.xoa_sach();
+    if (audio && gtts_playing) {
+      audio.pause();
+    }
+    Q.enqueue({ id: id, vip: 1, text: setting.het_gio + ' ' + id });
+    gtts_playing = 0;
+  }
+  function het_gio_all() {
+    Q.xoa_sach();
+    if (audio && gtts_playing) {
+      audio.pause();
+    }
+    Q.enqueue({ id: 999, vip: 1, text: setting.dong_cua });
+    gtts_playing = 0;
   }
   function draw_init(json) {
     for (var item of json.data) {
@@ -178,14 +212,11 @@
         $('#p' + item.id).prop("title", "Phòng nữ " + item.id)
       }
       $('#p' + item.id).data('pid', item.id);
-      $('#p' + item.id).html('<div class="time">P' + item.id + '</div><span class="bot"></span><span class="voi"></span>');
+      $('#p' + item.id).html('<div class="time">P' + item.id + '</div><div class="bot"></div>');
     }
-    //$('.voi,.bot').draggable();
+    //$('.bot').draggable();
     $('.nam,.nu').click(function () {
-      if (!logined) {
-        alert_not_login(); //mỗi khi click vào để điều khiển từng phòng tắm nam nữ
-        return;
-      }
+      if (alert_not_login()) return; //mỗi khi click vào để điều khiển từng phòng tắm nam nữ
 
       if (user_info == null || user_info.role < 3) return;
 
@@ -218,7 +249,7 @@
             },
             nham: {
               btnClass: 'btn-warning',
-              text: '<span title="Nhầm có thể hủy trong vòng 2 phút"><i class="fa fa-rotate-left"></i> Nhầm</span>',
+              text: '<span title="  "><i class="fa fa-rotate-left"></i> Nhầm</span>',
               keys: ['n', 'N'],
               isHidden: true,
               isDisabled: true,
@@ -232,8 +263,7 @@
               text: '<i class="fa fa-volume-high"></i> Loa',
               keys: ['m', 'p', '3', 'M', 'P'],
               action: function () {
-                Q.clear();
-                Q.enqueue({ id: id, vip: 1 });
+                play_vip(id);
               }
             },
             cancel: {
@@ -249,7 +279,7 @@
             move_dialog();
             for (var item of data.data) {
               if (item.id == id) {
-                if (item.ss < 150) {
+                if (item.ss < setting.huy_delay) {
                   this.buttons.nham.show();
                   this.buttons.nham.enable();
                 }
@@ -307,8 +337,7 @@
               text: '<i class="fa fa-volume-high"></i> Loa',
               keys: ['m', 'p', '3', 'M', 'P'],
               action: function () {
-                Q.clear();
-                Q.enqueue({ id: id, vip: 1 });
+                play_vip(id);
               }
             },
             cancel: {
@@ -327,6 +356,7 @@
         dialog = $.confirm(phong_trong);
       }
     })
+    update_status(json);
   }
   function format(s) {
     var m, h;
@@ -379,6 +409,11 @@
     enqueue2(item) {
       if (!this.checkExist(item)) this.enqueue(item);
     }
+    xoa_sach() {
+      for (var index in this.queue) {
+        this.queue.splice(index, 1);
+      }
+    }
     clear() {
       for (var index in this.queue) {
         var item = this.queue[index];
@@ -403,9 +438,10 @@
   }
   var Q = new Queue();
   var gtts_playing = 0;               //biến đánh dấu xem có đang bận play ko
+  var audio;
   function playSound(url, txt) {           //hàm này nhận 1 url audio để play
     if (gtts_playing) return;         //nếu đang bận playing thì thoát
-    var audio = new Audio(url);     //tạo đối tượng để chuẩn bị play
+    audio = new Audio(url);
     audio.play().then(() => {       //gọi play() và khi thực sự play thì:
       gtts_playing = 1;             //đánh dấu đang play
       toastr["info"]("Đang nói ra loa, hãy bật loa!<br>" + txt);
@@ -416,28 +452,17 @@
     audio.addEventListener("ended", //đăng ký sự kiện play xong thì:
       function () {                 //play xong thì hàm này chạy
         //bỏ đánh dấu bận => hết bận
-        setTimeout(function () { gtts_playing = 0; }, 3000);//nghỉ 3 giây mới nói tiếp
-      });                             //hết hàm xử lý stop
+        setTimeout(function () { gtts_playing = 0; }, setting.tts_delay * 1000);//nghỉ 3 giây mới nói tiếp
+      });
   }//hết hàm playSound
   function play_tts(txt) {              //nhận txt là chuỗi cần tts
     $.post(mp3,  //gọi API tạo tts
       { text: txt },                     //truyền lên chuỗi cần tts
       function (json) {             //nhận về tên file mp3
         var tts = JSON.parse(json);
+        console.log(['play audio', Q, mp3 + tts.fn, txt]);
         playSound(mp3 + tts.fn, txt);  //play url=file này trong thư mục mp3
       });//end ajax post
-  }
-
-  var last_status = null;
-  function isChangeStatus(new_item) {
-    if (last_status) {
-      for (var item of last_status.data) {
-        if (item.id == new_item.id) {
-          return item.tt != new_item.tt;
-        }
-      }
-    }
-    return true;
   }
   function update_status(json) {
     if (json.ok) {
@@ -446,32 +471,23 @@
         if (item.tt == 1) {
           $('#p' + item.id).addClass('tam');
           $('#p' + item.id + ' .time').html('P' + item.id + ': ' + format(item.ss));
-          if (item.ss > (15 * 60)) {
+          if (item.ss > (setting.time_tam * 60)) {
             $('#p' + item.id).addClass('over');
-            //Q.enqueue2(item);
             het_gio.push(item.id);
+          } else {
+            $('#p' + item.id).removeClass('over');
           }
         } else {
-          if (isChangeStatus(item)) {
-            $('#p' + item.id).removeClass('tam').removeClass('over');
-            $('#p' + item.id + ' .time').html('P' + item.id);
-          }
+          $('#p' + item.id).removeClass('tam').removeClass('over');
+          $('#p' + item.id + ' .time').html('P' + item.id);
           Q.remove(item);
         }
       }
 
       if (het_gio.length > 0) {
         var id_tts = het_gio.join(', ');
-        Q.clear();
-        Q.enqueue2({ id: id_tts });
+        play_nomal(id_tts);
       }
-
-      if (!gtts_playing && !Q.isEmpty()) {
-        var item = Q.dequeue();
-        var txt = 'Hết giờ phòng tắm ' + item.id;
-        play_tts(txt);
-      }
-      last_status = json;
     } else {
       toastr["warning"](json.msg); //xem log khi có lỗi
     }
@@ -540,10 +556,8 @@
     );
   }
   function thong_ke() {
-    if (!logined) {
-      alert_not_login();  //khi thống kê thì phải có quyền
-      return;
-    }
+    if (alert_not_login()) return; //phải login trước khi thống kê
+    if (not_allow()) return;//khi thống kê thì phải có quyền
     $.post(api,
       {
         action: 'thong_ke',
@@ -600,7 +614,6 @@
       }
     );
   }
-
   function add_new_user() {
     var all_option_roles = '';
     for (var item of all_quyen) {
@@ -923,11 +936,271 @@
         });
       }
   }
-  function admin_panel() {
-    if (!logined) {
-      alert_not_login(); // khi vào chức năng của admin
-      return;
+
+  function not_allow() {
+    if (!(user_info.role == 100 || user_info.role == 3))//nếu ko đủ quyền
+    {
+      $.confirm({
+        animateFromElement: false,
+        typeAnimated: false,
+        icon: 'fa fa-clipboard-check',
+        title: 'Bạn không đủ quyền',
+        content: 'Chức năng chỉ dành cho Admin',
+        type: 'red',
+        closeIcon: true,
+        closeIconClass: 'fa fa-close',
+        columnClass: 's',
+        escapeKey: 'cancel',
+        buttons: {
+          cancel: {
+            text: '<i class="fa fa-circle-xmark"></i> Cancel',
+            keys: ['esc', 'c', 'C'],
+            btnClass: 'btn-red',
+          }
+        }
+      });
+      return true;
     }
+    return false;
+  }
+
+  function show_edit_setting(item) {
+    if (alert_not_login()) return;// khi vào admin_setting    
+    if (not_allow()) return; //admin_setting chi danh cho admin
+    var loai = 'number';
+    switch (item.key) {
+      case 'time_tam':
+      case 'huy_delay':
+      case 'tts_delay':
+      case 'monitor_interval':
+        loai = 'number';
+        break;
+      default:
+        loai = 'text';
+        break;
+    }
+    var content = `
+      <div class="mb-3 mt-3">
+        <label for="set-key" class="form-label">Key:</label>
+        <input type="text" class="form-control" id="set-key" value="`+ item.key + `" disabled>
+      </div>
+      <div class="mb-3 mt-3">
+        <label for="set-value" class="form-label">`+ item.note + `:</label>
+        <input type="`+ loai + `" class="form-control" id="set-value" placeholder="giá trị cũ: ` + item.value + `" value="` + item.value + `">
+      </div>
+    `;
+
+    var dialog_edit_setting = $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-pen-to-square',
+      title: 'Thay đổi: ' + item.key,
+      content: content,
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      type: 'blue',
+      columnClass: 'm',
+      escapeKey: 'cancel',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-check"></i> Cập nhật',
+          btnClass: 'btn-primary',
+          keys: ['enter'],
+          action: function () {
+            var new_value = $('#set-value').val();
+            if (item.value == new_value) {
+              //giống thì ko cần cập nhật
+              dialog_edit_setting.close();
+            } else {
+              //khác thì mới gửi
+              $.post(api,
+                {
+                  action: 'edit_setting',
+                  key: item.key,
+                  value: $('#set-value').val()
+                },
+                function (json) {
+                  if (json.ok) {
+                    dialog_edit_setting.close();
+                    list_setting();
+                  }
+                });
+            }
+            return false; //ko đóng dialog_edit_setting ngay
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+
+      }
+    });
+  }
+  function apply_setting(json) {
+    if (json.ok) {
+      for (var item of json.data) {
+        switch (item.key) {
+          case 'tts_delay':
+            setting.tts_delay = parseInt(item.value);
+            break;
+          case 'huy_delay':
+            setting.huy_delay = parseInt(item.value);
+            break;
+          case 'time_tam':
+            setting.time_tam = parseInt(item.value);
+            break;
+          case 'monitor_interval':
+            setting.monitor_interval = parseInt(item.value);
+            break;
+          case 'auto_play_interval':
+            setting.auto_play_interval = parseInt(item.value);
+            break;
+          case 'het_gio':
+            setting.het_gio = item.value;
+            break;
+          case 'dong_cua':
+            setting.dong_cua = item.value;
+            break;
+          case 'tab_title':
+            document.title = item.value;
+            break;
+          case 'app_sologan':
+            $('#app-sologan').html(item.value);
+            break;
+          case 'app_title':
+            $('#app-title').html(item.value);
+            break;
+        }
+      }
+    }
+  }
+  function get_list_setting() {
+    $.post(api,
+      {
+        action: 'list_setting'
+      },
+      function (json) {
+        if (json.ok) {
+          apply_setting(json);
+        }
+      });
+  }
+  function list_setting() {
+    if (alert_not_login()) return; // list_setting phai login truoc
+    if (not_allow()) return; //list_setting chi danh cho admin
+    $.post(api,
+      {
+        action: 'list_setting'
+      },
+      function (json) {
+        var content = '';
+        if (json.ok) {
+          apply_setting(json);
+          content = '<table id="thong-ke-chi-tiet" class="table table-hover table-striped">';
+          content += '<thead><tr class="table-info fw-bold">' +
+            '<th align=center>stt</th>' +
+            '<th align=center>Key</th>' +
+            '<th align=right>Description</th>' +
+            '<th>Value</th>' +
+            '<th align=center>Last change</th>' +
+            '<th align=center>Change</th>' +
+            '</tr></thead><tbody>';
+          var stt = 0;
+          for (var item of json.data) {
+            content += '<tr>' +
+              '<td align=center>' + (++stt) + '</td>' +
+              '<td align=center>' + item.key + '</span></td>' +
+              '<td align=right>' + item.note + ':</span></td>' +
+              '<td><span class="badge rounded-pill bg-primary btn-change-setting" data-key="' + item.key + '">' + item.value + '</span></span></td>' +
+              '<td align=center>' + item.time + '</span></td>' +
+              '<td align=center><button data-key="' + item.key + '" class="btn btn-sm btn-info btn-change-setting" title="Change ' + item.note + '"><i class="fa fa-pen-to-square"></i></button></span></td>' +
+              '</tr>'
+          }
+          content += '</tbody></table>';
+        } else {
+          content = 'Không có dữ liệu';
+        }
+        $('#list_setting').html(content);
+        $('.btn-change-setting').click(function () {
+          var key = $(this).data('key');
+          for (var item of json.data) {
+            if (item.key == key) {
+              show_edit_setting(item);
+              break;
+            }
+          }
+        });
+      });
+  }
+  function admin_setting() {
+    if (alert_not_login()) return;// khi vào admin_setting
+    if (not_allow()) return; //admin_setting chi danh cho admin
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-gear',
+      title: 'Cài đặt các thông số',
+      content: '<div id="list_setting"></div>',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      type: 'blue',
+      columnClass: 'xl',
+      escapeKey: 'cancel',
+      buttons: {
+        reset_default: {
+          text: '<i class="fa fa-circle-radiation"></i> Reset Default',
+          btnClass: 'btn-warning',
+          isHidden: true,
+          action: function () {
+            var wait = 0;
+            for (var key in default_setting) {
+              var value = default_setting[key];
+              //var value_new = setting[key];
+              //if (value != value_new)
+              {
+                wait++;
+                $.post(api,
+                  {
+                    action: 'edit_setting',
+                    key: key,
+                    value: value,
+                  },
+                  function (json) {
+                    if (json.ok) {
+                      toastr["info"]('[' + wait + '] ' + json.msg);
+                    }
+                    wait--;
+                    if (wait == 0) list_setting();
+                  });
+              }
+            }
+            setTimeout(function () {
+              bao_ok({ ok: 1, msg: 'Đã khôi phục giá trị mặc định' })
+            }, 100);
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        if (user_info.role == 100 || user_info.role == 3)//nếu đủ quyền
+        {
+          this.buttons.reset_default.show();
+          list_setting();
+        }
+      }
+    });
+  }
+  function admin_panel() {
+    if (alert_not_login()) return;// khi vào admin_panel
     $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -958,6 +1231,15 @@
             return false; //ko đóng dialog
           }
         },
+        setting: {
+          text: '<i class="fa fa-gear"></i> Cấu hình',
+          btnClass: 'btn-info',
+          isHidden: true,
+          action: function () {
+            admin_setting();
+            return false; //ko đóng dialog
+          }
+        },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc', 'c', 'C'],
@@ -968,6 +1250,7 @@
         if (user_info.role == 100 || user_info.role == 3)//nếu đủ quyền
         {
           this.buttons.add_user.show();
+          this.buttons.setting.show();
           list_user(); //khi admin_panel show lần đầu
         }
       }
@@ -977,14 +1260,14 @@
     if (logined) {
       $('.login_info').html("<i class='fa fa-user'></i> Xin chào&nbsp;<b>" + user_info.fullname + "</b>");
       $('#cmdLogin').hide();
-      $('#cmdLogout,.login_info, .btn-thong-ke').removeClass('not-show');
-      $('#cmdLogout,.login_info, .btn-thong-ke').show();
+      $('#cmdLogout, .login_info, .btn-thong-ke, .btn-het-gio').removeClass('not-show');
+      $('#cmdLogout, .login_info, .btn-thong-ke, .btn-het-gio').show();
       $('.login_info').click(function () { admin_panel(); });
     } else {
       $('.login_info').html('');
       $('#cmdLogin').removeClass('not-show');
       $('#cmdLogin').show();
-      $('#cmdLogout').hide();
+      $('#cmdLogout, .login_info, .btn-thong-kem ,btn-het-gio').hide();
     }
   }
   function do_login() {
@@ -1163,6 +1446,15 @@
       load_gui();
     }
   }
+
+  function auto_play_in_queue() {
+    if (!gtts_playing && !Q.isEmpty()) {
+      var item = Q.dequeue();
+      play_tts(item.text);
+    };
+  }
+
+
   function init() {
     toastr.options = {
       "closeButton": true,
@@ -1181,8 +1473,19 @@
       "showMethod": "fadeIn",
       "hideMethod": "fadeOut"
     }
+    get_list_setting();
     monitor('monitor', draw_init)
-    setInterval(function () { monitor('monitor', update_status); }, 1000);
+
+    var wait_monitor = 0;
+    setInterval(function () {
+      wait_monitor++;
+      if (wait_monitor > setting.monitor_interval) {
+        wait_monitor = 0;
+        monitor('monitor', update_status);
+      }
+    }, 1000);
+    setInterval(function () { auto_play_in_queue() }, 1000);
+
     //ngăn menu phải
     //if (document.addEventListener) {
     //  document.addEventListener('contextmenu', function (e) {
@@ -1192,6 +1495,7 @@
     $('.btn-thong-ke').click(function () { thong_ke(); });
     $('#cmdLogin').click(function () { do_login() });
     $('#cmdLogout').click(function () { do_logout(); });
+    $('.btn-het-gio').click(function () { het_gio_all() });
     check_login(); //auto login
   }
   init();
