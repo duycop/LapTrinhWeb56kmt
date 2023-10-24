@@ -12,7 +12,9 @@
             const [file] = chon_anh.files
             if (file) {
                 var anh = document.getElementById('anh_review');
-                anh.src = URL.createObjectURL(file)
+                var src = URL.createObjectURL(file)
+                anh.src = src
+                console.log(src)
             }
         }
     </script>

@@ -48,8 +48,10 @@ namespace NhapLiieu
 
                 HttpPostedFile anh_the= Request.Files["anh_the"];
                 //đường dẫn tương đối : để lưu dv
+                //đường dẫn này có thể truy cập trực tiếp từ URL
+                //thư mục: /anh_the : nằm ở server, truy xuất từ gốc /
                 string path = $"/anh_the/{masv}_{anh_the.FileName}";
-                //đường dẫn tuyệt đối : để lưu file bằng lệnh save_as
+                //đường dẫn tuyệt đối trên server : để lưu file bằng lệnh save_as
                 string abs_path = Server.MapPath(path); 
                 anh_the.SaveAs(abs_path);
 
