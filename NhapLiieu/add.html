@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script>
+        function copy_dulieu(f) {
+            var nguon = document.getElementById('html-gioithieu');
+            f.gioithieu.value = nguon.innerHTML;
+        }
+        function review_anh(chon_anh) {
+            const [file] = chon_anh.files
+            if (file) {
+                var anh = document.getElementById('anh_review');
+                anh.src = URL.createObjectURL(file)
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Form nhập liệu</h1>
+    <form enctype="multipart/form-data" method="post" action="nhap_lieu.aspx" onsubmit="copy_dulieu(this)">
+        <input type="hidden" name="gioithieu" />
+        <table width="100%">
+            <tr>
+                <td>
+                    Mã sv: <input name="masv" type="number" />
+                </td>
+                <td rowspan="4"><img id="anh_review" /></td>
+            </tr>
+            <tr>
+                <td>
+                    Họ&nbsp;tên: <input name="hoten" type="text" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Ảnh thẻ: <input accept="image/*" onchange="review_anh(this)" name="anh_the" id="anh_the" type="file" style="display:none;" />
+                    <button type="button"><label for="anh_the">Chọn ảnh thẻ</label></button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Giới thiệu bản thân (html trực quan)
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" id="html-gioithieu" contenteditable style="border:1px solid gray; height:200px;width:100%;vertical-align:top;">
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type="submit" value="Gửi đi" />
+                </td>
+            </tr>
+        </table>
+    </form>
+
+</body>
+</html>

@@ -1,0 +1,141 @@
+﻿body, html {
+    margin-top: 5px;
+}
+
+.nam, .nu {
+    background-image: url('../images/phong_trong.png');
+    background-size: 85px 178px;
+    background-position: 0 22px;
+    background-repeat: no-repeat;
+    width: 85px;
+    height: 200px;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    margin: 0;
+    padding: 0;
+}
+
+.time {
+    position: relative;
+    display: inline-block;
+    width: 85px;
+    text-align: center;
+    background-color: deepskyblue;
+}
+
+.nam.tam {
+    background-image: url('/images/nam_tam_18.png');
+}
+
+.nu.tam {
+    background-image: url('/images/nu_tam.png');
+}
+
+.nam.tam .bot {
+    background-image: url('/images/nam_bot.png');
+    background-size: 32px 40px;
+    background-repeat: no-repeat;
+    width: 32px;
+    height: 40px;
+    position: relative;
+    left: 25px;
+    top: 80px;
+    animation: MoveDownUp 60s ease infinite;
+}
+@keyframes MoveDownUp {
+    0% {
+        top: 80px;
+        opacity:1;
+    }
+    60% {
+        opacity: 1;
+    }
+    100% {
+        top: 135px;
+        opacity: 0
+    }
+}
+
+.tam .time {
+    background-color: yellow !important;
+}
+
+.tam.over {
+    animation: blink 1s infinite;
+}
+
+    .tam.over .time {
+        background-color: red !important;
+    }
+
+.btn-blink {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0.1;
+        background-color: red;
+    }
+}
+
+.phong-tam td {
+    text-align: center;
+    border: 1px solid gray;
+    padding: 0 !important;
+}
+
+    .phong-tam td.tu-do {
+        border: 0px;
+        vertical-align: middle;
+    }
+
+.header {
+    border: 0px !important;
+    vertical-align: middle;
+    text-align: left !important;
+    margin: 10px !important;
+}
+
+table.phong-tam {
+    margin-right: 5px;
+    padding-right: 5px;
+}
+
+.phong-tam td.le-tan {
+    border-top: 1px solid gray;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 0px;
+    vertical-align: middle;
+}
+
+.phong-tam td.loi-di {
+    border-left: 1px solid gray;
+    border-right: 1px solid gray;
+    border-top: 0px;
+    border-bottom: 0px;
+}
+
+.phong-tam td {
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.not-show {
+    display: none !important;
+}
+
+.login_info {
+    padding-top: 8px;
+}
+
+
+@font-face {
+    font-family: 'FontAwesome';
+    src: url('/fonts/fontawesome-webfont.eot?v=4.7.0');
+    src: url('/fonts/fontawesome-webfont.eot?#iefix&v=4.7.0') format('embedded-opentype'),url('fonts/fontawesome-webfont.woff2?v=4.7.0') format('woff2'),url('fonts/fontawesome-webfont.woff?v=4.7.0') format('woff'),url('fonts/fontawesome-webfont.ttf?v=4.7.0') format('truetype'),url('fonts/fontawesome-webfont.svg?v=4.7.0#fontawesomeregular') format('svg');
+}
+
+table.table th{text-align:center !important;}
