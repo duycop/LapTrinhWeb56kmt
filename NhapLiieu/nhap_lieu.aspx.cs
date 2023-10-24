@@ -1,4 +1,31 @@
-﻿using System;
+﻿/* 
+ * Đỗ Duy Cốp => 56kmt : LẬP TRÌNH WEB
+ * 
+ * để nhập liệu
+ * 1. db lưu dc dư liệu: cấu trúc phù hợp
+ *    ntext : phù hợp để lưu văn bản dài (gb)
+ * 2. form nhập: upload đc ảnh (thẻ input type=file), review ảnh, form enctype+action
+ * 3. code lưu vào db: lưu path là đơn giản nhất (nvarchar)
+ * 4. liệt kê lại: dt=>json
+ * 
+ * 
+ * cấu trúc table trong db:
+ 
+CREATE TABLE [dbo].[GioiThieuSV](
+	[masv] [int] NOT NULL,
+	[hoten] [nvarchar](50) NULL,
+	[gioithieu] [ntext] NULL,
+	[anh_the] [Nvarchar](200) NULL,
+ CONSTRAINT [PK_GioiThieuSV] PRIMARY KEY CLUSTERED 
+(
+	[masv] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -43,17 +70,19 @@ namespace NhapLiieu
                 if (n > 0)
                 {
                     ketqua.InnerHtml = $"OK. Đã thêm được {n} bản ghi vào db";
-                    ketqua.InnerHtml += "<script>setTimeout(function () {document.location='/liet_ke.aspx'},5000)</script>";
+                    ketqua.InnerHtml += "<script>setTimeout(function () {document.location='/liet_ke.aspx';},5000)</script>";
                 }
                 else
                 {
                     ketqua.InnerHtml = "Không thêm được bản ghi vào db, có gì đó sai sai";
+                    ketqua.InnerHtml += "<script>setTimeout(function () {window.history.back();},5000)</script>";
                 }
                
             }
             catch (Exception ex)
             {
                 ketqua.InnerHtml = $"Lỗi rồi: {ex.Message}";
+                ketqua.InnerHtml += "<script>setTimeout(function () {window.history.back();},5000)</script>";
             }
         }
     }
