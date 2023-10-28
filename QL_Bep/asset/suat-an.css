@@ -1,0 +1,90 @@
+﻿
+body, html {
+    margin-top: 0px;
+}
+
+@font-face {
+    font-family: 'FontAwesome';
+    src: url('/fonts/fontawesome-webfont.eot?v=4.7.0');
+    src: url('/fonts/fontawesome-webfont.eot?#iefix&v=4.7.0') format('embedded-opentype'),url('fonts/fontawesome-webfont.woff2?v=4.7.0') format('woff2'),url('fonts/fontawesome-webfont.woff?v=4.7.0') format('woff'),url('fonts/fontawesome-webfont.ttf?v=4.7.0') format('truetype'),url('fonts/fontawesome-webfont.svg?v=4.7.0#fontawesomeregular') format('svg');
+}
+
+.header img.logo {
+    width: 64px;
+    display: inline;
+    float: left;
+    margin-right: 5px;
+}
+
+.header h2 {
+    display: inline;
+}
+
+.jconfirm.jconfirm-light.jconfirm-open {
+    z-index: 999 !important;
+}
+
+a:link {
+    text-decoration: none;
+}
+
+a:visited {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+a:active {
+    text-decoration: none;
+}
+
+.not-show {
+    display: none;
+}
+
+@media (max-width: 575.98px) {
+    .table-responsive-sm {
+        width: 335px !important;
+    }
+
+    td {
+        white-space: nowrap !important;
+    }
+}
+
+@media (max-width: 393px) {
+    .table-responsive-sm {
+        width: 335px !important;
+    }
+
+    td {
+        white-space: nowrap !important;
+    }
+}
+
+.table-company tr > td {
+    padding-bottom: 5px;
+}
+
+.address {
+    font-size: small;
+    color: dimgray;
+    font-style: italic;
+}
+
+#ke-hoach-sx tr td {
+    padding-bottom: 1px;
+    padding-top: 1px;
+}
+
+#ke-hoach-sx {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#soluong-old{
+    background-color:yellow !important;
+}
