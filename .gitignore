@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/QL_Bep/Web.config
+/QL_Bep/Web.Debug.config
+/QL_Bep/Web.Release.config
