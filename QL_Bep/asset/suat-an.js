@@ -1,7 +1,7 @@
 ﻿$(document).ready(function () {
   const setting = {
-    tab_title: "Suất Ăn",
-    app_title: "Suất ăn Công nghiệp",
+    tab_title: "MAI FOOD VN",
+    app_title: "CÔNG TY TNHH MAI FOOD VN",
     app_sologan: "An toàn, đa dạng, hợp lý!",
     monitor_interval: 1,
   }
@@ -12,7 +12,7 @@
   const api = '/api.ashx';
   const mp3 = '/mp3/';
 
-  var dialog, logined = false, user_info, all_quyen;
+  var logined = false, user_info, all_quyen;
 
   //--begin ck---
   function setCookie(name, value, days) {
@@ -56,7 +56,7 @@
   //--end ck---
 
   //--auto play mp3---
-
+  /*
   class Queue {
     constructor() {
       this.queue = [];
@@ -165,36 +165,21 @@
       play_tts(item.text);
     };
   }
+  /**/
   //--end auto play mp3---
-  function monitor(action, callback) {
+  var json_global;
+  function monitor(action, callback, callback2) {
     $.post(api,
       {
         action: action, //gửi đi action
       },
       function (json) {
-        callback(json);
+        json_global = json;
+        callback(json, callback2);
       },
     );
   }
-  function control(action, id) {
-    if (alert_not_login()) return; //khi control phải login trước
-    if (user_info == null || user_info.role < 3) return;
 
-    $.post(api,
-      {
-        action: action,
-        id: id
-      },
-      function (json) {
-        if (json.ok) {
-          dialog.close();
-          monitor('monitor', update_status);
-        } else {
-          toastr["warning"](json.msg);
-        }
-      }
-    );
-  }
   function alert_not_login() {
     if (!logined) {
       $.confirm({
@@ -234,37 +219,219 @@
     }
     return null;
   }
-  function listSuat(suat, arr) {
+  function listSuat(suat, arr, id) {
     var s = '';
+    if (id == 0) s += '<ol type="1">';
     for (var c of arr) {
       var item = getItem(suat, c.id);
       if (item == null) return '';
-      s += `<span title="${item.name}">${item.sign}=<span class="badge rounded-pill bg-primary">${c.sl}</span></span> `;
+      if (id == 0) s += '<li>';
+      s += `<span title="${item.name}">${item.sign}<span class="badge rounded-pill bg-primary">${c.sl}</span></span> `;
+      if (id == 0) s += '</li>';
     }
+    if (id == 0) s += '</ul>';
     return s;
   }
-  function company_order(item, ca, json) {
+  function company_order(item_company, ca, json) {
     if (!ca) ca = 0;
+    if (ca == 0) return;
+
     var ds_company = '', ds_ca = '', ds_suat = '';
-    for (var c_item of json.data) {
-      if (c_item.id == item.id)
-        ds_company += `<option value="${c_item.id}" selected>${c_item.name} - ${c_item.address} - ${c_item.phone}</option>`;
-      else
-        ds_company += `<option value="${c_item.id}" >${c_item.name} - ${c_item.address} - ${c_item.phone}</option>`;
+    for (var cty_item of json.data) {
+      if (cty_item.id > 0)
+        if (cty_item.id == item_company.id) {
+          ds_company += `<option value="${cty_item.id}" selected>${cty_item.name} - ${cty_item.address} - ${cty_item.phone}</option>`;
+          break;
+        }
+      //else
+      //ds_company += `<option value="${cty_item.id}" >${cty_item.name} - ${cty_item.address} - ${cty_item.phone}</option>`;
     }
-    for (var c_item in ca_name) {
-      if (c_item == ca)
-        ds_ca += `<option value="${c_item}" selected>${ca_name[c_item]}</option>`;
-      else
-        ds_ca += `<option value="${c_item}" >${ca_name[c_item]}</option>`;
+    for (var ca_item in ca_name) {
+      if (ca_item == ca) {
+        ds_ca += `<option value="${ca_item}" selected>${ca_name[ca_item]}</option>`;
+        break;
+      }
+      //else
+      //ds_ca += `<option value="${ca_item}" >${ca_name[ca_item]}</option>`;
     }
-    for (var c_item of json.suat) {
-      if (c_item == ca)
-        ds_suat += `<option value="${c_item.id}" selected>${c_item.name} (${format_price(c_item.price)})</option>`;
-      else
-        ds_suat += `<option value="${c_item.id}" >${c_item.name} (${format_price(c_item.price)})</option>`;
+    ds_suat += '<option selected="true" disabled="disabled" value="0">--Chọn suất--</option>';
+    for (var suat_item of json.suat) {
+      ds_suat += `<option value="${suat_item.id}">${suat_item.name} (${format_price(suat_item.price)})</option>`;
     }
-    var content = `<div class="table-responsive-sm"><table align="center" width="100%">
+    var dialog_order;
+    function reload_order() {
+      monitor('monitor', draw_init, function () {
+        var content = list_order_done(item_company.id, ca);
+        $('#list-order-done').html(content);
+        $('.btn-order-delete').click(function () {
+          var id_suat = $(this).data('suat');
+          delete_button(id_suat);
+        });
+        $('.btn-order-edit').click(function () {
+          var id_suat = $(this).data('suat');
+          var sl = $(this).data('sl');
+          edit_button(id_suat, sl);
+        });
+        $('#edit-suat').focus();
+      });
+    }
+    function list_order_done(id_company, id_ca) {
+      var s = []
+      for (var item of json_global.data) {
+        if (item.id == id_company) {
+          var c = [];
+          if (id_ca == 1) c = item.c1;
+          if (id_ca == 2) c = item.c2;
+          if (id_ca == 3) c = item.c3;
+          if (id_ca == 4) c = item.c4;
+          for (var order_item of c) {
+            var item_suat = getItem(json.suat, order_item.id);
+            if (item_suat) {
+              var content = `<tr id="order_suat_${item_suat.id}">
+              <td>${item_suat.sign}</td>
+              <td>${item_suat.name}</td>
+              <td>${format_price(item_suat.price)}</td>
+              <td><span class="badge rounded-pill bg-primary">${order_item.sl}</span></td>
+              <td>
+                <button class="btn btn-sm btn-warning btn-order-edit" data-suat="${item_suat.id}" data-sl="${order_item.sl}">Sửa</button>
+                <button class="btn btn-sm btn-danger btn-order-delete" data-suat="${item_suat.id}" data-sl="${order_item.sl}">Xóa</button>
+              </td>
+              </tr>`;
+              s.push(content);
+            }
+          }
+          break;
+        }
+      }
+      var kq = '';
+      if (s.length == 0) {
+        kq = `<span class="badge rounded-pill bg-danger">Chưa đặt suất ăn nào</span>`;
+      } else {
+        kq += 'Đã đặt các suất ăn:';
+        kq += `<table width="100%" class="table table-hover table-striped"><thead><tr class="table-info">
+              <th>Kí hiệu</th>
+              <th>Tên</th>
+              <th>Giá</th>
+              <th>Số&nbsp;lượng</th>
+              <th>Action</th>
+              </tr></thead><tbody>`;
+        for (var content of s) {
+          kq += content;
+        }
+        kq += '</tbody></table>';
+      }
+      return kq;
+    }
+    function update_soluong() {
+      var id_suat = $('#edit-suat').val();
+      if (!id_suat) return;
+
+      var id_company = $('#edit-company').val();
+      var id_ca = $('#edit-ca').val();
+      $.post(api,
+        {
+          action: 'dem_suat_an',
+          id_company: id_company,
+          id_ca: id_ca,
+          id_suat: id_suat
+        },
+        function (json) {
+          if (json.ok) {
+            $('#soluong-old').val(json.soluong);
+            if (json.soluong == 0) json.soluong = '';
+            $('#soluong-new').val(json.soluong);
+            $('#soluong-new').focus();
+          }
+          else
+            thong_bao_loi(json);
+        })
+    }
+    function update_name_cty() {
+      var id_company = $('#edit-company').val();
+      var selected_item = null;
+      for (var c_item of json.data) {
+        if (c_item.id == id_company) {
+          selected_item = c_item;
+          break;
+        }
+      }
+      if (selected_item != null) {
+        dialog_order.setTitle('Đặt suất ăn cho công ty: ' + selected_item.name + (selected_item.vip ? ' <i class="fa fa-star" style="color:red"></i>' : ''));
+      }
+    };
+    function delete_button(id_suat) {
+      if (!id_suat) {
+        thong_bao_loi({ ok: 0, msg: 'Chưa chọn suất ăn!' }, { w: 1, t: 1 }, function () {
+          $('edit-suat').focus();
+        })
+        return;
+      }
+
+      var id_company = $('#edit-company').val();
+      var id_ca = $('#edit-ca').val();
+
+
+      $.post(api,
+        {
+          action: 'delete_order',
+          id_company: id_company,
+          id_ca: id_ca,
+          id_suat: id_suat
+        },
+        function (json) {
+          if (json.ok) {
+            reload_order();
+          }
+          else
+            thong_bao_loi(json);
+        })
+    }
+    function save_button() {
+      var id_suat = $('#edit-suat').val();
+      if (!id_suat) {
+        thong_bao_loi({ ok: 0, msg: 'Chưa chọn suất ăn!' }, { w: 1, t: 1 }, function () {
+          $('edit-suat').focus();
+        })
+        return;
+      }
+
+      var id_company = $('#edit-company').val();
+      var id_ca = $('#edit-ca').val();
+      var so_luong = $('#soluong-new').val();
+      if (so_luong == '' || so_luong <= 0) {
+        thong_bao_loi({ ok: 0, msg: 'Phải nhập số lượng suất ăn chứ!' }, { w: 1, t: 1 }, function () {
+          $('#soluong-new').focus();
+        })
+        return false;
+      }
+      $.post(api,
+        {
+          action: 'add_order',
+          id_company: id_company,
+          id_ca: id_ca,
+          id_suat: id_suat,
+          so_luong: so_luong
+        },
+        function (json) {
+
+          if (json.ok) {
+            //dialog_order.close();
+            reload_order();
+          } else {
+            thong_bao_loi(json)
+          }
+        });
+      return false;
+    }
+    function edit_button(id_suat, soluong) {
+      $('#edit-suat').val(id_suat);
+      $('#soluong-old').val(soluong);
+      if (soluong == 0) soluong = '';
+      $('#soluong-new').val(soluong);
+      $('#soluong-new').focus();
+    }
+    var content = `<div class="table-responsive-sm">
+    <table align="center" width="100%">
     <tr>
     <td>Công&nbsp;ty:</td>
     <td><select class="form-select cbo-order" id="edit-company">${ds_company}</select></td>
@@ -285,55 +452,31 @@
       <input type="number" class="form-control" id="soluong-old" value="0" disabled>
       <span class="input-group-text">Mới</span>
       <input type="number" class="form-control" id="soluong-new" placeholder="Số mới">
+      <button class="btn btn-info" id="save-order" type="button">Save</button>
     </div>
     </td>
     </tr>
-    </table></div>`;
-    $.confirm({
+    </table></div>
+    <hr>
+    <div class="table-responsive-sm" id="list-order-done">${list_order_done(item_company.id, ca)}</div>
+    `;
+    dialog_order = $.confirm({
       animateFromElement: false,
       typeAnimated: false,
       icon: 'fa fa-utensils',
       title: 'Đặt suất ăn cho công ty',
       closeIcon: true,
       closeIconClass: 'fa fa-close',
-      columnClass: 'm',
+      columnClass: 'l',
       type: 'blue',
       escapeKey: 'cancel',
       content: content,
       buttons: {
-        ok: {
-          text: '<i class="fa fa-utensils"></i> Thêm',
+        reload: {
+          text: '<i class="fa fa-utensils"></i> Reload',
           btnClass: 'btn-primary',
           action: function () {
-            var self = this;
-            var id_company = $('#edit-company').val();
-            var id_ca = $('#edit-ca').val();
-            var id_suat = $('#edit-suat').val();
-            var so_luong = $('#soluong-new').val();
-            if (so_luong == '' || so_luong <= 0) {
-              thong_bao_loi({ ok: 0, msg: 'Phải nhập số lượng suất ăn chứ!' }, { w: 1, t: 1 }, function () {
-                $('#soluong-new').focus();
-              })
-              return false;
-            }
-            $.post(api,
-              {
-                action: 'add_order',
-                id_company: id_company,
-                id_ca: id_ca,
-                id_suat: id_suat,
-                so_luong: so_luong
-              },
-              function (json) {
-
-                if (json.ok) {
-                  self.close();
-                  monitor('monitor', draw_init);
-                  //
-                } else {
-                  thong_bao_loi(json)
-                }
-              });
+            reload_order();
             return false;
           }
         },
@@ -345,46 +488,34 @@
         }
       },
       onContentReady: function () {
-        var dialog = this;
-        $('#soluong-new').focus();
-        function update_soluong() {
-          var id_company = $('#edit-company').val();
-          var id_ca = $('#edit-ca').val();
-          var id_suat = $('#edit-suat').val();
-          $.post(api,
-            {
-              action: 'dem_suat_an',
-              id_company: id_company,
-              id_ca: id_ca,
-              id_suat: id_suat
-            },
-            function (json) {
-              if (json.ok) {
-                $('#soluong-old').val(json.soluong);
-                if (json.soluong > 0) {
-                  dialog.buttons.ok.setText('<i class="fa fa-utensils"></i> Cập nhật')
-                } else {
-                  dialog.buttons.ok.setText('<i class="fa fa-utensils"></i> Thêm')
-                }
-                if (json.soluong == 0) json.soluong = '';
-                $('#soluong-new').val(json.soluong);
-                $('#soluong-new').focus();
-              }
-              else
-                thong_bao_loi(json);
-            })
-        }
         $('.cbo-order').on('change', function () {
           update_soluong();
         });
+        $('#edit-company').on('change', function () {
+          update_name_cty();
+        });
+        $('#save-order').click(function () {
+          save_button();
+        });
+        $('.btn-order-delete').click(function () {
+          var id_suat = $(this).data('suat');
+          delete_button(id_suat);
+        });
+        $('.btn-order-edit').click(function () {
+          var id_suat = $(this).data('suat');
+          var sl = $(this).data('sl');
+          edit_button(id_suat, sl);
+        });
         update_soluong();
+        update_name_cty();
+        $('#soluong-new').focus();
       }
     });
   }
-  function draw_init(json) {
+  function draw_init(json, callback2) {
     if (json.ok) {
       var content = '' +
-        '<h5>Kế hoạch nấu ăn ngày: ' + json.ngay + '</h5>' +
+        '<h5>Kế hoạch ngày: <span class="badge rounded-pill bg-success">' + json.ngay + '</span> <button class="btn btn-sm btn-success ngay-monitor" data-ngay="' + json.ngay + '">Xem ngày khác</button></h5>' +
         '<div class="table-responsive">' +
         '<table id="ke-hoach-sx" class="ke-hoach-sx table table-bordered table-hover table-striped">' +
         '<thead><tr class="table-info fw-bold">' +
@@ -399,11 +530,11 @@
       for (var item of json.data) {
         content += `<tr data-cid="${item.id}" class="${(item.id > 0 ? '' : 'table-danger fw-bold')}">` +
           '<td align=center nowarp class="btn-company-order">' + (item.id > 0 ? (++stt) : '') + '</td>' +
-          '<td align="' + (item.id > 0 ? 'left' : 'right') + '" nowarp class="btn-company-order">' + (item.name) + '</td>' +
-          `<td align=left nowarp class="btn-company-order" data-ca="1" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['1']}">${listSuat(json.suat, item.c1)}</td>` +
-          `<td align=left nowarp class="btn-company-order" data-ca="2" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['2']}">${listSuat(json.suat, item.c2)}</td>` +
-          `<td align=left nowarp class="btn-company-order" data-ca="3" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['3']}">${listSuat(json.suat, item.c3)}</td>` +
-          `<td align=left nowarp class="btn-company-order" data-ca="4" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['4']}">${listSuat(json.suat, item.c4)}</td>` +
+          '<td align="' + (item.id > 0 ? 'left' : 'right') + '" nowarp class="btn-company-order">' + (item.name) + (item.vip == 1 ? ' <i class="fa fa-star" style="color:red"></i>' : '') + '</td>' +
+          `<td align=left nowarp class="btn-company-order" data-ca="1" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['1']}">${listSuat(json.suat, item.c1, item.id)}</td>` +
+          `<td align=left nowarp class="btn-company-order" data-ca="2" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['2']}">${listSuat(json.suat, item.c2, item.id)}</td>` +
+          `<td align=left nowarp class="btn-company-order" data-ca="3" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['3']}">${listSuat(json.suat, item.c3, item.id)}</td>` +
+          `<td align=left nowarp class="btn-company-order" data-ca="4" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['4']}">${listSuat(json.suat, item.c4, item.id)}</td>` +
           '</tr>';
       }
       content += "</tbody></table></div>";
@@ -421,13 +552,15 @@
           }
         }
       });
+      $('.ngay-monitor').click(function () {
+        var ngay = $(this).data("ngay");
+        thong_bao_ok({ ok: 1, msg: "View order date=" + ngay + ": coding..." })
+      });
+      if (callback2) callback2(json);
     } else {
       $('#monitor-zone').html('Không có dữ liệu');
     }
   }
-  function update_status(json) {
-  }
-
   //--thuc_don--
   function format_price(price) {
     var t = price + 'vnđ';
@@ -462,7 +595,7 @@
           }
           content += '</tbody></table></div>';
           $('#list_suat_an').html(content);
-          sort_table('#table_list_suat_an', "Danh sách suất ăn", 10);
+          sort_table('#table_list_suat_an', "Danh sách suất ăn", 20);
           $('.btn-edit-suat-an').click(function () {
             var id = $(this).data('sid');
             for (var item of json.data) {
@@ -1141,7 +1274,7 @@
       buttons: {
         ok: {
           text: '<i class="fa fa-circle-check"></i> ok Xóa đi',
-          btnClass: 'btn-blue',
+          btnClass: 'btn-red',
           keys: ['enter', 'x', 'X'],
           action: function () {
             //gửi đi api: y/c xóa
@@ -1157,7 +1290,7 @@
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc', 'c', 'C'],
-          btnClass: 'btn-red',
+          btnClass: 'btn-blue',
         }
       }
     });
@@ -1336,11 +1469,11 @@
     <div class="table-responsive-sm"><table align="center" width="100%" class="table-company">
     <tr>
     <td>Name:</td>
-    <td><input type="text" class="form-control" id="edit-name"></td>
+    <td><input type="text" class="form-control" id="edit-name" placeholder="Nhập tên công ty"></td>
     </tr>
     <tr>
     <td>Address:</td>
-    <td><input type="text" class="form-control" id="edit-address"></td>
+    <td><input type="text" class="form-control" id="edit-address" placeholder="Nhập địa chỉ"></td>
     </tr>
     <tr>
     <td>GPS:</td>
@@ -1353,7 +1486,11 @@
     </tr>
     <tr>
     <td>Phone:</td>
-    <td><input type="text" class="form-control" id="edit-phone"></td>
+    <td><input type="text" class="form-control" id="edit-phone" placeholder="Nhập sđt"></td>
+    </tr>
+    <tr>
+    <td>Zalo:</td>
+    <td><input type="text" class="form-control" id="edit-zalo" placeholder="https://zalo.me/..."></td>
     </tr>
     </table></div>
     `;
@@ -1376,6 +1513,7 @@
               address: $('#edit-address').val(),
               gps: $('#edit-gps').val(),
               phone: $('#edit-phone').val(),
+              zalo: $('#edit-zalo').val(),
             }
             $.post(api, data, function (json) {
               if (json.ok) {
@@ -1418,11 +1556,11 @@
     <div class="table-responsive-sm"><table align="center" width="100%" class="table-company">
     <tr>
     <td>Name:</td>
-    <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `"></td>
+    <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `" placeholder="Nhập tên công ty"></td>
     </tr>
     <tr>
     <td>Address:</td>
-    <td><input type="text" class="form-control" id="edit-address" value="`+ item.address + `"></td>
+    <td><input type="text" class="form-control" id="edit-address" value="`+ item.address + `" placeholder="Nhập địa chỉ"></td>
     </tr>
     <tr>
     <td>GPS:</td>
@@ -1435,7 +1573,11 @@
     </tr>
     <tr>
     <td>Phone:</td>
-    <td><input type="text" class="form-control" id="edit-phone" value="`+ item.phone + `"></td>
+    <td><input type="text" class="form-control" id="edit-phone" value="`+ item.phone + `" placeholder="Nhập sđt"></td>
+    </tr>
+    <tr>
+    <td>Zalo:</td>
+    <td><input type="text" class="form-control" id="edit-zalo" value="`+ item.zalo + `" placeholder="https://zalo.me/..."></td>
     </tr>
     </table></div>
     `;
@@ -1454,12 +1596,13 @@
           action: function () {
             //làm ý 3
             var data = {
+              action: 'edit_company',
               id: item.id,
               name: $('#edit-name').val(),
               address: $('#edit-address').val(),
               gps: $('#edit-gps').val(),
               phone: $('#edit-phone').val(),
-              action: 'edit_company'
+              zalo: $('#edit-zalo').val(),
             }
             $.post(api, data, function (json) {
               if (json.ok) {
@@ -1550,6 +1693,7 @@
           '<th>Địa chỉ</th>' +
           '<th>Chỉ đường</th>' +
           '<th>Phone</th>' +
+          '<th>Zalo</th>' +
           '<th class="text-center">Sửa/Xóa</th>' +
           '</tr></thead><tbody>';
         var stt = 0;
@@ -1569,8 +1713,14 @@
             phone = '';
           else
             phone = '<a href="tel:' + phone + '"><i class="fa fa-tty"></i> ' + phone + '</a>';
-
           item.phone2 = phone;
+
+          var zalo = item.zalo;
+          if (zalo == 'null' || zalo == '')
+            zalo = '';
+          else
+            zalo = '<a href="' + zalo + '" target="_blank"><img src="/images/icon-zalo.png" style="width:24px"></a>';
+
 
           var action = '';
           action += '<button class="btn btn-sm btn-warning btn-action-company" data-cid="' + item.id + '" data-action="edit-company">Sửa</button>';
@@ -1583,6 +1733,7 @@
             '<td align=left nowarp>' + (item.address) + '</td>' +
             '<td align=left nowarp>' + gps + '</td>' +
             '<td align=left nowarp>' + (phone) + '</td>' +
+            '<td align=left nowarp>' + (zalo) + '</td>' +
             '<td align=center nowarp>' + (action) + '</td>' +
             '</tr>';
         }

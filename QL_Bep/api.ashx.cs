@@ -306,6 +306,7 @@ namespace SuatAn
                     cm.Parameters.Add("@lat", SqlDbType.Float).Value = lat;
                     cm.Parameters.Add("@lng", SqlDbType.Float).Value = lng;
                     cm.Parameters.Add("@phone", SqlDbType.VarChar, 50).Value = context.Request["phone"];
+                    cm.Parameters.Add("@zalo", SqlDbType.VarChar, 100).Value = context.Request["zalo"];
                 }
                 else if (action == "add_company")
                 {
@@ -401,7 +402,9 @@ namespace SuatAn
                     case "enable_suat_an":
                     case "delete_suat_an":
                     //case "dem_suat_an":
+
                     case "add_order":
+                    case "delete_order":
                         if (role == 3 || role == 100)
                         {
                             cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
@@ -433,6 +436,7 @@ namespace SuatAn
                         break;
                     case "dem_suat_an":
                     case "add_order":
+                    case "delete_order":
                         cm.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
                         cm.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
                         cm.Parameters.Add("@id_suat", SqlDbType.Int).Value = context.Request["id_suat"];
@@ -472,6 +476,7 @@ namespace SuatAn
                 case "delete_suat_an":
                 case "dem_suat_an":
                 case "add_order":
+                case "delete_order":
                     suat_an(action);
                     break;
 

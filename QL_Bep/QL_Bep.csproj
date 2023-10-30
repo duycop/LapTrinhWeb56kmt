@@ -61,6 +61,7 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+    <Content Include="images\icon-zalo.png" />
     <Content Include="webfonts\fa-brands-400.ttf" />
     <Content Include="webfonts\fa-brands-400.woff2" />
     <Content Include="webfonts\fa-regular-400.ttf" />
