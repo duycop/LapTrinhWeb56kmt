@@ -1,5 +1,4 @@
-﻿using SuatAn;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -21,7 +20,7 @@ namespace ThucHanh
             {
                 //2 loại này truyền 5 tham số chung
                 case "add_company":
-                case "modify_company":
+                case "edit_company":
                     cm.Parameters.Add("@name", SqlDbType.NVarChar, 255).Value = Request["name"];
                     cm.Parameters.Add("@address", SqlDbType.NVarChar, 255).Value = Request["address"];
                     cm.Parameters.Add("@lat", SqlDbType.Float).Value = Request["lat"];
@@ -33,7 +32,7 @@ namespace ThucHanh
             switch (action)
             {
                 //2 loại này cần thêm @id
-                case "modify_company":
+                case "edit_company":
                 case "delete_company":
                     cm.Parameters.Add("@id", SqlDbType.Int).Value = Request["id"];
                     break;
@@ -46,10 +45,10 @@ namespace ThucHanh
             string action = Request["action"];
             switch (action)
             {
-                case "add_company":
-                case "modify_company":
-                case "delete_company":
                 case "list_company":
+                case "add_company":
+                case "edit_company":
+                case "delete_company":
                     xuly_company(action);
                     break;
 

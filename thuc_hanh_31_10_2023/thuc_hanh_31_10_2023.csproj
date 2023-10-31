@@ -58,6 +58,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="api.aspx" />
+    <Content Include="asset\bootstrap.min.css" />
+    <Content Include="asset\jquery-confirm.min.css" />
+    <Content Include="asset\jquery-confirm.min.js" />
     <Content Include="asset\jquery.min.js" />
     <Content Include="asset\mystyle.css" />
     <Content Include="asset\mycode.js" />

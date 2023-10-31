@@ -1,9 +1,9 @@
 CREATE DATABASE [ThucHanh]
  CONTAINMENT = NONE
  ON  PRIMARY 
-( NAME = N'SuatAn', FILENAME = N'd:\ThucHanh.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB )
+( NAME = N'ThucHanh', FILENAME = N'd:\ThucHanh.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 1024KB )
  LOG ON 
-( NAME = N'SuatAn_log', FILENAME = N'd:\ThucHanh_log.ldf' , SIZE = 1024KB , MAXSIZE = 2048GB , FILEGROWTH = 10%)
+( NAME = N'ThucHanh_log', FILENAME = N'd:\ThucHanh_log.ldf' , SIZE = 1024KB , MAXSIZE = 2048GB , FILEGROWTH = 10%)
 GO
 
 CREATE TABLE [dbo].[Company](

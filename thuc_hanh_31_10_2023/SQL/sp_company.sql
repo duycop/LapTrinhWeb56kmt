@@ -1,24 +1,35 @@
+USE [ThucHanh]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_Company]    Script Date: 31/10/2023 10:47:07 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author     :	do duy cop
 -- Create date: 31.10.2023
 -- Description:	xu ly cong ty
 -- =============================================
-Create PROCEDURE [dbo].[SP_Company]
+ALTER PROCEDURE [dbo].[SP_Company]
 	@action		nvarchar(50) = 'list_company',
 	@id			int = null,
 	@name		nvarchar(255) = null,
 	@address	nvarchar(255) = null,
 	@lat		float=null,
 	@lng		float=null,
-	@phone		varchar(50)=null
+	@phone		varchar(50)=null,
+	@zalo		varchar(100)=null
 AS
 BEGIN
 	declare @json nvarchar(max)='';	
 
 	if(@action='edit_company')
 	begin
-		update [Company] set [name]=@name, [address]=@address,[lat]=@lat,[lng]=@lng,[phone]=@phone where [id]=@id;		
-		set @json=FORMATMESSAGE(N'{"ok":1,"msg":"Đã sửa thành công!"')
+		update [Company] 
+		set [name]=@name, [address]=@address,[lat]=@lat,[lng]=@lng,[phone]=@phone,zalo=@zalo 
+		where [id]=@id;		
+
+		set @json=FORMATMESSAGE(N'{"ok":1,"msg":"Đã sửa thành công!"}')
 		select @json as json;
 	end	
 	else if(@action='add_company')
@@ -39,7 +50,7 @@ BEGIN
 	if(@action='list_company')
 	begin
 		select @json+=FORMATMESSAGE(N'{"id":%d,"name":"%s","address":"%s","lat":%s,"lng":%s,"phone":"%s","zalo":"%s"},',
-						[id],[name],isnull([address],''),str([lat],10,10),str([lng],10,10),[phone],[zalo])
+						[id],[name],isnull(replace([address],'"','\"'),''),str([lat],10,10),str([lng],10,10),[phone],[zalo])
 		from [Company]
 		where del_at is null
 		order by [id];
