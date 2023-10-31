@@ -18,15 +18,16 @@
           action: function () {
             var data_gui_di = {
               action: 'delete_company',
-              id: id,
+              id: id, //gửi đi id của cty cần xóa: api, sp sẽ làm phần còn lại
             }
             $.post(api, data_gui_di, function (data) {
-              var json = JSON.parse(data);
-              if (json.ok) {
+              //đợi data là json string text gửi về
+              var json = JSON.parse(data); //json string text => obj
+              if (json.ok) { //dùng obj
                 dialog_xoa.close();
-                cap_nhap_company();
+                cap_nhap_company();  //vẽ lại kq mới
               } else {
-                alert(json.msg)
+                alert(json.msg) // lỗi gì ở trên lo, ta cứ show ra thôi
               }
             })
           }
@@ -112,6 +113,7 @@
           //duyet json -> noidung_ds_cty_html xịn
           var stt = 0;
           for (var cty of json.data) {
+            //sua_xoa là 2 nút: mỗi nút kèm theo data để sau này phân loại: là data-cid  và data-action
             var sua_xoa = `<button class="btn btn-sm btn-warning nut-sua-xoa" data-cid="${cty.id}" data-action="edit_company">Sửa</button>`;
             sua_xoa += ` <button class="btn btn-sm btn-danger nut-sua-xoa" data-cid="${cty.id}" data-action="delete_company">Xóa</button>`;
             noidung_ds_cty_html += `
@@ -126,15 +128,21 @@
 
           noidung_ds_cty_html += "</tbody></table>";
         } else {
+
           noidung_ds_cty_html = "không có dữ liệu";
         }
+        //đưa html vừa nối nối vào chỗ định trước: #ds_cong_ty
         $('#ds_cong_ty').html(noidung_ds_cty_html); //gán html vào thân dialog
+
+        //trong html vừa đua vào có nhiều nút sửa và xóa, đều có class nut-sua-xoa
+        //selector này tóm đc mọi nút
         $('.nut-sua-xoa').click(function () {
-          var action = $(this).data('action')
-          var id = $(this).data('cid')
-          if (action == 'delete_company') {
+          //phân biệt các nút bằng data kèm theo
+          var action = $(this).data('action')  //lấy action kèm theo
+          var id = $(this).data('cid')  //lấy cid kèm theo
+          if (action == 'delete_company') { //dùng action
             //can xac nhan
-            delete_company(id, json);
+            delete_company(id, json); //dùng id vào đây để hàm này xử, cho khỏi rối code
           } else if (action == 'edit_company') {
             //ko can xac nhan
             edit_company(id, json);
@@ -205,7 +213,7 @@
       onContentReady: function () {
         //alert('dialog show ok')
         //hoi api: ds cong ty la json nao?
-        cap_nhap_company();
+        cap_nhap_company(); //fill html vào thêm dialog tại div#ds_cong_ty
       }
     });
   }
