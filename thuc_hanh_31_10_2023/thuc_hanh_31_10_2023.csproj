@@ -62,7 +62,8 @@
     <Content Include="asset\mystyle.css" />
     <Content Include="asset\mycode.js" />
     <Content Include="index.html" />
-    <Content Include="sp_company.sql" />
+    <Content Include="SQL\sql_create_db.sql" />
+    <Content Include="SQL\sp_company.sql" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
