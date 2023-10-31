@@ -12,7 +12,7 @@
   const api = '/api.ashx';
   const mp3 = '/mp3/';
 
-  var logined = false, user_info, all_quyen;
+  var logined = false, user_info, all_quyen, today = '';
 
   //--begin ck---
   function setCookie(name, value, days) {
@@ -172,6 +172,7 @@
     $.post(api,
       {
         action: action, //gửi đi action
+        today: today
       },
       function (json) {
         json_global = json;
@@ -265,7 +266,9 @@
         $('#list-order-done').html(content);
         $('.btn-order-delete').click(function () {
           var id_suat = $(this).data('suat');
-          delete_button(id_suat);
+          var ten = $(this).data('name');
+          var sl = $(this).data('sl');
+          delete_button(id_suat, ten, sl);
         });
         $('.btn-order-edit').click(function () {
           var id_suat = $(this).data('suat');
@@ -288,13 +291,12 @@
             var item_suat = getItem(json.suat, order_item.id);
             if (item_suat) {
               var content = `<tr id="order_suat_${item_suat.id}">
-              <td>${item_suat.sign}</td>
               <td>${item_suat.name}</td>
               <td>${format_price(item_suat.price)}</td>
               <td><span class="badge rounded-pill bg-primary">${order_item.sl}</span></td>
               <td>
                 <button class="btn btn-sm btn-warning btn-order-edit" data-suat="${item_suat.id}" data-sl="${order_item.sl}">Sửa</button>
-                <button class="btn btn-sm btn-danger btn-order-delete" data-suat="${item_suat.id}" data-sl="${order_item.sl}">Xóa</button>
+                <button class="btn btn-sm btn-danger btn-order-delete" data-name="${item_suat.name}" data-suat="${item_suat.id}" data-sl="${order_item.sl}">Xóa</button>
               </td>
               </tr>`;
               s.push(content);
@@ -309,7 +311,6 @@
       } else {
         kq += 'Đã đặt các suất ăn:';
         kq += `<table width="100%" class="table table-hover table-striped"><thead><tr class="table-info">
-              <th>Kí hiệu</th>
               <th>Tên</th>
               <th>Giá</th>
               <th>Số&nbsp;lượng</th>
@@ -359,7 +360,7 @@
         dialog_order.setTitle('Đặt suất ăn cho công ty: ' + selected_item.name + (selected_item.vip ? ' <i class="fa fa-star" style="color:red"></i>' : ''));
       }
     };
-    function delete_button(id_suat) {
+    function delete_button(id_suat, ten, sl) {
       if (!id_suat) {
         thong_bao_loi({ ok: 0, msg: 'Chưa chọn suất ăn!' }, { w: 1, t: 1 }, function () {
           $('edit-suat').focus();
@@ -369,22 +370,47 @@
 
       var id_company = $('#edit-company').val();
       var id_ca = $('#edit-ca').val();
-
-
-      $.post(api,
-        {
-          action: 'delete_order',
-          id_company: id_company,
-          id_ca: id_ca,
-          id_suat: id_suat
-        },
-        function (json) {
-          if (json.ok) {
-            reload_order();
+      $.confirm({
+        animateFromElement: false,
+        typeAnimated: false,
+        icon: 'fa fa-circle-question',
+        title: 'Xác nhận xóa đặt suất ăn',
+        closeIcon: true,
+        closeIconClass: 'fa fa-close',
+        columnClass: 'm',
+        type: 'red',
+        escapeKey: 'cancel',
+        content: `Xác nhận muốn xóa<br>Suất ăn <span class="badge rounded-pill bg-primary">${ten}</span> số lượng: <span class="badge rounded-pill bg-primary">${sl}</span> ??`,
+        autoClose: "cancel|5000",
+        buttons: {
+          yes: {
+            text: '<i class="fa fa-trash-can"></i> Yes',
+            keys: ['enter', 'y'],
+            btnClass: 'btn-danger',
+            action: function () {
+              $.post(api,
+                {
+                  action: 'delete_order',
+                  id_company: id_company,
+                  id_ca: id_ca,
+                  id_suat: id_suat
+                },
+                function (json) {
+                  if (json.ok) {
+                    reload_order();
+                  }
+                  else
+                    thong_bao_loi(json);
+                })
+            }
+          },
+          cancel: {
+            text: '<i class="fa fa-circle-check"></i> No no no',
+            keys: ['n'],
+            btnClass: 'btn-blue',
           }
-          else
-            thong_bao_loi(json);
-        })
+        }
+      })
     }
     function save_button() {
       var id_suat = $('#edit-suat').val();
@@ -415,7 +441,7 @@
         function (json) {
 
           if (json.ok) {
-            //dialog_order.close();
+            $('#soluong-old').val(so_luong);
             reload_order();
           } else {
             thong_bao_loi(json)
@@ -499,7 +525,9 @@
         });
         $('.btn-order-delete').click(function () {
           var id_suat = $(this).data('suat');
-          delete_button(id_suat);
+          var ten = $(this).data('name');
+          var sl = $(this).data('sl');
+          delete_button(id_suat, ten, sl);
         });
         $('.btn-order-edit').click(function () {
           var id_suat = $(this).data('suat');
@@ -508,6 +536,14 @@
         });
         update_soluong();
         update_name_cty();
+        $('#soluong-new').keyup(function (event) {
+          if (event.keyCode === 13) {
+            if ($('#soluong-new').val() == '')
+              $('#soluong-new').focus();
+            else
+              save_button();
+          }
+        });
         $('#soluong-new').focus();
       }
     });
@@ -515,7 +551,7 @@
   function draw_init(json, callback2) {
     if (json.ok) {
       var content = '' +
-        '<h5>Kế hoạch ngày: <span class="badge rounded-pill bg-success">' + json.ngay + '</span> <button class="btn btn-sm btn-success ngay-monitor" data-ngay="' + json.ngay + '">Xem ngày khác</button></h5>' +
+        '<h5>Kế hoạch ngày: <span class="badge rounded-pill bg-success">' + json.ngay + '</span> <button class="btn btn-sm btn-success chon-ngay-monitor" data-ngay="' + json.ngay + '">Chọn ngày</button></h5>' +
         '<div class="table-responsive">' +
         '<table id="ke-hoach-sx" class="ke-hoach-sx table table-bordered table-hover table-striped">' +
         '<thead><tr class="table-info fw-bold">' +
@@ -552,9 +588,51 @@
           }
         }
       });
-      $('.ngay-monitor').click(function () {
+      $('.chon-ngay-monitor').click(function () {
         var ngay = $(this).data("ngay");
-        thong_bao_ok({ ok: 1, msg: "View order date=" + ngay + ": coding..." })
+        var content = `
+        <p>Hôm nay là ngày: ${new Date().toISOString().split('T')[0]}</p>
+        <div class="input-group">
+          <span class="input-group-text">Chọn ngày:</span>
+          <input type="date" class="form-control" id="txt-ngay-chon" value="${ngay}" style="text-align:center">
+        </div>
+        `;
+        $.confirm({
+          animateFromElement: false,
+          typeAnimated: false,
+          icon: 'fa fa-calendar-check',
+          title: 'Chọn ngày',
+          closeIcon: true,
+          closeIconClass: 'fa fa-close',
+          columnClass: 's',
+          type: 'blue',
+          escapeKey: 'cancel',
+          content: content,
+          buttons: {
+            chon: {
+              text: '<i class="fa fa-calendar-check"></i> Chọn',
+              btnClass: 'btn-primary',
+              action: function () {
+                today = $('#txt-ngay-chon').val();
+                monitor('monitor', draw_init);
+              }
+            },
+
+            cancel: {
+              text: '<i class="fa fa-circle-xmark"></i> Đóng',
+              keys: ['esc'],
+              btnClass: 'btn-red',
+            }
+          },
+          onContentReady: function () {
+            function addDays(date, days) {
+              var result = new Date(date);
+              result.setDate(result.getDate() + days);
+              return result;
+            }
+
+          }
+        });
       });
       if (callback2) callback2(json);
     } else {
@@ -845,145 +923,7 @@
   //--end thuc_don--
 
   //--report zone--
-  function format(s) {
-    var m, h;
-    m = s >= 60 ? parseInt(s / 60) : 0;
-    h = m >= 60 ? parseInt(m / 60) : 0;
-    m = m % 60;
-    s = s % 60;
 
-    if (m < 10) m = '0' + m;
-    if (s < 10) s = '0' + s;
-    if (h > 0) {
-      if (h < 10) h = '0' + h;
-      return h + ':' + m + ':' + s;
-    } else {
-      return m + ':' + s;
-    }
-  }
-
-  function thong_ke_chi_tiet(date) {
-    $.post(api,
-      {
-        action: 'report_detail',
-        date: date,
-      },
-      function (json) {
-        if (json.ok) {
-          var content = '<div class="table-responsive-sm"><table id="thong-ke-chi-tiet" class="table table-hover table-striped">';
-          content += '<thead><tr class="table-info fw-bold">' +
-            '<th align=center>stt</th>' +
-            '<th align=center>Phòng</th>' +
-            '<th align=center>Giờ vào</th>' +
-            '<th align=center>Giờ ra</th>' +
-            '<th align=center>Số phút</th>' +
-            '<th align=center>Note</th>' +
-            '</tr></thead><tbody>';
-          var stt = 0;
-          for (var item of json.data) {
-            var t1 = item.tin.split(' '); if (t1.length > 1) t1 = t1[1];
-            var t2 = item.tout.split(' '); if (t2.length > 1) t2 = t2[1]; else t2 = '(đang tắm)';
-            var nhanh = ['bg-info', 'Tắm siêu nhanh'];
-            if (item.use > 10 && item.use <= 15) nhanh = ['bg-primary', 'Tắm nhanh'];
-            if (item.use > 15 && item.use <= 20) nhanh = ['bg-warning', 'Tắm hơi chậm'];
-            if (item.use > 20) nhanh = ['bg-danger', 'Tắm rất chậm'];
-            content += '<tr class="' + (item.huy ? 'table-danger' : '') + '">' +
-              '<td align=center>' + (++stt) + '</td>' +
-              '<td align=center><span class="badge rounded-pill ' + (item.loai ? 'bg-primary' : 'bg-info') + '">' + (item.loai ? 'Nam' : 'Nữ') + ' ' + item.pid + '</span></td>' +
-              '<td align=center>' + t1 + '</td>' +
-              '<td align=center>' + t2 + '</td>' +
-              '<td align=center><span class="badge rounded-pill ' + nhanh[0] + '" title="' + nhanh[1] + '">' + item.use + '</span></td>' +
-              '<td align=center>' + (item.huy ? '<span class="badge rounded-pill bg-warning">Hủy</span>' : nhanh[1]) + '</td>' +
-              '</tr>'
-          }
-          content += '</tbody></table></div>';
-          $.confirm({
-            animateFromElement: false,
-            typeAnimated: false,
-            icon: 'fa fa-calendar-days',
-            title: 'Thống kê chi tiết ngày ' + date + '',
-            content: content,
-            closeIcon: true,
-            closeIconClass: 'fa fa-close',
-            columnClass: 'l',
-            type: 'purple',
-            escapeKey: 'ok',
-            buttons: {
-              ok: {
-                text: '<i class="fa fa-circle-xmark"></i> Đóng lại',
-                btnClass: 'btn-info',
-              }
-            },
-            onContentReady: function () {
-              sort_table('#thong-ke-chi-tiet', 'Thống kê chi tiết ngày ' + date, 10);
-            }
-          });
-        } else {
-          thong_bao_loi(json); //báo lỗi khi thong_ke_tong_hop
-        }
-      }
-    );
-  }
-  function thong_ke() {
-    if (alert_not_login()) return; //phải login trước khi thống kê
-    if (not_allow()) return;//khi thống kê thì phải có quyền
-    var ww = $(window).width()
-    var dw = $(document).width()
-    $.post(api,
-      {
-        action: 'thong_ke',
-      },
-      function (json) {
-        if (json.ok) {
-          var content = '<div class="table-responsive-sm"><table id="thong-ke-tong-hop" class="table table-hover" title="Click vào mỗi dòng để xem chi tiết từng ngày">';
-          content += '<thead>' +
-            '<tr class="table-info fw-bold">' +
-            '<th align=center>STT</th>' +
-            '<th align=center>Ngày</th>' +
-            '<th align=center>Số lượt tắm</th>' +
-            '<th align=center>Số lượt hủy</th>' +
-            '</tr>' +
-            '</thead>' +
-            '<tbody>';
-          var tam = 0, huy = 0, stt = 0;
-          for (var item of json.data) {
-            content += '<tr class="btn-report-detail" data-date="' + item.date + '"><td align=center>' + (++stt) + '</td><td align=center>' + item.date + '</td><td align=center><span class="badge rounded-pill bg-primary">' + item.tam + '</span></td><td align=center><span class="badge rounded-pill bg-danger">' + item.huy + '</span></td></tr>';
-            tam += item.tam;
-            huy += item.huy;
-          }
-          content += '<tr class="table-warning fw-bold"><td align=center>' + (++stt) + '</td><td align=right>Tổng:</td><td align=center><span class="badge rounded-pill bg-primary">' + tam + '</span></td><td align=center><span class="badge rounded-pill bg-danger">' + huy + '</span></td></tr>';
-          content += '</tbody></table></div>';
-          $.confirm({
-            animateFromElement: false,
-            typeAnimated: false,
-            icon: 'fa fa-flag-checkered',
-            title: 'Thống kê tổng hợp',
-            content: content,
-            closeIcon: true,
-            closeIconClass: 'fa fa-close',
-            type: 'purple',
-            escapeKey: 'ok',
-            columnClass: 'm',
-            buttons: {
-              ok: {
-                text: '<i class="fa fa-circle-xmark"></i> Đóng lại',
-                btnClass: 'btn-info',
-              }
-            },
-            onContentReady: function () {
-              $('.btn-report-detail').click(function () {
-                var date = $(this).data('date');
-                thong_ke_chi_tiet(date);
-              });
-              sort_table('#thong-ke-tong-hop', 'Thống kê tổng hợp', 10);
-            }
-          });
-        } else {
-          thong_bao_loi(json); //báo lỗi khi thong_ke
-        }
-      }
-    );
-  }
   //--end report zone--
 
   //--các hàng dùng chung
@@ -2284,6 +2224,7 @@
     get_list_setting();
 
     var wait_monitor = 0;
+    today = getLocal('ngay');
 
     monitor('monitor', draw_init);
     setInterval(function () {
@@ -2294,7 +2235,6 @@
       }
     }, 1000);
     //setInterval(function () { auto_play_in_queue() }, 1000);
-    $('.btn-thong-ke').click(function () { thong_ke(); });
     $('.btn-thuc-don').click(function () { thuc_don(); });
     $('#cmdLogin').click(function () { do_login() });
     $('#cmdLogout').click(function () { do_logout(); });

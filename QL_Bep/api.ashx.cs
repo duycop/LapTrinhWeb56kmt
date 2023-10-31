@@ -369,23 +369,23 @@ namespace SuatAn
             context.Response.Write(json);
         }
 
-        void report(string action)
+        void report(string action)  //truyền action ngay từ page_load vào
         {
             try
             {
-                SqlServer db = new SqlServer();
-                SqlCommand cm = db.GetCmd("SP_Report", action);
-
-                string json = (string)db.Scalar(cm);
-                context.Response.Write(json);
+                SqlServer db = new SqlServer(); //dùng thư viện SqlServer
+                SqlCommand cm = db.GetCmd("SP_Report", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
+                cm.Parameters.Add("@ngay", SqlDbType.Date).Value = context.Request["today"]; //truyền tham số cho cm
+                string json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
+                context.Response.Write(json); //trả về client, trong này có ok=true rồi
             }
-            catch (Exception ex)
+            catch (Exception ex) //bẫy lỗi
             {
-                Reply reply = new Reply();
-                reply.msg = ex.Message;
-                reply.ok = false;
-                string json = JsonConvert.SerializeObject(reply);
-                context.Response.Write(json);
+                Reply reply = new Reply(); //tạo đối tượng để trả về lỗi
+                reply.msg = ex.Message; //lấy lỗi bẫy được
+                reply.ok = false; //báo lỗi qua ok
+                string json = JsonConvert.SerializeObject(reply); //dùng json net để tạo chuỗi
+                context.Response.Write(json); //gửi về client
             }
         }
         void suat_an(string action)
