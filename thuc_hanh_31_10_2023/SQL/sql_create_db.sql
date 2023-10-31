@@ -13,6 +13,7 @@ CREATE TABLE [dbo].[Company](
 	[lat] [float] NULL,
 	[lng] [float] NULL,
 	[phone] [varchar](50) NULL,
+	[zalo]  [varchar](100) NULL,
 	[del_at] [datetime] NULL,
  CONSTRAINT [PK_Company] PRIMARY KEY CLUSTERED 
 (
