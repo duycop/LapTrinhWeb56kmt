@@ -457,6 +457,8 @@ namespace SuatAn
                     case "add_order":
                     case "delete_order":
                     case "save_order":
+                    case "goi_y_order":
+                    case "copy_order":
                         if (role == 3 || role == 100)
                         {
                             cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
@@ -503,8 +505,8 @@ namespace SuatAn
                     case "save_order":
                         //1 xóa hết order cũ
                         SqlCommand cm2 = db.GetCmd("SP_SuatAn", "remove_order_cty_ca");
-                        cm2.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id"];
-                        cm2.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["ca"];
+                        cm2.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
+                        cm2.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
                         if (today != null && today != "") cm2.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm3
                         
                         db.RunSQL(cm2); 
@@ -527,8 +529,8 @@ namespace SuatAn
                             {
                                 xx = " lần này sl = "+sl;
                                 SqlCommand cm3 = db.GetCmd("SP_SuatAn", "add_order_cty_ca");
-                                cm3.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id"];
-                                cm3.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["ca"];
+                                cm3.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
+                                cm3.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
                                 cm3.Parameters.Add("@id_suat", SqlDbType.Int).Value = ids;
                                 cm3.Parameters.Add("@so_luong", SqlDbType.Int).Value = sl;
                                 if (today != null && today != "") cm3.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm
@@ -542,6 +544,14 @@ namespace SuatAn
                         string json_save = JsonConvert.SerializeObject(reply);
                         context.Response.Write(json_save);
                         return;
+                    case "goi_y_order":
+                        cm.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
+                        cm.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
+                        break;
+                    case "copy_order":
+                        cm.Parameters.Add("@ngay_old", SqlDbType.Date).Value = context.Request["ngay_from"];
+                        cm.Parameters.Add("@ngay_new", SqlDbType.Date).Value = context.Request["ngay_to"];
+                        break;
                 }
                 string json = (string)db.Scalar(cm);
                 context.Response.Write(json);
@@ -586,6 +596,8 @@ namespace SuatAn
                 //case "add_order":
                 //case "delete_order":
                 case "save_order":
+                case "goi_y_order":
+                case "copy_order":
                     suat_an(action);
                     break;
 

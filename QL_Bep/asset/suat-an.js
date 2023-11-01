@@ -158,7 +158,8 @@
         var tts = JSON.parse(json);
         console.log(['play audio', Q, mp3 + tts.fn, txt]);
         playSound(mp3 + tts.fn, txt);  //play url=file này trong thư mục mp3
-      });//end ajax post
+      }
+    );//end ajax post
   }
   function auto_play_in_queue() {
     if (!gtts_playing && !Q.isEmpty()) {
@@ -178,7 +179,7 @@
         json_global = json;
         callback(json, callback2);
       },
-    );
+    );//end $.post
   }
 
   function alert_not_login() {
@@ -236,6 +237,10 @@
   function company_order(item_company, ca, json) {
     if (!ca) ca = 0;
     if (ca == 0) return;
+    if (item_company.default.length == 0) {
+      thong_bao_loi({ ok: 0, msg: 'Chưa thiết lập các suất hay ăn cho công ty này.<br>Hãy dùng chức năng SỬA công ty nhé!' })
+      return;
+    }
 
     var ds_company = '', ds_ca = '', ds_suat = '';
     for (var cty_item of json.data) {
@@ -279,6 +284,7 @@
       });
     }
     function list_order_done(id_company, id_ca) {
+
       var s = []
       for (var item of json_global.data) {
         if (item.id == id_company) {
@@ -345,7 +351,8 @@
           }
           else
             thong_bao_loi(json);
-        })
+        }
+      );//end $.post
     }
     function update_name_cty() {
       var id_company = $('#edit-company').val();
@@ -401,7 +408,8 @@
                   }
                   else
                     thong_bao_loi(json);
-                })
+                }
+              );//end $.post
             }
           },
           cancel: {
@@ -446,7 +454,8 @@
           } else {
             thong_bao_loi(json)
           }
-        });
+        }
+      );//end $.post
       return false;
     }
     function edit_button(id_suat, soluong) {
@@ -465,11 +474,10 @@
     if (ca == 2) c = item_company.c2;
     if (ca == 3) c = item_company.c3;
     if (ca == 4) c = item_company.c4;
-    
-    //console.log(c);
+
     for (var suat of item_company.default) {
       for (var item of json.suat) {
-        var so_luong=0
+        var so_luong = 0
         if (suat.id == item.id) {
 
           for (var order_item of c) {
@@ -478,14 +486,13 @@
               break;
             }
           }
-          console.log(so_luong)
           row_order_nhanh += `
             <tr>
               <td>${item.name}:</td>
               <td>
               <div class="input-group">
                 <span class="input-group-text">Số lượng đặt:</span>
-                <input type="number" min="0" max="5000" oninput="validity.valid||(value='');" data-sid="${item.id}" class="form-control input_soluong_order" value="${so_luong}">
+                <input type="number" min="0" max="5000" oninput="validity.valid||(value='');" data-sid="${item.id}" class="form-control input_soluong_order" style="text-align:right" value="${so_luong}">
                 <span class="input-group-text"> x ${format_price(item.price)}</span>
               </div>
               </td>
@@ -547,15 +554,15 @@
           action: function () {
             //lấy thông tin trên form
             //gửi đi với action='save_order'
-            var order_id = [], order_sl=[];
+            var order_id = [], order_sl = [];
             $('.input_soluong_order').each(function (i, item) {
               order_id.push($(item).data('sid'))
               order_sl.push(parseInt(item.value))
             })
             var data_save = {
               action: 'save_order',
-              id: item_company.id,
-              ca: ca,
+              id_company: item_company.id,
+              id_ca: ca,
               order_id: order_id,
               order_sl: order_sl
             }
@@ -570,7 +577,8 @@
                 } else {
                   thong_bao_loi(json);
                 }
-              });
+              }
+            );//end $.post
 
 
             return false;
@@ -685,7 +693,23 @@
                   text: '<i class="fa fa-circle-check"></i> YES',
                   btnClass: 'btn-red',
                   action: function () {
-                    thong_bao_loi({ ok: 0, msg: 'coding...' });
+                    $.post(api,
+                      {
+                        action: 'copy_order',
+                        ngay_from: $('#ngay-from').val(),
+                        ngay_to: $('#ngay-to').val()
+                      },
+                      function (json) {
+                        if (json.ok) {
+                          thong_bao_ok(json);
+                          monitor('monitor', draw_init);
+                          dialog_confirm_copy.close();
+                          dialog_copy.close();
+                        } else {
+                          thong_bao_loi(json);
+                        }
+                      }
+                    );
                     //return false;//ko đóng dialog_confirm_copy
                   }
                 },
@@ -808,7 +832,7 @@
         </div>
         <span id="khoang-cach-ngay">Tính khoảng cách...</span>
         `;
-        $.confirm({
+        var dialog_chon_ngay = $.confirm({
           animateFromElement: false,
           typeAnimated: false,
           icon: 'fa fa-calendar-check',
@@ -932,7 +956,8 @@
         else {
           thong_bao_loi(json)
         }
-      });
+      }
+    );//end $.post
   }
   function edit_suat_an(item) {
     var content = `<div class="table-responsive-sm"><table align="center" width="100%">
@@ -982,7 +1007,8 @@
                 } else {
                   thong_bao_loi(json)
                 }
-              });
+              }
+            );//end $.post
             return false;
           }
         },
@@ -1007,7 +1033,8 @@
                 } else {
                   thong_bao_loi(json)
                 }
-              });
+              }
+            );//end $.post
             return false;
           }
         },
@@ -1045,7 +1072,8 @@
                         } else {
                           thong_bao_loi(json)
                         }
-                      });
+                      }
+                    );//end $.post
                   }
                 },
                 cancel: {
@@ -1115,7 +1143,8 @@
                 } else {
                   thong_bao_loi(json)
                 }
-              });
+              }
+            );//end $.post
             return false;
           }
         },
@@ -1362,7 +1391,8 @@
                 } else {
                   thong_bao_loi(json); //báo lỗi khi add_user
                 }
-              });
+              }
+            );//end $.post
             return false; // ko đóng
           }
         },
@@ -1426,7 +1456,8 @@
                 } else {
                   thong_bao_loi(json); //báo lỗi khi set_pw
                 }
-              });
+              }
+            );//end $.post
             return false; // ko đóng
           }
         },
@@ -1463,13 +1494,19 @@
           keys: ['enter', 'x', 'X'],
           action: function () {
             //gửi đi api: y/c xóa
-            $.post(api, { action: 'delete_user', deluid: uid }, function (json) {
-              if (json.ok) {
-                list_user(); //sau khi delete_user thì tải lại
-              } else {
-                thong_bao_loi(json); //báo lỗi khi delete_user
+            $.post(api,
+              {
+                action: 'delete_user',
+                deluid: uid
+              },
+              function (json) {
+                if (json.ok) {
+                  list_user(); //sau khi delete_user thì tải lại
+                } else {
+                  thong_bao_loi(json); //báo lỗi khi delete_user
+                }
               }
-            });
+            );//end $.post
           }
         },
         cancel: {
@@ -1481,39 +1518,44 @@
     });
   }
   function list_user() {
-    $.post(api, { action: 'list_user' }, function (json) {
-      if (json.ok) {
-        all_quyen = json.quyen;
-        var s = '<h4>Danh sách user</h4>' +
-          '<div class="table-responsive-sm"><table class="table table-hover"><thead><tr class="table-info"><th>STT</th><th>Uid</th><th>Fullname</th><th>Role</th><th>Last login</th><th>Action</th></tr></thead><tbody>';
-        var stt = 0;
-        for (var item of json.data) {
-          s += '<tr>';
-          s += '<td align="center">' + (++stt) + '</td>';
-          s += '<td nowarp>' + item.uid + '</td>';
-          s += '<td nowarp>' + item.fullname.replace(' ', ' ') + '</td>';
-          s += '<td nowarp>' + item.rolename + '</td>';
-          s += '<td nowarp>' + item.last + '</td>';
-          var action = '<button class="btn btn-sm btn-warning btn-action-user" data-action="set_pw" data-uid="' + item.uid + '" title="Set password"><i class="fa fa-key"></i></button>';
-          action += ' <button class="btn btn-sm btn-danger btn-action-user" data-action="delete_user" data-uid="' + item.uid + '" title="Delete user"><i class="fa fa-user-xmark"></i></button>';
-          s += '<td>' + action + '</td></tr>';
-          s += '</tr>';
-        }
-        s += '</tbody></table></div>';
-        $('#list-user').html(s);
-        $('.btn-action-user').click(function () {
-          var action = $(this).data('action');
-          var uid = $(this).data('uid');
-          if (action == 'delete_user') {
-            delete_user(uid);
-          } else if (action == 'set_pw') {
-            set_pw(uid);
+    $.post(api,
+      {
+        action: 'list_user'
+      },
+      function (json) {
+        if (json.ok) {
+          all_quyen = json.quyen;
+          var s = '<h4>Danh sách user</h4>' +
+            '<div class="table-responsive-sm"><table class="table table-hover"><thead><tr class="table-info"><th>STT</th><th>Uid</th><th>Fullname</th><th>Role</th><th>Last login</th><th>Action</th></tr></thead><tbody>';
+          var stt = 0;
+          for (var item of json.data) {
+            s += '<tr>';
+            s += '<td align="center">' + (++stt) + '</td>';
+            s += '<td nowarp>' + item.uid + '</td>';
+            s += '<td nowarp>' + item.fullname.replace(' ', ' ') + '</td>';
+            s += '<td nowarp>' + item.rolename + '</td>';
+            s += '<td nowarp>' + item.last + '</td>';
+            var action = '<button class="btn btn-sm btn-warning btn-action-user" data-action="set_pw" data-uid="' + item.uid + '" title="Set password"><i class="fa fa-key"></i></button>';
+            action += ' <button class="btn btn-sm btn-danger btn-action-user" data-action="delete_user" data-uid="' + item.uid + '" title="Delete user"><i class="fa fa-user-xmark"></i></button>';
+            s += '<td>' + action + '</td></tr>';
+            s += '</tr>';
           }
-        });
-      } else {
-        thong_bao_loi(json); //báo lỗi khi list_user
+          s += '</tbody></table></div>';
+          $('#list-user').html(s);
+          $('.btn-action-user').click(function () {
+            var action = $(this).data('action');
+            var uid = $(this).data('uid');
+            if (action == 'delete_user') {
+              delete_user(uid);
+            } else if (action == 'set_pw') {
+              set_pw(uid);
+            }
+          });
+        } else {
+          thong_bao_loi(json); //báo lỗi khi list_user
+        }
       }
-    });//end get list_user
+    );//end get list_user
   }
   function do_change_pw() {
     //show tên , uid : ko cần nhập
@@ -1552,22 +1594,25 @@
           action: function () {
             var pwd = $('#old-pwd').val();
             var pwd2 = $('#new-pwd').val();
-            $.post(api, {
-              action: 'do_change_pw',
-              pwd: pwd,
-              pwd2: pwd2,
-            }, function (json) {
-              if (json.ok) {
-                //cần lưu cookie mới
-                setLocal("ck", json.cookie)
-                setCookie('ck', json.cookie, 30);
-                if (json.msg != null && json.msg != "")
-                  toastr["info"](json.msg)
-                dialog_change_pw.close();
-              } else {
-                thong_bao_loi(json) //báo lỗi khi do_change_pw
+            $.post(api,
+              {
+                action: 'do_change_pw',
+                pwd: pwd,
+                pwd2: pwd2,
+              },
+              function (json) {
+                if (json.ok) {
+                  //cần lưu cookie mới
+                  setLocal("ck", json.cookie)
+                  setCookie('ck', json.cookie, 30);
+                  if (json.msg != null && json.msg != "")
+                    toastr["info"](json.msg)
+                  dialog_change_pw.close();
+                } else {
+                  thong_bao_loi(json) //báo lỗi khi do_change_pw
+                }
               }
-            });
+            );//end $.post
             return false;//ko đóng
           }
         },
@@ -1597,7 +1642,6 @@
           btnClass: 'btn-primary',
           isHidden: true,
           action: function () {
-            //console.log(all_quyen);
             add_new_user();
             return false; //ko đóng dialog
           }
@@ -1700,15 +1744,18 @@
               phone: $('#edit-phone').val(),
               zalo: $('#edit-zalo').val(),
             }
-            $.post(api, data, function (json) {
-              if (json.ok) {
-                thong_bao_ok(json);
-                list_company();
-                dialog_company_edit.close();
-              } else {
-                thong_bao_loi(json);
+            $.post(api,
+              data,
+              function (json) {
+                if (json.ok) {
+                  thong_bao_ok(json);
+                  list_company();
+                  dialog_company_edit.close();
+                } else {
+                  thong_bao_loi(json);
+                }
               }
-            })
+            );//end $.post
             return false; //ko đóng
           }
         },
@@ -1744,6 +1791,69 @@
       }
       return false;
     }
+    function goi_y() {
+      $.post(api,
+        {
+          action: 'goi_y_order',
+          id_company: item.id
+        },
+        function (json) {
+          if (json.ok) {
+            var content = `Công ty ${item.name} đã đặt các suất ăn:<div class="table-responsive-sm">
+                <table class="table table-hover"><thead>
+                <tr class="table-info">
+                <th>STT</th>
+                <th>Sign</th>
+                <th>Name</th>
+                <th style="text-align:right">Price</th>
+                <th style="text-align:right">Sum&nbsp;Order</th>
+                <th style="text-align:center">Enable</th>
+                </tr>
+                </thead><tbody>`;
+            var stt = 0;
+            var arr_goiy = []
+            for (var sitem of json.data) {
+              arr_goiy.push(sitem.id);
+              content += `<tr class="${sitem.enable ? '' : 'table-danger'}">
+                  <td align=center>${++stt}</td>
+                  <td>${sitem.sign}</td>
+                  <td>${sitem.name}</td>
+                  <td align=right>${format_price(sitem.price)}</td>
+                  <td align=right>${sitem.sl}</td>
+                  <td align=center>${sitem.enable ? '<span class="badge rounded-pill bg-primary">Yes</span>' : '<span class="badge rounded-pill bg-danger">NO</span>'}</td>
+                  </tr>`;
+            }
+            content += '</tbody></table></div>';
+            $.confirm({
+              animateFromElement: false,
+              typeAnimated: false,
+              icon: 'fa fa-hand-point-right',
+              title: 'Gợi ý các suất ăn cho công ty: ' + item.name,
+              columnClass: 'm',
+              content: content,
+              type: 'green',
+              buttons: {
+                ok: {
+                  text: '<i class="fa fa-circle-check"></i> Chọn theo gợi ý',
+                  btnClass: 'btn-info',
+                  action: function () {
+                    $('#cbo_default_order').val(arr_goiy);
+                    $('#cbo_default_order').trigger('change');
+                  }
+                },
+                cancel: {
+                  text: '<i class="fa fa-circle-xmark"></i> Close',
+                  keys: ['esc'],
+                  btnClass: 'btn-red',
+                }
+              }
+            });
+          } else {
+            thong_bao_loi(json);
+          }
+        }
+      );
+    }
     for (var suat_item of json.suat) {
       if (in_order(suat_item.id))
         default_order += `<option selected value="${suat_item.id}">${suat_item.name} (${format_price(suat_item.price)})</option>`;
@@ -1753,7 +1863,7 @@
     var content = `
     <div class="table-responsive-sm"><table align="center" width="100%" class="table-company">
     <tr>
-    <td width="10%">Name:</td>
+    <td width="12%">Name:</td>
     <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `" placeholder="Nhập tên công ty"></td>
     </tr>
     <tr>
@@ -1778,7 +1888,7 @@
     <td><input type="text" class="form-control" id="edit-zalo" value="`+ item.zalo + `" placeholder="https://zalo.me/..."></td>
     </tr>
     <tr>
-    <td>Hay&nbsp;ăn:</td>
+    <td id="goi-y-hay-an" title="Click để xem công ty này từng ăn món nào" nowarp>Hay&nbsp;ăn&nbsp;<i class="fa fa-circle-question" style="color:red"></i>:</td>
     <td><select class="form-control" id="cbo_default_order" name="order[]" multiple="multiple" style="width: 100%">${default_order}</select></td>
     </tr>
     </table></div>
@@ -1802,6 +1912,13 @@
             for (var op of selected) {
               default_order.push(op.value);
             }
+
+            if (default_order.length==0) {
+              thong_bao_loi({ ok: 0, msg: 'Phải chọn suất ăn' });
+              $('#cbo_default_order').focus();
+              return false;
+            }
+
             var data = {
               action: 'edit_company',
               id: item.id,
@@ -1812,16 +1929,27 @@
               zalo: $('#edit-zalo').val(),
               default_order: default_order
             }
-            $.post(api, data, function (json) {
-              if (json.ok) {
-                thong_bao_ok(json);
-                list_company();
-                dialog_company_edit.close();
-              } else {
-                thong_bao_loi(json);
+            $.post(api, data,
+              function (json) {
+                if (json.ok) {
+                  thong_bao_ok(json);
+                  list_company();
+                  monitor('monitor', draw_init);
+                  dialog_company_edit.close();
+                } else {
+                  thong_bao_loi(json);
+                }
               }
-            })
+            );//end $.post
             return false; //ko đóng
+          }
+        },
+        goi_y: {
+          text: '<i class="fa fa-hand-point-right"></i> Gợi ý',
+          btnClass: 'btn-info',
+          action: function () {
+            goi_y();
+            return false;
           }
         },
         cancel: {
@@ -1841,7 +1969,14 @@
             toastr["warning"]('Không lấy được gps');
           }
         });
-        $('#cbo_default_order').select2();
+        $('#goi-y-hay-an').click(function () {
+          goi_y();
+        });
+        $('#cbo_default_order').select2({
+          placeholder: 'Chọn suất ăn cho công ty',
+          closeOnSelect: false,
+          allowClear: true,
+        });
       }
     });
   }
@@ -1868,16 +2003,22 @@
           btnClass: 'btn-red',
           action: function () {
             //gửi api để xóa
-            $.post(api, { action: 'delete_company', id: item.id }, function (json) {
-              if (json.ok) {
-                thong_bao_ok(json);
-                list_company();
-                dialog_del_company.close();
+            $.post(api,
+              {
+                action: 'delete_company',
+                id: item.id
+              },
+              function (json) {
+                if (json.ok) {
+                  thong_bao_ok(json);
+                  list_company();
+                  dialog_del_company.close();
+                }
+                else {
+                  thong_bao_loi(json);
+                }
               }
-              else {
-                thong_bao_loi(json);
-              }
-            })
+            );//end $.post
             return false; //ko đóng dialog
           }
         },
@@ -1906,89 +2047,94 @@
     return s;
   }
   function list_company() {
-    $.post(api, { action: 'list_company' }, function (json) {
-      if (json.ok) {
-        var content = '<div class="table-responsive-sm">' +
-          '<table id="ds_company" class="table table-hover table-striped">' +
-          '<thead><tr class="table-info fw-bold">' +
-          '<th class="text-center">STT</th>' +
-          '<th>Công ty</th>' +
-          '<th>Hay ăn</th>' +
-          '<th>Địa chỉ</th>' +
-          '<th>Chỉ đường</th>' +
-          '<th>Phone</th>' +
-          '<th>Zalo</th>' +
-          '<th class="text-center">Sửa/Xóa</th>' +
-          '</tr></thead><tbody>';
+    $.post(api,
+      {
+        action: 'list_company'
+      },
+      function (json) {
+        if (json.ok) {
+          var content = '<div class="table-responsive-sm">' +
+            '<table id="ds_company" class="table table-hover table-striped">' +
+            '<thead><tr class="table-info fw-bold">' +
+            '<th class="text-center">STT</th>' +
+            '<th>Công ty</th>' +
+            '<th>Hay ăn</th>' +
+            '<th>Địa chỉ</th>' +
+            '<th>Chỉ đường</th>' +
+            '<th>Phone</th>' +
+            '<th>Zalo</th>' +
+            '<th class="text-center">Sửa/Xóa</th>' +
+            '</tr></thead><tbody>';
 
-        var stt = 0;
-        for (var item of json.data) {
-          var gps = '';
-          if (item.lat == null || item.lng == null) {
-            gps = '';
-          } else {
-            gps = item.lat + ',' + item.lng;
-            gps = ' <a class="btn btn-sm btn-info btn-go-map" data-gps="' + gps + '" href="https://www.google.com/maps/dir/here/' + gps + '" target="_blank" title="Xem đường đi trên Google Map tới ' + item.name + '"><i class="fa fa-location-dot" style="color:red"></i> Chỉ đường</a>';
-          }
-
-          item.gps = gps;
-
-          var phone = item.phone;
-          if (phone == 'null' || phone == '')
-            phone = '';
-          else
-            phone = '<a href="tel:' + phone + '"><i class="fa fa-tty"></i> ' + phone + '</a>';
-          item.phone2 = phone;
-
-          var zalo = item.zalo;
-          if (zalo == 'null' || zalo == '')
-            zalo = '';
-          else
-            zalo = '<a href="' + zalo + '" target="_blank"><img src="/images/icon-zalo.png" style="width:24px"></a>';
-
-
-          var action = '';
-          action += '<button class="btn btn-sm btn-warning btn-action-company" data-cid="' + item.id + '" data-action="edit-company">Sửa</button>';
-          action += ' ';
-          action += '<button class="btn btn-sm btn-danger btn-action-company" data-cid="' + item.id + '" data-action="delete-company">Xóa</button>';
-          var suat = get_suat(item.default, json.suat)
-          var hay_an = '';
-          for (var s of suat) {
-            hay_an += `<span class="badge bg-info">${s.name}</span> `;
-          }
-          content += '<tr>' +
-            '<td align=center nowarp>' + (++stt) + '</td>' +
-            '<td align=left nowarp>' + (item.name) + '</td>' +
-            '<td align=left nowarp>' + (hay_an) + '</td>' +
-            '<td align=left nowarp>' + (item.address) + '</td>' +
-            '<td align=left nowarp>' + gps + '</td>' +
-            '<td align=left nowarp>' + (phone) + '</td>' +
-            '<td align=left nowarp>' + (zalo) + '</td>' +
-            '<td align=center nowarp>' + (action) + '</td>' +
-            '</tr>';
-        }
-        content += "</tbody></table></div>";
-        $('#list_company').html(content);
-        $('.btn-action-company').click(function () {
-          var id = $(this).data('cid');
-          var selected_item = null;
+          var stt = 0;
           for (var item of json.data) {
-            if (item.id == id) {
-              selected_item = item;
-              break;
+            var gps = '';
+            if (item.lat == null || item.lng == null) {
+              gps = '';
+            } else {
+              gps = item.lat + ',' + item.lng;
+              gps = ' <a class="btn btn-sm btn-info btn-go-map" data-gps="' + gps + '" href="https://www.google.com/maps/dir/here/' + gps + '" target="_blank" title="Xem đường đi trên Google Map tới ' + item.name + '"><i class="fa fa-location-dot" style="color:red"></i> Chỉ đường</a>';
             }
+
+            item.gps = gps;
+
+            var phone = item.phone;
+            if (phone == 'null' || phone == '')
+              phone = '';
+            else
+              phone = '<a href="tel:' + phone + '"><i class="fa fa-tty"></i> ' + phone + '</a>';
+            item.phone2 = phone;
+
+            var zalo = item.zalo;
+            if (zalo == 'null' || zalo == '')
+              zalo = '';
+            else
+              zalo = '<a href="' + zalo + '" target="_blank"><img src="/images/icon-zalo.png" style="width:24px"></a>';
+
+
+            var action = '';
+            action += '<button class="btn btn-sm btn-warning btn-action-company" data-cid="' + item.id + '" data-action="edit-company">Sửa</button>';
+            action += ' ';
+            action += '<button class="btn btn-sm btn-danger btn-action-company" data-cid="' + item.id + '" data-action="delete-company">Xóa</button>';
+            var suat = get_suat(item.default, json.suat)
+            var hay_an = '';
+            for (var s of suat) {
+              hay_an += `<span class="badge bg-info">${s.name}</span> `;
+            }
+            content += '<tr>' +
+              '<td align=center nowarp>' + (++stt) + '</td>' +
+              '<td align=left nowarp>' + (item.name) + '</td>' +
+              '<td align=left nowarp>' + (hay_an) + '</td>' +
+              '<td align=left nowarp>' + (item.address) + '</td>' +
+              '<td align=left nowarp>' + gps + '</td>' +
+              '<td align=left nowarp>' + (phone) + '</td>' +
+              '<td align=left nowarp>' + (zalo) + '</td>' +
+              '<td align=center nowarp>' + (action) + '</td>' +
+              '</tr>';
           }
-          var action = $(this).data('action');
-          if (action == 'edit-company') {
-            show_edit_company(selected_item, json);
-          } else if (action == 'delete-company') {
-            show_delete_company(selected_item);
-          }
-        });
-      } else {
-        $('#list_company').html(json.msg);
+          content += "</tbody></table></div>";
+          $('#list_company').html(content);
+          $('.btn-action-company').click(function () {
+            var id = $(this).data('cid');
+            var selected_item = null;
+            for (var item of json.data) {
+              if (item.id == id) {
+                selected_item = item;
+                break;
+              }
+            }
+            var action = $(this).data('action');
+            if (action == 'edit-company') {
+              show_edit_company(selected_item, json);
+            } else if (action == 'delete-company') {
+              show_delete_company(selected_item);
+            }
+          });
+        } else {
+          $('#list_company').html(json.msg);
+        }
       }
-    });
+    );//end $.post
   }
   function admin_company() {
     if (alert_not_login()) return;// khi vào admin_setting
@@ -2113,7 +2259,8 @@
                   } else {
                     thong_bao_loi(json);
                   }
-                });
+                }
+              );//end $.post
             }
             return false; //ko đóng dialog_edit_setting ngay
           }
@@ -2176,7 +2323,8 @@
         if (json.ok) {
           apply_setting(json);
         }
-      });
+      }
+    );//end $.post
   }
   function list_setting() {
     if (alert_not_login()) return; // list_setting phai login truoc
@@ -2224,7 +2372,8 @@
             }
           }
         });
-      });
+      }
+    );//end $.post
   }
   function admin_setting() {
     if (alert_not_login()) return;// khi vào admin_setting
@@ -2265,7 +2414,8 @@
                     }
                     wait--;
                     if (wait == 0) list_setting();
-                  });
+                  }
+                );//end $.post
               }
             }
             setTimeout(function () {
@@ -2405,7 +2555,8 @@
                     }
                   })
                 }
-              });
+              }
+            );//end $.post
             return false;
           }
         },
@@ -2464,7 +2615,8 @@
           load_gui();
           window.location.href = "/";
         }
-      });
+      }
+    );//end $.post
   }
   function check_login() {
     let ck = get_store('ck');
@@ -2485,7 +2637,8 @@
             setCookie('ck', json.cookie, 30);
           }
           load_gui();
-        });
+        }
+      );//end $.post
     } else {
       logined = false;
       load_gui();
