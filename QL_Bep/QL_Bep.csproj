@@ -52,6 +52,8 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="asset\select2.min.css" />
+    <Content Include="asset\select2.min.js" />
     <Content Include="icon\site.webmanifest" />
     <Content Include="api.ashx" />
     <None Include="packages.config" />
@@ -90,7 +92,6 @@
     <Content Include="asset\toastr.min.js" />
     <Content Include="db_sql\SuatAn_data_only.sql" />
     <Content Include="db_sql\SuatAn_struct_only.sql" />
-    <Content Include="Global.asax" />
     <Content Include="icon\android-chrome-192x192.png" />
     <Content Include="icon\android-chrome-512x512.png" />
     <Content Include="icon\apple-touch-icon.png" />
@@ -105,9 +106,6 @@
   <ItemGroup>
     <Compile Include="api.ashx.cs">
       <DependentUpon>api.ashx</DependentUpon>
-    </Compile>
-    <Compile Include="Global.asax.cs">
-      <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="lib\AppSettingsGet.cs" />
     <Compile Include="lib\LibDB.cs" />

@@ -209,11 +209,32 @@ namespace SuatAn
             {
                 SqlServer db = new SqlServer();
                 string ip = GetIPAddress();
+                string msg = $"ip={ip};";
+                foreach (string item in context.Request.QueryString)
+                {
+                    msg += $"{item}={context.Request.QueryString[item]};";
+                }
+                foreach (string item in context.Request.Form)
+                {
+                    msg += $"{item}={context.Request.Form[item]};";
+                }
+                foreach (string item in context.Request.Cookies)
+                {
+                    if (!item.StartsWith("_"))
+                        msg += $"{item}={context.Request.Cookies[item].Value};";
+                }
                 var userAgent = context.Request.Headers["User-Agent"];
-                string msg = $"IP: {ip}\nUserAgent: {userAgent}\n";
+                msg += $"userAgent={userAgent}";
                 db.LogMsg(action, msg);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                SqlServer db = new SqlServer();
+                string ip = GetIPAddress();
+                //var userAgent = context.Request.Headers["User-Agent"];
+                string msg = $"ip: {ip} ex: {ex.Message}";
+                db.LogMsg(action, msg);
+            }
         }
         void admin_setting(string action)
         {
@@ -328,6 +349,7 @@ namespace SuatAn
                     cm.Parameters.Add("@lat", SqlDbType.Float).Value = lat;
                     cm.Parameters.Add("@lng", SqlDbType.Float).Value = lng;
                     cm.Parameters.Add("@phone", SqlDbType.VarChar, 50).Value = context.Request["phone"];
+
                 }
                 else if (action == "delete_company")
                 {
@@ -348,6 +370,27 @@ namespace SuatAn
                 if (cm != null)
                 {
                     string json_str = (string)db.Scalar(cm);
+
+
+                    if (action == "add_company" || action == "edit_company")
+                    {
+                        //cần cập nhật vào bảng DefautOrder
+                        //test: nhận được dữ liệu đã
+                        string default_order = context.Request.Form["default_order[]"];
+
+                        SqlCommand cm1 = db.GetCmd("SP_Company", "delele_all_default_order");
+                        cm1.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                        db.RunSQL(cm1);
+
+                        string[] arr = default_order.Split(new char[] { ',' });
+                        foreach (string ids in arr)
+                        {
+                            SqlCommand cm2 = db.GetCmd("SP_Company", "add_default_order");
+                            cm2.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                            cm2.Parameters.Add("@ids", SqlDbType.Int).Value = ids;
+                            db.RunSQL(cm2);
+                        }
+                    }
 
                     context.Response.Write(json_str);
                     context.Response.End();
@@ -375,7 +418,9 @@ namespace SuatAn
             {
                 SqlServer db = new SqlServer(); //dùng thư viện SqlServer
                 SqlCommand cm = db.GetCmd("SP_Report", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
-                cm.Parameters.Add("@ngay", SqlDbType.Date).Value = context.Request["today"]; //truyền tham số cho cm
+                string today = context.Request.Cookies["today"].Value;
+                if (today != null && today != "")
+                    cm.Parameters.Add("@ngay", SqlDbType.Date).Value = today; //truyền tham số cho cm
                 string json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
                 context.Response.Write(json); //trả về client, trong này có ok=true rồi
             }
@@ -390,11 +435,17 @@ namespace SuatAn
         }
         void suat_an(string action)
         {
+            string xx = "";
             try
             {
                 SqlServer db = new SqlServer();
                 SqlCommand cm = db.GetCmd("SP_SuatAn", action);
                 int role = get_role();
+
+                string today = context.Request.Cookies["today"].Value;
+                if (today != null && today != "") cm.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm
+
+
                 switch (action)
                 {
                     case "add_suat_an":
@@ -405,6 +456,7 @@ namespace SuatAn
 
                     case "add_order":
                     case "delete_order":
+                    case "save_order":
                         if (role == 3 || role == 100)
                         {
                             cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
@@ -447,6 +499,49 @@ namespace SuatAn
                     case "add_order":
                         cm.Parameters.Add("@so_luong", SqlDbType.Int).Value = context.Request["so_luong"];
                         break;
+
+                    case "save_order":
+                        //1 xóa hết order cũ
+                        SqlCommand cm2 = db.GetCmd("SP_SuatAn", "remove_order_cty_ca");
+                        cm2.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id"];
+                        cm2.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["ca"];
+                        if (today != null && today != "") cm2.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm3
+                        
+                        db.RunSQL(cm2); 
+
+                        //2 add từng order mới
+                        string order_id = context.Request.Form["order_id[]"];
+                        string order_sl= context.Request.Form["order_sl[]"];
+                        char[] sep = { ',' };
+                        string[] arr_id = order_id.Split(sep);
+                        string[] arr_sl = order_sl.Split(sep);
+                        for(int i = 0; i < arr_id.Length; i++)
+                        {
+                            string ids= arr_id[i];
+                            string sl= arr_sl[i];
+                            if(sl=="0"|| sl == "" || sl == "NaN")
+                            {
+                                //ko làm gi
+                            }
+                            else
+                            {
+                                xx = " lần này sl = "+sl;
+                                SqlCommand cm3 = db.GetCmd("SP_SuatAn", "add_order_cty_ca");
+                                cm3.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id"];
+                                cm3.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["ca"];
+                                cm3.Parameters.Add("@id_suat", SqlDbType.Int).Value = ids;
+                                cm3.Parameters.Add("@so_luong", SqlDbType.Int).Value = sl;
+                                if (today != null && today != "") cm3.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm
+
+                                db.RunSQL(cm3);
+                            }
+                        }
+                        Reply reply = new Reply();
+                        reply.msg = "Đã cập nhật số lượng suất ăn thành công";
+                        reply.ok = true;
+                        string json_save = JsonConvert.SerializeObject(reply);
+                        context.Response.Write(json_save);
+                        return;
                 }
                 string json = (string)db.Scalar(cm);
                 context.Response.Write(json);
@@ -454,19 +549,32 @@ namespace SuatAn
             catch (Exception ex)
             {
                 Reply reply = new Reply();
-                reply.msg = ex.Message;
+                reply.msg = ex.Message + xx;
                 reply.ok = false;
                 string json = JsonConvert.SerializeObject(reply);
                 context.Response.Write(json);
             }
         }
+        void remove_ck()
+        {
+            try
+            {
+                string[] cks = { "xbc", "__pat", "__pvi", "__tbc" };
+                foreach (string ck in cks)
+                {
+                    context.Request.Cookies.Remove(ck);
+                    context.Response.Cookies.Remove(ck);
+                }
+            }
+            catch { }
+        }
         public void ProcessRequest(HttpContext context)
         {
             this.context = context;
             context.Response.ContentType = "application/json";
+            remove_ck();
             string action = context.Request["action"];
             add_log(action);
-
             switch (action)
             {
                 case "list_suat_an":
@@ -475,8 +583,9 @@ namespace SuatAn
                 case "disable_suat_an":
                 case "delete_suat_an":
                 case "dem_suat_an":
-                case "add_order":
-                case "delete_order":
+                //case "add_order":
+                //case "delete_order":
+                case "save_order":
                     suat_an(action);
                     break;
 

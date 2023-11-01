@@ -1,7 +1,7 @@
 ﻿$(document).ready(function () {
   const setting = {
     tab_title: "MAI FOOD VN",
-    app_title: "CÔNG TY TNHH MAI FOOD VN",
+    app_title: "MAI FOOD VN, Co. Ltd",
     app_sologan: "An toàn, đa dạng, hợp lý!",
     monitor_interval: 1,
   }
@@ -35,7 +35,8 @@
     return null;
   }
   function eraseCookie(name) {
-    document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    //document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
   }
   function getLocal(name) {
     return window.localStorage.getItem(name);
@@ -172,7 +173,6 @@
     $.post(api,
       {
         action: action, //gửi đi action
-        today: today
       },
       function (json) {
         json_global = json;
@@ -456,6 +456,45 @@
       $('#soluong-new').val(soluong);
       $('#soluong-new').focus();
     }
+
+
+    var row_order_nhanh = '';
+
+    var c = [];
+    if (ca == 1) c = item_company.c1;
+    if (ca == 2) c = item_company.c2;
+    if (ca == 3) c = item_company.c3;
+    if (ca == 4) c = item_company.c4;
+    
+    //console.log(c);
+    for (var suat of item_company.default) {
+      for (var item of json.suat) {
+        var so_luong=0
+        if (suat.id == item.id) {
+
+          for (var order_item of c) {
+            if (order_item.id == item.id) {
+              so_luong = order_item.sl;
+              break;
+            }
+          }
+          console.log(so_luong)
+          row_order_nhanh += `
+            <tr>
+              <td>${item.name}:</td>
+              <td>
+              <div class="input-group">
+                <span class="input-group-text">Số lượng đặt:</span>
+                <input type="number" min="0" max="5000" oninput="validity.valid||(value='');" data-sid="${item.id}" class="form-control input_soluong_order" value="${so_luong}">
+                <span class="input-group-text"> x ${format_price(item.price)}</span>
+              </div>
+              </td>
+            </tr>`
+          break;
+        }
+      }
+
+    }
     var content = `<div class="table-responsive-sm">
     <table align="center" width="100%">
     <tr>
@@ -466,12 +505,13 @@
     <td>Ca:</td>
     <td><select class="form-select cbo-order" id="edit-ca">${ds_ca}</select></td>
     </tr>
+    <!--
     <tr>
-    <td>Suất&nbsp;ăn:</td>
+    <td>Suất&nbsp;ăn (tí xóa):</td>
     <td><select class="form-select cbo-order" id="edit-suat">${ds_suat}</select></td>
     </tr>
     <tr>
-    <td>Số&nbsp;lượng:</td>
+    <td>Số&nbsp;lượng (tí xóa):</td>
     <td>
     <div class="input-group">
       <span class="input-group-text">Cũ</span>
@@ -482,10 +522,13 @@
     </div>
     </td>
     </tr>
+    -->
+    ${row_order_nhanh}
     </table></div>
-    <hr>
-    <div class="table-responsive-sm" id="list-order-done">${list_order_done(item_company.id, ca)}</div>
     `;
+    //<hr>
+    //<div class="table-responsive-sm" id="list-order-done">${list_order_done(item_company.id, ca)}</div>
+    //`;
     dialog_order = $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -498,9 +541,44 @@
       escapeKey: 'cancel',
       content: content,
       buttons: {
+        save_db: {
+          text: '<i class="fa fa-floppy-disk"></i> Save',
+          btnClass: 'btn-primary',
+          action: function () {
+            //lấy thông tin trên form
+            //gửi đi với action='save_order'
+            var order_id = [], order_sl=[];
+            $('.input_soluong_order').each(function (i, item) {
+              order_id.push($(item).data('sid'))
+              order_sl.push(parseInt(item.value))
+            })
+            var data_save = {
+              action: 'save_order',
+              id: item_company.id,
+              ca: ca,
+              order_id: order_id,
+              order_sl: order_sl
+            }
+            $.post(api,
+              data_save,
+              function (json) {
+                if (json.ok) {
+                  //đóng hộp thoại edit
+                  dialog_order.close();
+                  //tải lại dữ liệu
+                  reload_order();
+                } else {
+                  thong_bao_loi(json);
+                }
+              });
+
+
+            return false;
+          }
+        },
         reload: {
           text: '<i class="fa fa-utensils"></i> Reload',
-          btnClass: 'btn-primary',
+          btnClass: 'btn-info',
           action: function () {
             reload_order();
             return false;
@@ -548,6 +626,134 @@
       }
     });
   }
+  function get_datediff(date1, date2) {
+    const diffTime = (date2 - date1);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+  function copy_order() {
+    var nay = new Date().toISOString().split('T')[0];
+    var mai = new Date();
+    mai.setDate(mai.getDate() + 1);
+    mai = mai.toISOString().split('T')[0];
+    var content = `
+      <p>Hôm nay là ngày: <span class="badge rounded-pill bg-info">${nay}</span></p>
+      Ngày nguồn:
+      <div class="input-group">
+        <button type="button" class="btn btn-warning btn-next-back-day" data-delta="-1" data-target="#ngay-from">--</button>
+        <input type="date" class="form-control input-ngay-copy" id="ngay-from" value="${nay}" style="text-align:center">
+        <button type="button" class="btn btn-info btn-next-back-day" data-delta="0" data-target="#ngay-from" data-reset="${nay}" title="Chọn ngày: ${nay}">Hôm nay</button>
+        <button type="button" class="btn btn-success btn-next-back-day" data-delta="1" data-target="#ngay-from">++</button>
+      </div>
+      Ngày đích:
+      <div class="input-group">
+        <button type="button" class="btn btn-warning btn-next-back-day" data-delta="-1" data-target="#ngay-to">--</button>
+        <input type="date" class="form-control input-ngay-copy" id="ngay-to" value="${mai}" style="text-align:center">
+        <button type="button" class="btn btn-info btn-next-back-day" data-delta="0" data-target="#ngay-to" data-reset="${mai}" title="Chọn ngày: ${mai}">Ngày mai</button>
+        <button type="button" class="btn btn-success btn-next-back-day" data-delta="1" data-target="#ngay-to">++</button>
+      </div>
+      <span id="date-diff-copy">Copy từ hôm nay đến ngày mai</span>
+    `;
+    var dialog_copy = $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-calendar-check',
+      title: 'Sao chép dữ liệu',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'm',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        copy: {
+          text: '<i class="fa fa-clone"></i> Copy',
+          btnClass: 'btn-primary',
+          action: function () {
+            var dialog_confirm_copy = $.confirm({
+              title: 'Xác nhận copy dữ liệu',
+              content: `Copy dữ liệu từ ${$('#ngay-from').val()} đến ngày ${$('#ngay-to').val()}<br>Mọi dữ liệu của ngày ${$('#ngay-to').val()} sẽ bị xóa và ghi đè.<br>Nếu ngày ${$('#ngay-to').val()} có dữ liệu, hãy copy nó ra xa xa trong tương lai`,
+              animateFromElement: false,
+              typeAnimated: false,
+              icon: 'fa fa-circle-question',
+              columnClass: 'm',
+              type: 'red',
+              escapeKey: 'no',
+              autoClose: "no|30000",
+              buttons: {
+                yes: {
+                  text: '<i class="fa fa-circle-check"></i> YES',
+                  btnClass: 'btn-red',
+                  action: function () {
+                    thong_bao_loi({ ok: 0, msg: 'coding...' });
+                    //return false;//ko đóng dialog_confirm_copy
+                  }
+                },
+                no: {
+                  text: '<i class="fa fa-circle-xmark"></i> NO',
+                  keys: ['esc'],
+                  btnClass: 'btn-blue',
+                }
+              }
+            });
+            return false; //ko đóng dialog_copy
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        var dialog = this;
+        function tinh_khoang_cach_copy() {
+          var ngay_from = $('#ngay-from').val();
+          var ngay_to = $('#ngay-to').val();
+          var ngay_from = new Date(ngay_from);
+          var ngay_to = new Date(ngay_to);
+          var hom_nay = new Date();
+          const d1 = get_datediff(ngay_from, ngay_to);
+          const d2 = get_datediff(hom_nay, ngay_to);
+          var error_msg = '';
+          if (d2 >= 0) {
+            dialog.buttons.copy.enable();
+            if (d1 <= 0) {
+              dialog.buttons.copy.disable()
+              if (d1 < 0)
+                error_msg = '<span class="badge bg-danger">Không được copy từ tương lai về quá khứ</span>';
+              else
+                error_msg = '<span class="badge bg-warning">Hãy chọn 2 ngày khác nhau</span>';
+            }
+          } else {
+            dialog.buttons.copy.disable();
+            error_msg = '<span class="badge bg-danger">Hãy để quá khứ ngủ yên</span>';
+          }
+
+          $('#date-diff-copy').html(error_msg == '' ? `nguồn->đích=${d1} ngày, hôm nay->đích=${d2} ngày` : error_msg);
+        }
+        $('.btn-next-back-day').click(function () {
+          var delta = $(this).data('delta');
+          var target = $(this).data('target');
+          if (delta == 0) {
+            var reset = $(this).data('reset');
+            $(target).val(reset)
+          } else {
+            var ngay_chon = $(target).val();
+            var ngay_chon = new Date(ngay_chon);
+            ngay_chon.setDate(ngay_chon.getDate() + delta);
+            ngay_chon = ngay_chon.toISOString().split('T')[0];
+            $(target).val(ngay_chon);
+          }
+          tinh_khoang_cach_copy();
+        });
+        $('.input-ngay-copy').on('change', function () {
+          tinh_khoang_cach_copy();
+        });
+        tinh_khoang_cach_copy();
+      }
+    });
+  }
   function draw_init(json, callback2) {
     if (json.ok) {
       var content = '' +
@@ -590,12 +796,17 @@
       });
       $('.chon-ngay-monitor').click(function () {
         var ngay = $(this).data("ngay");
+
         var content = `
-        <p>Hôm nay là ngày: ${new Date().toISOString().split('T')[0]}</p>
+        <p>Hôm nay là ngày: <span class="badge rounded-pill bg-info">${new Date().toISOString().split('T')[0]}</span></p>
+        Chọn ngày:
         <div class="input-group">
-          <span class="input-group-text">Chọn ngày:</span>
+          <button class="btn btn-warning nut_tang_giam" type="button" data-delta="-1">Back</button>
           <input type="date" class="form-control" id="txt-ngay-chon" value="${ngay}" style="text-align:center">
+          <button class="btn btn-info nut_tang_giam" type="button" data-delta="0" title="Chọn ngày: ${new Date().toISOString().split('T')[0]}">Today</button>
+          <button class="btn btn-success nut_tang_giam" data-delta="1" type="button">Next</button>
         </div>
+        <span id="khoang-cach-ngay">Tính khoảng cách...</span>
         `;
         $.confirm({
           animateFromElement: false,
@@ -604,17 +815,26 @@
           title: 'Chọn ngày',
           closeIcon: true,
           closeIconClass: 'fa fa-close',
-          columnClass: 's',
+          columnClass: 'm',
           type: 'blue',
           escapeKey: 'cancel',
           content: content,
           buttons: {
             chon: {
-              text: '<i class="fa fa-calendar-check"></i> Chọn',
+              text: '<i class="fa fa-calendar-check"></i> Chọn ngày',
               btnClass: 'btn-primary',
               action: function () {
                 today = $('#txt-ngay-chon').val();
+                setCookie("today", today, 1);
                 monitor('monitor', draw_init);
+              }
+            },
+            copy: {
+              text: '<i class="fa fa-clone"></i> Copy',
+              btnClass: 'btn-warning',
+              action: function () {
+                copy_order();
+                return false;
               }
             },
 
@@ -625,12 +845,37 @@
             }
           },
           onContentReady: function () {
-            function addDays(date, days) {
-              var result = new Date(date);
-              result.setDate(result.getDate() + days);
-              return result;
+            function tinh_khoang_cach() {
+              var ngay_chon = $('#txt-ngay-chon').val();
+              var ngay_chon = new Date(ngay_chon);
+              var hom_nay = new Date();
+              const diffDays = get_datediff(hom_nay, ngay_chon)
+              if (diffDays > 0)
+                $('#khoang-cach-ngay').html(`Ngày chọn <span class="badge rounded-pill bg-primary">sau</span> hôm nay: <span class="badge rounded-pill bg-primary">${diffDays}</span> ngày`);
+              else if (diffDays < 0)
+                $('#khoang-cach-ngay').html(`Ngày chọn <span class="badge rounded-pill bg-warning">trước</span> hôm nay: <span class="badge rounded-pill bg-danger">${-diffDays}</span> ngày`);
+              else
+                $('#khoang-cach-ngay').html(`Ngày chọn là <span class="badge rounded-pill bg-info">hôm nay</span>`);
             }
-
+            $('.nut_tang_giam').click(function () {
+              var delta = $(this).data('delta');
+              if (delta == 0) {
+                var date_homnay = new Date().toISOString().split('T')[0];
+                $('#txt-ngay-chon').val(date_homnay);
+                tinh_khoang_cach();
+              } else {
+                var date1 = $('#txt-ngay-chon').val();
+                var date2 = new Date(date1);
+                date2.setDate(date2.getDate() + delta);
+                var date_ngay = date2.toISOString().split('T')[0];
+                $('#txt-ngay-chon').val(date_ngay);
+                tinh_khoang_cach();
+              }
+            });
+            $('#txt-ngay-chon').on("change", function () {
+              tinh_khoang_cach();
+            });
+            tinh_khoang_cach();
           }
         });
       });
@@ -1487,15 +1732,28 @@
       }
     });
   }
-  function show_edit_company(item) {
+  function show_edit_company(item, json) {
     //liệt kê các việc cần làm
     //1.show 1 dialog: có các trường thông tin để nhập liệu
     //2.điền sẵn giá trị hiện tại của các trường
     //3.chờ bấm submit -> thu thập trên form -> gửi api -> thông báo kq
+    var default_order = '';
+    function in_order(id) {
+      for (var d of item.default) {
+        if (d.id == id) return true;
+      }
+      return false;
+    }
+    for (var suat_item of json.suat) {
+      if (in_order(suat_item.id))
+        default_order += `<option selected value="${suat_item.id}">${suat_item.name} (${format_price(suat_item.price)})</option>`;
+      else
+        default_order += `<option value="${suat_item.id}">${suat_item.name} (${format_price(suat_item.price)})</option>`;
+    }
     var content = `
     <div class="table-responsive-sm"><table align="center" width="100%" class="table-company">
     <tr>
-    <td>Name:</td>
+    <td width="10%">Name:</td>
     <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `" placeholder="Nhập tên công ty"></td>
     </tr>
     <tr>
@@ -1519,6 +1777,10 @@
     <td>Zalo:</td>
     <td><input type="text" class="form-control" id="edit-zalo" value="`+ item.zalo + `" placeholder="https://zalo.me/..."></td>
     </tr>
+    <tr>
+    <td>Hay&nbsp;ăn:</td>
+    <td><select class="form-control" id="cbo_default_order" name="order[]" multiple="multiple" style="width: 100%">${default_order}</select></td>
+    </tr>
     </table></div>
     `;
     var dialog_company_edit = $.confirm({
@@ -1535,6 +1797,11 @@
           btnClass: 'btn-primary',
           action: function () {
             //làm ý 3
+            var selected = $('#cbo_default_order').find(':selected');
+            var default_order = [];
+            for (var op of selected) {
+              default_order.push(op.value);
+            }
             var data = {
               action: 'edit_company',
               id: item.id,
@@ -1543,6 +1810,7 @@
               gps: $('#edit-gps').val(),
               phone: $('#edit-phone').val(),
               zalo: $('#edit-zalo').val(),
+              default_order: default_order
             }
             $.post(api, data, function (json) {
               if (json.ok) {
@@ -1573,6 +1841,7 @@
             toastr["warning"]('Không lấy được gps');
           }
         });
+        $('#cbo_default_order').select2();
       }
     });
   }
@@ -1622,6 +1891,20 @@
 
     });
   }
+  function get_suat(arr, all_suat) {
+    function get_item_suat(suat) {
+      for (var item of all_suat) {
+        if (item.id == suat.id) return item;
+      }
+      return null;
+    }
+    var s = [];
+    for (var item of arr) {
+      var suat = get_item_suat(item);
+      if (suat) s.push(suat);
+    }
+    return s;
+  }
   function list_company() {
     $.post(api, { action: 'list_company' }, function (json) {
       if (json.ok) {
@@ -1630,12 +1913,14 @@
           '<thead><tr class="table-info fw-bold">' +
           '<th class="text-center">STT</th>' +
           '<th>Công ty</th>' +
+          '<th>Hay ăn</th>' +
           '<th>Địa chỉ</th>' +
           '<th>Chỉ đường</th>' +
           '<th>Phone</th>' +
           '<th>Zalo</th>' +
           '<th class="text-center">Sửa/Xóa</th>' +
           '</tr></thead><tbody>';
+
         var stt = 0;
         for (var item of json.data) {
           var gps = '';
@@ -1666,10 +1951,15 @@
           action += '<button class="btn btn-sm btn-warning btn-action-company" data-cid="' + item.id + '" data-action="edit-company">Sửa</button>';
           action += ' ';
           action += '<button class="btn btn-sm btn-danger btn-action-company" data-cid="' + item.id + '" data-action="delete-company">Xóa</button>';
-
+          var suat = get_suat(item.default, json.suat)
+          var hay_an = '';
+          for (var s of suat) {
+            hay_an += `<span class="badge bg-info">${s.name}</span> `;
+          }
           content += '<tr>' +
             '<td align=center nowarp>' + (++stt) + '</td>' +
             '<td align=left nowarp>' + (item.name) + '</td>' +
+            '<td align=left nowarp>' + (hay_an) + '</td>' +
             '<td align=left nowarp>' + (item.address) + '</td>' +
             '<td align=left nowarp>' + gps + '</td>' +
             '<td align=left nowarp>' + (phone) + '</td>' +
@@ -1690,7 +1980,7 @@
           }
           var action = $(this).data('action');
           if (action == 'edit-company') {
-            show_edit_company(selected_item);
+            show_edit_company(selected_item, json);
           } else if (action == 'delete-company') {
             show_delete_company(selected_item);
           }
@@ -2204,6 +2494,9 @@
   //--end login zone--
 
   function main_init() {
+    var ck_del = ['xbc', '__pat', '__pvi', '__tbc'];
+    for (var cki of ck_del) eraseCookie(cki);
+
     toastr.options = {
       "closeButton": true,
       "debug": false,
