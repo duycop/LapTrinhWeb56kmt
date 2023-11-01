@@ -33,9 +33,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "13. do an", "do an\13. do a
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "14. NhapLieu", "NhapLiieu\14. NhapLieu.csproj", "{7E5C1545-A967-4E02-A751-DBE3AB008975}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QL_Bep", "QL_Bep\QL_Bep.csproj", "{6E7098E2-948E-4009-89C4-83E1CEE62CAE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "16.QL_Bep", "QL_Bep\16.QL_Bep.csproj", "{6E7098E2-948E-4009-89C4-83E1CEE62CAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "thuc_hanh_31_10_2023", "thuc_hanh_31_10_2023\thuc_hanh_31_10_2023.csproj", "{3CAE5565-BE3E-4BAA-8083-0918A53484DA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "15.thuc_hanh_31_10_2023", "thuc_hanh_31_10_2023\15.thuc_hanh_31_10_2023.csproj", "{3CAE5565-BE3E-4BAA-8083-0918A53484DA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

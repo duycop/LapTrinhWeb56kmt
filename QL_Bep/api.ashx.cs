@@ -9,6 +9,7 @@ using System.Net.NetworkInformation;
 using System.Runtime.Remoting.Contexts;
 using System.Threading;
 using System.Web;
+using System.Web.Configuration;
 using System.Web.Security;
 
 namespace SuatAn
@@ -418,9 +419,13 @@ namespace SuatAn
             {
                 SqlServer db = new SqlServer(); //dùng thư viện SqlServer
                 SqlCommand cm = db.GetCmd("SP_Report", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
-                string today = context.Request.Cookies["today"].Value;
-                if (today != null && today != "")
-                    cm.Parameters.Add("@ngay", SqlDbType.Date).Value = today; //truyền tham số cho cm
+                HttpCookie obj = context.Request.Cookies["today"];
+                if (obj != null)
+                {
+                    string today = obj.Value;
+                    if (today != null && today != "")
+                        cm.Parameters.Add("@ngay", SqlDbType.Date).Value = today; //truyền tham số cho cm
+                }
                 string json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
                 context.Response.Write(json); //trả về client, trong này có ok=true rồi
             }
@@ -442,9 +447,13 @@ namespace SuatAn
                 SqlCommand cm = db.GetCmd("SP_SuatAn", action);
                 int role = get_role();
 
-                string today = context.Request.Cookies["today"].Value;
-                if (today != null && today != "") cm.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm
-
+                HttpCookie obj = context.Request.Cookies["today"];
+                if (obj != null)
+                {
+                    string today = obj.Value;
+                    if (today != null && today != "")
+                        cm.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm
+                }
 
                 switch (action)
                 {
@@ -507,7 +516,6 @@ namespace SuatAn
                         SqlCommand cm2 = db.GetCmd("SP_SuatAn", "remove_order_cty_ca");
                         cm2.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
                         cm2.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
-                        if (today != null && today != "") cm2.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm3
                         
                         db.RunSQL(cm2); 
 
@@ -533,7 +541,6 @@ namespace SuatAn
                                 cm3.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
                                 cm3.Parameters.Add("@id_suat", SqlDbType.Int).Value = ids;
                                 cm3.Parameters.Add("@so_luong", SqlDbType.Int).Value = sl;
-                                if (today != null && today != "") cm3.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm
 
                                 db.RunSQL(cm3);
                             }

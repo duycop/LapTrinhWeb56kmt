@@ -492,7 +492,7 @@
               <td>
               <div class="input-group">
                 <span class="input-group-text">Số lượng đặt:</span>
-                <input type="number" min="0" max="5000" oninput="validity.valid||(value='');" data-sid="${item.id}" class="form-control input_soluong_order" style="text-align:right" value="${so_luong}">
+                <input type="number" min="0" max="5000" oninput="validity.valid||(value='');" data-sid="${item.id}" class="form-control input_soluong_order" value="${so_luong}">
                 <span class="input-group-text"> x ${format_price(item.price)}</span>
               </div>
               </td>
@@ -781,7 +781,7 @@
   function draw_init(json, callback2) {
     if (json.ok) {
       var content = '' +
-        '<h5>Kế hoạch ngày: <span class="badge rounded-pill bg-success">' + json.ngay + '</span> <button class="btn btn-sm btn-success chon-ngay-monitor" data-ngay="' + json.ngay + '">Chọn ngày</button></h5>' +
+        '<h5>Kế hoạch ngày: <span class="badge rounded-pill bg-info">' + json.ngay + '</span> <button class="btn btn-sm btn-primary chon-ngay-monitor" data-ngay="' + json.ngay + '"><i class="fa fa-calendar-check"></i> Chọn ngày</button></h5>' +
         '<div class="table-responsive">' +
         '<table id="ke-hoach-sx" class="ke-hoach-sx table table-bordered table-hover table-striped">' +
         '<thead><tr class="table-info fw-bold">' +
