@@ -2143,7 +2143,7 @@
       animateFromElement: false,
       typeAnimated: false,
       icon: 'fa fa-building',
-      title: 'Các công ty đặt xuất ăn',
+      title: 'Các công ty đặt suất ăn',
       content: '<div id="list_company"></div>',
       closeIcon: true,
       closeIconClass: 'fa fa-close',
