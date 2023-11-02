@@ -89,3 +89,19 @@ a:active {
     background-color:yellow !important;
 }
 
+.input-group-text.pp-checkbox {
+    /*padding:0.2em 0.2em;*/
+}
+
+.pp-checkbox input {
+    position: relative;
+    bottom: -1px;
+    left: -2px;
+}
+
+.thu > div {
+    display: inline-block;
+    position: relative;
+    bottom: 0px;
+    left: 1px;
+}

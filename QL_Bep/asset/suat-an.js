@@ -223,15 +223,26 @@
   }
   function listSuat(suat, arr, id) {
     var s = '';
-    if (id == 0) s += '<ol type="1">';
+    if (id == 0) s += '<ol type="1" style="margin:0">';
     for (var c of arr) {
       var item = getItem(suat, c.id);
       if (item == null) return '';
       if (id == 0) s += '<li>';
-      s += `<span title="${item.name}">${item.sign}<span class="badge rounded-pill bg-primary">${c.sl}</span></span> `;
+      s += `<span title="${item.name}">${item.sign}${id == 0 ? ' ' : ''}<span class="badge rounded-pill bg-primary">${c.sl}</span></span> `;
       if (id == 0) s += '</li>';
     }
-    if (id == 0) s += '</ul>';
+    if (id == 0) s += '</ol>';
+    return s;
+  }
+  function listLoaiSuat(arr) {
+    var s = '';
+    s += '<ul style="margin:0">';
+    for (var item of arr) {
+      s += '<li>';
+      s += `<span title="${item.name}">${item.name} <span class="badge rounded-pill bg-info">${item.sl}</span></span> `;
+      s += '</li>';
+    }
+    s += '</ul>';
     return s;
   }
   function company_order(item_company, ca, json) {
@@ -493,7 +504,7 @@
               <div class="input-group">
                 <span class="input-group-text">Số lượng đặt:</span>
                 <input type="number" min="0" max="5000" oninput="validity.valid||(value='');" data-sid="${item.id}" class="form-control input_soluong_order" value="${so_luong}">
-                <span class="input-group-text"> x ${format_price(item.price)}</span>
+                <span class="input-group-text"> Giá: ${format_price(item.price)}</span>
               </div>
               </td>
             </tr>`
@@ -794,14 +805,34 @@
         '</tr></thead><tbody>';
       var stt = 0;
       for (var item of json.data) {
-        content += `<tr data-cid="${item.id}" class="${(item.id > 0 ? '' : 'table-danger fw-bold')}">` +
-          '<td align=center nowarp class="btn-company-order">' + (item.id > 0 ? (++stt) : '') + '</td>' +
-          '<td align="' + (item.id > 0 ? 'left' : 'right') + '" nowarp class="btn-company-order">' + (item.name) + (item.vip == 1 ? ' <i class="fa fa-star" style="color:red"></i>' : '') + '</td>' +
-          `<td align=left nowarp class="btn-company-order" data-ca="1" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['1']}">${listSuat(json.suat, item.c1, item.id)}</td>` +
-          `<td align=left nowarp class="btn-company-order" data-ca="2" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['2']}">${listSuat(json.suat, item.c2, item.id)}</td>` +
-          `<td align=left nowarp class="btn-company-order" data-ca="3" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['3']}">${listSuat(json.suat, item.c3, item.id)}</td>` +
-          `<td align=left nowarp class="btn-company-order" data-ca="4" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['4']}">${listSuat(json.suat, item.c4, item.id)}</td>` +
-          '</tr>';
+        if (item.id > 0) {
+          content += `<tr data-cid="${item.id}">` +
+            '<td align=center nowarp class="btn-company-order">' + (++stt) + '</td>' +
+            '<td align="left" nowarp class="btn-company-order">' + (item.name) + (item.vip == 1 ? ' <i class="fa fa-star" style="color:red"></i>' : '') + '</td>' +
+            `<td align=left nowarp class="btn-company-order" data-ca="1" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['1']}">${listSuat(json.suat, item.c1, item.id)}</td>` +
+            `<td align=left nowarp class="btn-company-order" data-ca="2" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['2']}">${listSuat(json.suat, item.c2, item.id)}</td>` +
+            `<td align=left nowarp class="btn-company-order" data-ca="3" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['3']}">${listSuat(json.suat, item.c3, item.id)}</td>` +
+            `<td align=left nowarp class="btn-company-order" data-ca="4" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['4']}">${listSuat(json.suat, item.c4, item.id)}</td>` +
+            '</tr>';
+        } else if (item.id == 0) {
+          content += `<tr data-cid="${item.id}" class="table-info fw-bold">` +
+            '<td align=center nowarp class="btn-company-order"></td>' +
+            '<td align="right" nowarp class="btn-company-order">' + item.name + '</td>' +
+            `<td nowarp>${listSuat(json.suat, item.c1, item.id)}</td>` +
+            `<td nowarp>${listSuat(json.suat, item.c2, item.id)}</td>` +
+            `<td nowarp>${listSuat(json.suat, item.c3, item.id)}</td>` +
+            `<td nowarp>${listSuat(json.suat, item.c4, item.id)}</td>` +
+            '</tr>';
+        } else if (item.id == -1) {
+          content += `<tr data-cid="${item.id}" class="table-warning fw-bold">` +
+            '<td align=center nowarp class="btn-company-order"></td>' +
+            '<td align="right" nowarp class="btn-company-order">' + item.name + '</td>' +
+            `<td nowarp>${listLoaiSuat(item.c1)}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c2)}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c3)}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c4)}</td>` +
+            '</tr>';
+        }
       }
       content += "</tbody></table></div>";
 
@@ -926,6 +957,7 @@
             '<th style="text-align:center">Stt</th>' +
             '<th>Kí hiệu</th>' +
             '<th>Tên</th>' +
+            '<th>Loại</th>' +
             '<th style="text-align:right">Giá</th>' +
             '<th style="text-align:center">Action</th>' +
             '</tr></thead><tbody>';
@@ -936,6 +968,7 @@
               '<td align=center>' + (++stt) + '</td>' +
               '<td>' + item.sign + '</td>' +
               '<td>' + item.name + '</td>' +
+              '<td>' + item.tenloai + '</td>' +
               '<td align=right>' + format_price(item.price) + '</td>' +
               '<td align=center>' + action + '</td>' +
               '</tr>'
@@ -960,6 +993,14 @@
     );//end $.post
   }
   function edit_suat_an(item) {
+    var ds_loai = ``;
+    for (var litem of json_global.loai) {
+      if (item.loai == litem.id)
+        ds_loai += `<option value="${litem.id}" selected>${litem.name}</option>`
+      else
+        ds_loai += `<option value="${litem.id}">${litem.name}</option>`
+    }
+
     var content = `<div class="table-responsive-sm"><table align="center" width="100%">
     <tr>
     <td>Kí hiệu:</td>
@@ -972,6 +1013,10 @@
     <tr>
     <td>Giá:</td>
     <td><input type="text" class="form-control" id="edit-price" value="`+ item.price + `"></td>
+    </tr>
+    <tr>
+    <td>Loại:</td>
+    <td><select class="form-control" id="edit-loai">${ds_loai}</select></td>
     </tr>
     </table></div>`;
     $.confirm({
@@ -998,6 +1043,7 @@
                 name: $('#edit-name').val(),
                 sign: $('#edit-sign').val(),
                 price: $('#edit-price').val(),
+                loai: $('#edit-loai').val(),
               },
               function (json) {
 
@@ -1024,6 +1070,7 @@
                 name: $('#edit-name').val(),
                 sign: $('#edit-sign').val(),
                 price: $('#edit-price').val(),
+                loai: $('#edit-loai').val(),
               },
               function (json) {
 
@@ -1097,6 +1144,10 @@
     });
   }
   function add_suat_an() {
+    var ds_loai = ``;
+    for (var item of json_global.loai) {
+      ds_loai += `<option value="${item.id}">${item.name}</option>`
+    }
     var content = `<div class="table-responsive-sm"><table align="center" width="100%">
     <tr>
     <td>Kí hiệu:</td>
@@ -1109,6 +1160,10 @@
     <tr>
     <td>Giá:</td>
     <td><input type="text" class="form-control" id="edit-price" value=""></td>
+    </tr>
+    <tr>
+    <td>Loại:</td>
+    <td><select class="form-control" id="edit-loai">${ds_loai}</select></td>
     </tr>
     </table></div>`;
     $.confirm({
@@ -1134,6 +1189,7 @@
                 name: $('#edit-name').val(),
                 sign: $('#edit-sign').val(),
                 price: $('#edit-price').val(),
+                loai: $('#edit-loai').val(),
               },
               function (json) {
 
@@ -1181,6 +1237,14 @@
             return false;
           }
         },
+        loai: {
+          text: '<i class="fa fa-layer-group"></i> Loại',
+          btnClass: 'btn-info',
+          action: function () {
+            quan_ly_loai();
+            return false;
+          }
+        },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Đóng',
           btnClass: 'btn-red',
@@ -1195,6 +1259,247 @@
     });
   }
   //--end thuc_don--
+
+  //--begin loai--
+  function list_loai() {
+    $.post(api,
+      {
+        action: 'list_loai'
+      },
+      function (json) {
+        if (json.ok) {
+          var content = '<div class="table-responsive-sm"><table id="table_list_loai" class="table table-hover table-striped">' +
+            '<thead><tr class="table-info fw-bold">' +
+            '<th>ID</th>' +
+            '<th>Tên</th>' +
+            '<th style="text-align:center">Action</th>' +
+            '</tr></thead><tbody>';
+          for (var item of json.data) {
+            var sua = '<button class="btn btn-sm btn-warning btn-edit-loai" data-lid="' + item.id + '" data-action="edit_loai">Sửa</button> ';
+            var xoa = '<button class="btn btn-sm btn-danger btn-edit-loai" data-lid="' + item.id + '" data-action="del_loai">Xóa</button>';
+            content += '<tr>' +
+              '<td>' + item.id + '</td>' +
+              '<td>' + item.name + '</td>' +
+              '<td align=center>' + sua + xoa + '</td>' +
+              '</tr>'
+          }
+          content += '</tbody></table></div>';
+          $('#list_loai').html(content);
+          $('.btn-edit-loai').click(function () {
+            var id = $(this).data('lid');
+            var action = $(this).data('action');
+            for (var item of json.data) {
+              if (item.id == id) {
+                if (action == 'edit_loai')
+                  edit_loai(item);
+                else if (action == 'del_loai')
+                  del_loai(item);
+                break;
+              }
+            }
+          });
+        }
+        else {
+          thong_bao_loi(json)
+        }
+      }
+    );//end $.post
+  }
+  function add_loai() {
+    var item = { id: '', name: '' };
+    var content = `<div class="table-responsive-sm"><table align="center" width="100%">
+    <tr>
+    <td>ID:</td>
+    <td><input type="text" class="form-control" id="edit-id" value="`+ item.id + `"></td>
+    </tr>
+    <tr>
+    <td>Name:</td>
+    <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `"></td>
+    </tr>
+    </table></div>`;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: `Thêm loại suất ăn`,
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'm',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        add: {
+          text: '<i class="fa fa-utensils"></i> Add',
+          btnClass: 'btn-primary',
+          action: function () {
+            var self = this;
+            $.post(api,
+              {
+                action: 'add_loai',
+                id: $('#edit-id').val(),
+                name: $('#edit-name').val(),
+              },
+              function (json) {
+
+                if (json.ok) {
+                  self.close();
+                  list_loai();
+                } else {
+                  thong_bao_loi(json)
+                }
+              }
+            );//end $.post
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        $('#edit-id').focus();
+      }
+    });
+  }
+  function edit_loai(item) {
+    var content = `<div class="table-responsive-sm"><table align="center" width="100%">
+    <tr>
+    <td>ID:</td>
+    <td><input type="text" class="form-control" id="edit-id" value="`+ item.id + `" disabled></td>
+    </tr>
+    <tr>
+    <td>Name:</td>
+    <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `"></td>
+    </tr>
+    </table></div>`;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: `Cập nhật loại suất ăn`,
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'm',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        add: {
+          text: '<i class="fa fa-utensils"></i> Update',
+          btnClass: 'btn-primary',
+          action: function () {
+            var self = this;
+            $.post(api,
+              {
+                action: 'edit_loai',
+                id: $('#edit-id').val(),
+                name: $('#edit-name').val(),
+              },
+              function (json) {
+
+                if (json.ok) {
+                  self.close();
+                  list_loai();
+                } else {
+                  thong_bao_loi(json)
+                }
+              }
+            );//end $.post
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        $('#edit-id').focus();
+      }
+    });
+  }
+  function del_loai(item) {
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-circle-question',
+      title: 'Xác nhận xóa?',
+      content: 'Bạn có chắc muốn xóa Loại <b>' + item.name + '</b> ?',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      type: 'red',
+      columnClass: 's',
+      escapeKey: 'cancel',
+      autoClose: 'cancel|15000',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-circle-check"></i> ok Xóa đi',
+          btnClass: 'btn-red',
+          keys: ['enter', 'x', 'X'],
+          action: function () {
+            //gửi đi api: y/c xóa
+            $.post(api,
+              {
+                action: 'del_loai',
+                id: item.id
+              },
+              function (json) {
+                if (json.ok) {
+                  list_loai();
+                } else {
+                  thong_bao_loi(json); //báo lỗi khi delete_user
+                }
+              }
+            );//end $.post
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc', 'c', 'C'],
+          btnClass: 'btn-blue',
+        }
+      }
+    });
+  }
+  function quan_ly_loai() {
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-layer-group',
+      title: 'Danh sách loại suất ăn',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'm',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: '<div id="list_loai"></div>',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-plus"></i> Thêm loại',
+          btnClass: 'btn-info',
+          action: function () {
+            add_loai();
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          btnClass: 'btn-red',
+          action: function () {
+            //
+          }
+        }
+      },
+      onContentReady: function () {
+        list_loai();
+      }
+    });
+  }
+  //--end loai--
 
   //--report zone--
 
@@ -1720,6 +2025,9 @@
     <tr>
     <td>Zalo:</td>
     <td><input type="text" class="form-control" id="edit-zalo" placeholder="https://zalo.me/..."></td>
+    </tr
+    <tr>
+    <td colspan=2>Chọn trước món cho cty này ở chức năng Sửa</td>
     </tr>
     </table></div>
     `;
@@ -1839,6 +2147,7 @@
                   action: function () {
                     $('#cbo_default_order').val(arr_goiy);
                     $('#cbo_default_order').trigger('change');
+                    change_suat_an_select2();
                   }
                 },
                 cancel: {
@@ -1861,7 +2170,9 @@
         default_order += `<option value="${suat_item.id}">${suat_item.name} (${format_price(suat_item.price)})</option>`;
     }
     var content = `
-    <div class="table-responsive-sm"><table align="center" width="100%" class="table-company">
+    <div class="table-responsive-sm">
+    <table align="center" width="100%" class="table-company" id="table-list-company">
+    <tbody>
     <tr>
     <td width="12%">Name:</td>
     <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `" placeholder="Nhập tên công ty"></td>
@@ -1891,8 +2202,91 @@
     <td id="goi-y-hay-an" title="Click để xem công ty này từng ăn món nào" nowarp>Hay&nbsp;ăn&nbsp;<i class="fa fa-circle-question" style="color:red"></i>:</td>
     <td><select class="form-control" id="cbo_default_order" name="order[]" multiple="multiple" style="width: 100%">${default_order}</select></td>
     </tr>
-    </table></div>
+    </tbody>
+    <!--
+    <tfoot>
+    <tr><td colspan=2>
+    <button class="btn btn-info btnsm add-row-suat-an">add</button>   
+    </td></tr>
+    </tfoot>
+    -->
+    </table>
+    </div>
     `;
+    function add_row_suat_an(item) {
+      var suat = ''
+      for (var suat_item of json.suat) {
+        if (suat_item.id == item.id) {
+          suat = suat_item;
+        }
+      }
+      var s = `
+        <div class="input-group" id="nhom-ngay-${item.id}">
+          <input type="text" class="form-control" value="${suat.name} (${format_price(suat.price)})" disabled>
+          <div class="input-group-text pp-checkbox" title="Thứ 2">
+            <input type="checkbox" value="2" checked>
+            <label class="thu">
+            <div>2</div></label>
+          </div>
+          <div class="input-group-text pp-checkbox" title="Thứ 3">
+            <input type="checkbox" value="3" checked>
+            <label class="thu">
+            <div>3</div></label>
+          </div>
+          <div class="input-group-text pp-checkbox" title="Thứ 4">
+            <input type="checkbox" value="4" checked>
+            <div>4</div></label>
+            <label class="thu">
+          </div>
+          <div class="input-group-text pp-checkbox" title="Thứ 5">
+            <input type="checkbox" value="5" checked>
+            <label class="thu">
+            <div>5</div></label>
+          </div>
+          <div class="input-group-text pp-checkbox" title="Thứ 6">
+            <input type="checkbox" value="6" checked>
+            <label class="thu">
+            <div>6</div></label>
+          </div>
+          <div class="input-group-text pp-checkbox" title="Thứ 7">
+            <input type="checkbox" value="7" checked>
+            <label class="thu">
+            <div>7</div></label>
+          </div>
+          <div class="input-group-text pp-checkbox" title="Chủ nhật">
+            <input type="checkbox" value="8" checked>
+            <label class="thu">
+            <div>CN</div></label>
+          </div>
+        </div>`;
+      var row = `<tr class="row-them-chon-ngay"><td>Chọn ngày:</td><td>${s}</td></tr>`;
+      $('#table-list-company > tbody').append(row);
+    }
+
+    function change_suat_an_select2() {
+      var selected = $('#cbo_default_order').find(':selected');
+      $('#table-list-company > tbody > tr.row-them-chon-ngay').remove()
+      for (var op of selected) {
+        for (var suat_item of json.suat) {
+          if (suat_item.id = op.value) {
+            add_row_suat_an(suat_item); //change_suat_an_select2
+            break;
+          }
+        }
+      }
+      $('.pp-checkbox,.pp-checkbox input').unbind();
+      $('.pp-checkbox').click(function () {
+        var c = $(this).find('input');
+        var t = c.prop('checked');
+        c.prop('checked', !t);
+      });
+      $('.pp-checkbox input').click(function () {
+        var c = $(this);
+        var t = c.prop('checked');
+        c.prop('checked', !t);
+      });
+    }
+
     var dialog_company_edit = $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -1902,6 +2296,22 @@
       content: content,
       type: 'green',
       buttons: {
+        //test: {
+        //  action: function () {
+        //    var selected = $('#cbo_default_order').find(':selected');
+        //    var data = []
+        //    for (var op of selected) {
+        //      var id = op.value;
+        //      var ngay = []
+        //      var thus = $(`#nhom-ngay-${id}`).find('input:checked')
+        //      for (var thu of thus) {
+        //        ngay.push(thu.value);
+        //      }
+        //      data.push({ id: id, ngay: ngay });
+        //    }
+        //    console.log(data);
+        //  }
+        //},
         ok: {
           text: '<i class="fa fa-circle-check"></i> Cập nhật',
           btnClass: 'btn-primary',
@@ -1913,10 +2323,22 @@
               default_order.push(op.value);
             }
 
-            if (default_order.length==0) {
+            if (default_order.length == 0) {
               thong_bao_loi({ ok: 0, msg: 'Phải chọn suất ăn' });
               $('#cbo_default_order').focus();
               return false;
+            }
+
+            var selected = $('#cbo_default_order').find(':selected');
+            var data_order = []
+            for (var op of selected) {
+              var id = op.value;
+              var ngay = []
+              var thus = $(`#nhom-ngay-${id}`).find('input:checked')
+              for (var thu of thus) {
+                ngay.push(thu.value);
+              }
+              data_order.push({ id: id, ngay: ngay });
             }
 
             var data = {
@@ -1927,7 +2349,8 @@
               gps: $('#edit-gps').val(),
               phone: $('#edit-phone').val(),
               zalo: $('#edit-zalo').val(),
-              default_order: default_order
+              default_order: default_order,
+              data_order: JSON.stringify(data_order)
             }
             $.post(api, data,
               function (json) {
@@ -1977,6 +2400,29 @@
           closeOnSelect: false,
           allowClear: true,
         });
+
+        $('#cbo_default_order').on('select2:select', function (e) {
+          change_suat_an_select2();
+        });
+
+        
+        $('.add-row-suat-an').click(function () {
+          add_row_suat_an();
+          $('.pp-checkbox,.pp-checkbox input').unbind();
+          $('.pp-checkbox').click(function () {
+            var c = $(this).find('input');
+            var t = c.prop('checked');
+            c.prop('checked', !t);
+          });
+          $('.pp-checkbox input').click(function () {
+            var c = $(this);
+            var t = c.prop('checked');
+            c.prop('checked', !t);
+
+          });
+        });
+
+        change_suat_an_select2();
       }
     });
   }
@@ -2680,7 +3126,6 @@
         //monitor('monitor', update_status);
       }
     }, 1000);
-    //setInterval(function () { auto_play_in_queue() }, 1000);
     $('.btn-thuc-don').click(function () { thuc_don(); });
     $('#cmdLogin').click(function () { do_login() });
     $('#cmdLogout').click(function () { do_logout(); });

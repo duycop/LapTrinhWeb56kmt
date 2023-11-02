@@ -222,10 +222,11 @@ namespace SuatAn
                 foreach (string item in context.Request.Cookies)
                 {
                     if (!item.StartsWith("_"))
-                        msg += $"{item}={context.Request.Cookies[item].Value};";
+                        if (item.StartsWith("uid") || item.StartsWith("today"))
+                            msg += $"{item}={context.Request.Cookies[item].Value};";
                 }
-                var userAgent = context.Request.Headers["User-Agent"];
-                msg += $"userAgent={userAgent}";
+                //var userAgent = context.Request.Headers["User-Agent"];
+                //msg += $"userAgent={userAgent}";
                 db.LogMsg(action, msg);
             }
             catch (Exception ex)
@@ -493,6 +494,7 @@ namespace SuatAn
                         cm.Parameters.Add("@name", SqlDbType.NVarChar, 1000).Value = context.Request["name"];
                         cm.Parameters.Add("@sign", SqlDbType.NVarChar, 105000).Value = context.Request["sign"];
                         cm.Parameters.Add("@price", SqlDbType.Float).Value = context.Request["price"];
+                        cm.Parameters.Add("@loai", SqlDbType.Int).Value = context.Request["loai"];
                         break;
                     case "delete_suat_an":
                         cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
@@ -516,26 +518,26 @@ namespace SuatAn
                         SqlCommand cm2 = db.GetCmd("SP_SuatAn", "remove_order_cty_ca");
                         cm2.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
                         cm2.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
-                        
-                        db.RunSQL(cm2); 
+
+                        db.RunSQL(cm2);
 
                         //2 add từng order mới
                         string order_id = context.Request.Form["order_id[]"];
-                        string order_sl= context.Request.Form["order_sl[]"];
+                        string order_sl = context.Request.Form["order_sl[]"];
                         char[] sep = { ',' };
                         string[] arr_id = order_id.Split(sep);
                         string[] arr_sl = order_sl.Split(sep);
-                        for(int i = 0; i < arr_id.Length; i++)
+                        for (int i = 0; i < arr_id.Length; i++)
                         {
-                            string ids= arr_id[i];
-                            string sl= arr_sl[i];
-                            if(sl=="0"|| sl == "" || sl == "NaN")
+                            string ids = arr_id[i];
+                            string sl = arr_sl[i];
+                            if (sl == "0" || sl == "" || sl == "NaN")
                             {
                                 //ko làm gi
                             }
                             else
                             {
-                                xx = " lần này sl = "+sl;
+                                xx = " lần này sl = " + sl;
                                 SqlCommand cm3 = db.GetCmd("SP_SuatAn", "add_order_cty_ca");
                                 cm3.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
                                 cm3.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
@@ -584,6 +586,73 @@ namespace SuatAn
                 }
             }
             catch { }
+        }
+
+        void xuly_loai(string action)
+        {
+            Reply reply = new Reply(); //tạo đối tượng để trả về lỗi
+            string json = "";
+            try
+            {
+                reply.ok = true;
+                SqlServer db = new SqlServer(); //dùng thư viện SqlServer
+                SqlCommand cm = db.GetCmd("SP_Loai", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
+
+                switch (action)
+                {
+                    case "add_loai":
+                    case "edit_loai":
+                    case "del_loai":
+                        int role = get_role();
+                        if (role == 3 || role == 100)
+                        {
+                            reply.ok = true;
+                            string uid = context.Request.Cookies["uid"].Value;
+                            string cookie = context.Request.Cookies["ck"].Value;
+                            if (uid != null && uid != "" && cookie != null && cookie != "")
+                            {
+                                cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = uid;
+                                cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = cookie;
+                            }
+                        }
+                        else
+                        {
+                            reply.ok = false;
+                            reply.msg = "Bạn không có quyền";
+                        }
+                        break;
+                }
+
+                if (reply.ok)
+                {
+                    switch (action)
+                    {
+                        case "list_loai":
+                            break;
+                        case "add_loai":
+                        case "edit_loai":
+                        case "del_loai":
+                            cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                            break;
+                    }
+
+                    switch (action)
+                    {
+                        case "add_loai":
+                        case "edit_loai":
+                            cm.Parameters.Add("@name", SqlDbType.NVarChar, 50).Value = context.Request["name"];
+                            break;
+                    }
+                    json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
+                }
+            }
+            catch (Exception ex) //bẫy lỗi
+            {
+                reply.msg = ex.Message; //lấy lỗi bẫy được
+                reply.ok = false; //báo lỗi qua ok
+                json = JsonConvert.SerializeObject(reply); //dùng json net để tạo chuỗi
+            }
+            context.Response.Write(json); //gửi về client
         }
         public void ProcessRequest(HttpContext context)
         {
@@ -634,6 +703,13 @@ namespace SuatAn
                 case "delete_user":
                 case "set_pw":
                     auth_user(action);
+                    break;
+
+                case "list_loai":
+                case "add_loai":
+                case "edit_loai":
+                case "del_loai":
+                    xuly_loai(action);
                     break;
             }
         }
