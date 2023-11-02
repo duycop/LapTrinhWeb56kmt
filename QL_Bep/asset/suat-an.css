@@ -43,65 +43,78 @@ a:active {
 .not-show {
     display: none;
 }
-
-@media (max-width: 575.98px) {
-    .table-responsive-sm {
-        width: 335px !important;
-    }
-
-    td {
-        white-space: nowrap !important;
+@media (min-width: 1024px) {
+    .mobile-only {
+        display: none;
     }
 }
 
-@media (max-width: 393px) {
-    .table-responsive-sm {
-        width: 335px !important;
+    @media (max-width: 575.98px) {
+        .table-responsive-sm {
+            width: 335px !important;
+        }
+
+        td {
+            white-space: nowrap !important;
+        }
+
+        .pc-only {
+            display: none;
+        }
+
+        .mobile-only {
+            display: inline;
+        }
     }
 
-    td {
-        white-space: nowrap !important;
+    @media (max-width: 393px) {
+        .table-responsive-sm {
+            width: 335px !important;
+        }
+
+        td {
+            white-space: nowrap !important;
+        }
     }
-}
 
-.table-company tr > td {
-    padding-bottom: 5px;
-}
+    .table-company tr > td {
+        padding-bottom: 5px;
+    }
 
-.address {
-    font-size: small;
-    color: dimgray;
-    font-style: italic;
-}
+    .address {
+        font-size: small;
+        color: dimgray;
+        font-style: italic;
+    }
 
-#xxx-ke-hoach-sx tr td {
-    padding-bottom: 1px;
-    padding-top: 1px;
-}
+    #xxx-ke-hoach-sx tr td {
+        padding-bottom: 1px;
+        padding-top: 1px;
+    }
 
-#ke-hoach-sx {
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
+    #ke-hoach-sx {
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
 
-#soluong-old{
-    background-color:yellow !important;
-}
+    #soluong-old {
+        background-color: yellow !important;
+    }
 
-.input-group-text.pp-checkbox {
-    /*padding:0.2em 0.2em;*/
-}
+    .input-group-text.pp-checkbox {
+        padding: 0.4em 0.4em;
+    }
 
-.pp-checkbox input {
-    position: relative;
-    bottom: -1px;
-    left: -2px;
-}
+    .pp-checkbox input {
+        position: relative;
+        bottom: -1px;
+        left: -2px;
+    }
 
-.thu > div {
-    display: inline-block;
-    position: relative;
-    bottom: 0px;
-    left: 1px;
-}
+    .thu > div {
+        display: inline-block;
+        position: relative;
+        bottom: 0px;
+        left: 1px;
+    }

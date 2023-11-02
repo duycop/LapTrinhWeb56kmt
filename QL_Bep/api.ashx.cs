@@ -330,6 +330,7 @@ namespace SuatAn
                     cm.Parameters.Add("@lng", SqlDbType.Float).Value = lng;
                     cm.Parameters.Add("@phone", SqlDbType.VarChar, 50).Value = context.Request["phone"];
                     cm.Parameters.Add("@zalo", SqlDbType.VarChar, 100).Value = context.Request["zalo"];
+                    cm.Parameters.Add("@data_order", SqlDbType.NVarChar, 4000).Value = context.Request["data_order"];
                 }
                 else if (action == "add_company")
                 {
@@ -359,10 +360,10 @@ namespace SuatAn
                     cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["ck"].Value;
                     cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
                 }
-                else if (action == "get_company")
-                {
-                    cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
-                }
+                //else if (action == "get_company")
+                //{
+                //    cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                //}
                 else
                 {
                     cm = null;
@@ -378,20 +379,21 @@ namespace SuatAn
                     {
                         //cần cập nhật vào bảng DefautOrder
                         //test: nhận được dữ liệu đã
-                        string default_order = context.Request.Form["default_order[]"];
+                        //bỏ đi 2.11.2023 vì: đã có trường [data_order] thay thế rồi.
+                        //string default_order = context.Request.Form["default_order[]"];
 
-                        SqlCommand cm1 = db.GetCmd("SP_Company", "delele_all_default_order");
-                        cm1.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
-                        db.RunSQL(cm1);
+                        //SqlCommand cm1 = db.GetCmd("SP_Company", "delele_all_default_order");
+                        //cm1.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                        //db.RunSQL(cm1);
 
-                        string[] arr = default_order.Split(new char[] { ',' });
-                        foreach (string ids in arr)
-                        {
-                            SqlCommand cm2 = db.GetCmd("SP_Company", "add_default_order");
-                            cm2.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
-                            cm2.Parameters.Add("@ids", SqlDbType.Int).Value = ids;
-                            db.RunSQL(cm2);
-                        }
+                        //string[] arr = default_order.Split(new char[] { ',' });
+                        //foreach (string ids in arr)
+                        //{
+                        //    SqlCommand cm2 = db.GetCmd("SP_Company", "add_default_order");
+                        //    cm2.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                        //    cm2.Parameters.Add("@ids", SqlDbType.Int).Value = ids;
+                        //    db.RunSQL(cm2);
+                        //}
                     }
 
                     context.Response.Write(json_str);
@@ -654,6 +656,75 @@ namespace SuatAn
             }
             context.Response.Write(json); //gửi về client
         }
+
+        void xuly_don_nguyen(string action)
+        {
+            Reply reply = new Reply(); //tạo đối tượng để trả về lỗi
+            string json = "";
+            try
+            {
+                reply.ok = true;
+                SqlServer db = new SqlServer(); //dùng thư viện SqlServer
+                SqlCommand cm = db.GetCmd("SP_DonNguyen", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
+
+                switch (action)
+                {
+                    case "add_don_nguyen":
+                    case "edit_don_nguyen":
+                    case "del_don_nguyen":
+                        int role = get_role();
+                        if (role == 3 || role == 100)
+                        {
+                            reply.ok = true;
+                            string uid = context.Request.Cookies["uid"].Value;
+                            string cookie = context.Request.Cookies["ck"].Value;
+                            if (uid != null && uid != "" && cookie != null && cookie != "")
+                            {
+                                cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = uid;
+                                cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = cookie;
+                            }
+                        }
+                        else
+                        {
+                            reply.ok = false;
+                            reply.msg = "Bạn không có quyền";
+                        }
+                        break;
+                }
+
+                if (reply.ok)
+                {
+                    switch (action)
+                    {
+                        case "list_don_nguyen":
+                            //ko cần thêm tham số
+                            break;
+                        case "add_don_nguyen":
+                        case "edit_don_nguyen":
+                        case "del_don_nguyen":
+                            cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                            break;
+                    }
+
+                    switch (action)
+                    {
+                        case "add_don_nguyen":
+                        case "edit_don_nguyen":
+                            cm.Parameters.Add("@name", SqlDbType.NVarChar, 255).Value = context.Request["name"];
+                            cm.Parameters.Add("@des", SqlDbType.NVarChar, 255).Value = context.Request["des"];
+                            break;
+                    }
+                    json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
+                }
+            }
+            catch (Exception ex) //bẫy lỗi
+            {
+                reply.msg = ex.Message; //lấy lỗi bẫy được
+                reply.ok = false; //báo lỗi qua ok
+                json = JsonConvert.SerializeObject(reply); //dùng json net để tạo chuỗi
+            }
+            context.Response.Write(json); //gửi về client
+        }
         public void ProcessRequest(HttpContext context)
         {
             this.context = context;
@@ -710,6 +781,13 @@ namespace SuatAn
                 case "edit_loai":
                 case "del_loai":
                     xuly_loai(action);
+                    break;
+
+                case "list_don_nguyen":
+                case "add_don_nguyen":
+                case "edit_don_nguyen":
+                case "del_don_nguyen":
+                    xuly_don_nguyen(action);
                     break;
             }
         }
