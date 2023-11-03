@@ -479,7 +479,16 @@
       $('#soluong-new').focus();
     }
 
-
+    function edit_hay_an(item_company) {
+      if (json_company == null) {
+        $.post(api, { action: 'list_company' }, function (json) {
+          json_company = json;
+          show_edit_company(item_company, json_company)
+        })
+      } else {
+        show_edit_company(item_company, json_company)
+      }
+    }
     var row_order_nhanh = '';
 
     var c = [];
@@ -500,13 +509,17 @@
       }
       return false;
     }
+
     for (var suat of item_company.default) {
       if (thu_ok(suat)) {
         for (var item of json.suat) {
           var so_luong = 0
           if (suat.id == item.id) {
+            console.log(['suat item OK', suat, item])
             for (var order_item of c) {
+              console.log(['order_item', order_item, c])
               if (order_item.id == item.id) {
+                console.log(['order_item OK', order_item, c])
                 so_luong = order_item.sl;
                 break;
               }
@@ -617,7 +630,14 @@
             return false;
           }
         },
-
+        hay_an: {
+          text: '<i class="fa fa-splotch"></i> Hay ăn',
+          btnClass: 'btn-warning',
+          action: function () {
+            edit_hay_an(item_company);
+            return false;
+          }
+        },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Đóng',
           keys: ['esc'],
@@ -2668,7 +2688,7 @@
     var default_order = '';
     function in_order(id) {
       for (var d of item_cong_ty.default) {
-        if (d.id === id) return true;
+        if (d.id === id) return true; //chỗ này === rất quan trọng, == thì là bug
       }
       return false;
     }
@@ -2736,16 +2756,15 @@
         }
       );
     }
-    var in_order_arr = [];
     for (var suat_item of json.suat) {
       if (in_order(suat_item.id)) {
-        in_order_arr.push(suat_item.id);        
         default_order += `<option selected value="${suat_item.id}">${suat_item.name} (${format_price(suat_item.price)})</option>`;
       }
-      else
+      else {
         default_order += `<option value="${suat_item.id}">${suat_item.name} (${format_price(suat_item.price)})</option>`;
+      }
     }
-    
+
     var content = `
           <div class="table-responsive-sm">
             <table align="center" width="100%" class="table-company" id="table-list-company">
@@ -2791,7 +2810,7 @@
       </div>
     `;
     function add_row_suat_an(item) {
-      console.log(['add_row_suat_an item',item])
+      console.log(['add_row_suat_an item', item])
       var thu = [2, 3, 4, 5, 6, 7, 8]
       for (var df of item_cong_ty.default) {
         if (df.id == item.id) {
@@ -2803,7 +2822,7 @@
       var suat = '';
       for (var suat_item of json.suat) {
         if (suat_item.id == item.id) {
-          suat = suat_item;          
+          suat = suat_item;
           console.log(['add_row_suat_an suat', suat])
           break;
         }
@@ -2863,7 +2882,7 @@
       $('#table-list-company > tbody > tr.row-them-chon-ngay').remove()
       for (var op of selected) {
         for (var suat_item of json.suat) {
-          if (suat_item.id == op.value) {            
+          if (suat_item.id == op.value) {
             add_row_suat_an(suat_item); //change_suat_an_select2
             break;
           }
@@ -2898,7 +2917,7 @@
         //    for (var op of selected) {
         //      var id = op.value;
         //      var ngay = []
-        //      var thus = $(`#nhom - ngay - ${ id }`).find('input:checked')
+        //      var thus = $(`#nhom-ngay-${ id }`).find('input:checked')
         //      for (var thu of thus) {
         //        ngay.push(thu.value);
         //      }
