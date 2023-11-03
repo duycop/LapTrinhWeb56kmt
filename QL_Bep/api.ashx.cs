@@ -302,7 +302,22 @@ namespace SuatAn
             {
                 SqlServer db = new SqlServer();
                 SqlCommand cm = db.GetCmd("SP_Company", action);
-
+                int role = get_role();
+                switch (action)
+                {
+                    case "add_company":
+                    case "edit_company":
+                    case "delete_company":
+                        if (role==3||role==100)
+                        {
+                            //ok
+                        }
+                        else
+                        {
+                            throw new Exception("Bạn không có quyền");
+                        }
+                        break;
+                }
 
                 if (action == "list_company")
                 {
@@ -310,27 +325,29 @@ namespace SuatAn
                 }
                 else if (action == "edit_company")
                 {
-                    cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
-                    cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["ck"].Value;
+                    
+                        cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
+                        cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["ck"].Value;
 
-                    //xử lý gps -> 2 số thực
-                    float? lat = null, lng = null;
-                    try
-                    {
-                        string[] items = context.Request["gps"].Split(',');
-                        lat = float.Parse(items[0]);
-                        lng = float.Parse(items[1]);
-                    }
-                    catch { }
+                        //xử lý gps -> 2 số thực
+                        float? lat = null, lng = null;
+                        try
+                        {
+                            string[] items = context.Request["gps"].Split(',');
+                            lat = float.Parse(items[0]);
+                            lng = float.Parse(items[1]);
+                        }
+                        catch { }
 
-                    cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
-                    cm.Parameters.Add("@name", SqlDbType.NVarChar, 255).Value = context.Request["name"];
-                    cm.Parameters.Add("@address", SqlDbType.NVarChar, 255).Value = context.Request["address"];
-                    cm.Parameters.Add("@lat", SqlDbType.Float).Value = lat;
-                    cm.Parameters.Add("@lng", SqlDbType.Float).Value = lng;
-                    cm.Parameters.Add("@phone", SqlDbType.VarChar, 50).Value = context.Request["phone"];
-                    cm.Parameters.Add("@zalo", SqlDbType.VarChar, 100).Value = context.Request["zalo"];
-                    cm.Parameters.Add("@data_order", SqlDbType.NVarChar, 4000).Value = context.Request["data_order"];
+                        cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                        cm.Parameters.Add("@name", SqlDbType.NVarChar, 255).Value = context.Request["name"];
+                        cm.Parameters.Add("@address", SqlDbType.NVarChar, 255).Value = context.Request["address"];
+                        cm.Parameters.Add("@lat", SqlDbType.Float).Value = lat;
+                        cm.Parameters.Add("@lng", SqlDbType.Float).Value = lng;
+                        cm.Parameters.Add("@phone", SqlDbType.VarChar, 50).Value = context.Request["phone"];
+                        cm.Parameters.Add("@zalo", SqlDbType.VarChar, 100).Value = context.Request["zalo"];
+                        cm.Parameters.Add("@data_order", SqlDbType.NVarChar, 4000).Value = context.Request["data_order"];
+                    
                 }
                 else if (action == "add_company")
                 {

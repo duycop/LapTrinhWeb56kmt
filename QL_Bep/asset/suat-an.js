@@ -13,7 +13,7 @@
   const mp3 = '/mp3/';
 
   var logined = false, user_info, all_quyen, today = '';
-  var json_suat_an, json_company, json_don_nguyen, json_setup_combo, json_loai, json_user, json_setting;
+  var json_global, json_suat_an, json_company, json_don_nguyen, json_setup_combo, json_loai, json_user, json_setting;
 
   //--begin ck---
   function setCookie(name, value, days) {
@@ -170,7 +170,6 @@
   }
   /**/
   //--end auto play mp3---
-  var json_global;
   function monitor(action, callback, callback2) {
     $.post(api,
       {
@@ -248,6 +247,11 @@
     return s;
   }
   function company_order(item_company, ca, json) {
+    if (alert_not_login()) return;// cần login trước khi order
+    if (!(logined && (user_info.role == 3 || user_info.role == 100))) {
+      thong_bao_loi({ ok: 0, msg: 'Bạn không có quyền' });
+      return;
+    }
     if (!ca) ca = 0;
     if (ca == 0) return;
     if (item_company.default.length == 0) {
@@ -280,6 +284,7 @@
     var dialog_order;
     function reload_order() {
       monitor('monitor', draw_init, function () {
+        thong_bao_ok(json_global, { w: 0, t: 1 });
         var content = list_order_done(item_company.id, ca);
         $('#list-order-done').html(content);
         $('.btn-order-delete').click(function () {
@@ -480,14 +485,10 @@
     }
 
     function edit_hay_an(item_company) {
-      if (json_company == null) {
-        $.post(api, { action: 'list_company' }, function (json) {
-          json_company = json;
-          show_edit_company(item_company, json_company)
-        })
-      } else {
+      $.post(api, { action: 'list_company' }, function (json) {
+        json_company = json;
         show_edit_company(item_company, json_company)
-      }
+      })
     }
     var row_order_nhanh = '';
 
@@ -515,11 +516,8 @@
         for (var item of json.suat) {
           var so_luong = 0
           if (suat.id == item.id) {
-            console.log(['suat item OK', suat, item])
             for (var order_item of c) {
-              console.log(['order_item', order_item, c])
               if (order_item.id == item.id) {
-                console.log(['order_item OK', order_item, c])
                 so_luong = order_item.sl;
                 break;
               }
@@ -693,8 +691,8 @@
   }
   function copy_order() {
     var nay = Date2().toISOString().split('T')[0];
-    var mai = Date2().
-      mai.setDate(mai.getDate() + 1);
+    var mai = Date2();
+    mai.setDate(mai.getDate() + 1);
     mai = mai.toISOString().split('T')[0];
     var content = `
       <p>Hôm nay là ngày: <span class="badge rounded-pill bg-info">${nay}</span></p>
@@ -928,6 +926,7 @@
             copy: {
               text: '<i class="fa fa-clone"></i> Copy',
               btnClass: 'btn-warning',
+              isHidden: true,
               action: function () {
                 copy_order();
                 return false;
@@ -972,6 +971,9 @@
               tinh_khoang_cach();
             });
             tinh_khoang_cach();
+            if (logined && (user_info.role == 3 || user_info.role == 100)) {
+              this.buttons.copy.show();
+            }
           }
         });
       });
@@ -1059,7 +1061,7 @@
     </tr>
     <tr>
     <td>Loại:</td>
-    <td><select class="form-control" id="edit-loai">${ds_loai}</select></td>
+    <td><select class="form-select" id="edit-loai">${ds_loai}</select></td>
     </tr>
     </table></div>`;
     $.confirm({
@@ -1206,7 +1208,7 @@
     </tr>
     <tr>
     <td>Loại:</td>
-    <td><select class="form-control" id="edit-loai">${ds_loai}</select></td>
+    <td><select class="form-select" id="edit-loai">${ds_loai}</select></td>
     </tr>
     </table></div>`;
     $.confirm({
@@ -1592,7 +1594,6 @@
     return tp;
   }
   function add_setup_combo(item) {
-    //alert(['coding... add_setup_combo', item.name])
     var ds_chon = '';
     for (var item_dn of json_don_nguyen.data) {
       ds_chon += `<option value="${item_dn.id}">${item_dn.name}</option>`;
@@ -1601,7 +1602,7 @@
     <table width="100%">
     <tr><td>Combo:</td><td>${item.name} (${format_price(item.price)})</td></tr>
     <tr><td>Đơn nguyên:</td>
-    <td><select class="form-select form-control cbo-don-nguyen" id="edit-id" style="width: 100%"><option selected="true" disabled="disabled" value="0">--Chọn đơn nguyên--</option>
+    <td><select class="form-select form-select-lg cbo-don-nguyen" id="edit-id" style="width: 100%"><option selected="true" disabled="disabled" value="0">--Chọn đơn nguyên--</option>
     ${ds_chon}
     </select></td></tr>
     <tr><td>Số lượng:</td>
@@ -1625,15 +1626,19 @@
           btnClass: 'btn-primary',
           action: function () {
             var self = this;
+            var sl = $('#edit-sl').val();
+            if (sl == '' || sl <= 0) {
+              thong_bao_loi({ ok: 0, msg: 'Chưa nhập số lượng' }, { w: 0, t: 1 });
+              return false;
+            }
             $.post(api,
               {
                 action: 'add_combo',
                 ids: item.id,
                 idn: $('#edit-id').val(),
-                sl: $('#edit-sl').val(),
+                sl: sl,
               },
               function (json) {
-
                 if (json.ok) {
                   self.close();
                   list_setup_combo();
@@ -1662,8 +1667,8 @@
     });
   }
   function edit_setup_combo(item, itemn) {
-    //alert(['coding... edit_setup_combo', items.name, itemn.name + ' x ' + itemn.sl])
     var ds_chon = '';
+    console.log(json_don_nguyen)
     for (var item_dn of json_don_nguyen.data) {
       if (item_dn.id == itemn.id) {
         ds_chon += `<option value="${item_dn.id}" selected>${item_dn.name}</option>`;
@@ -1700,12 +1705,17 @@
           btnClass: 'btn-primary',
           action: function () {
             var self = this;
+            var sl = $('#edit-sl').val();
+            if (sl == '' || sl <= 0) {
+              thong_bao_loi({ ok: 0, msg: 'Chưa nhập số lượng' }, { w: 0, t: 1 });
+              return false;
+            }
             $.post(api,
               {
                 action: 'edit_combo',
                 ids: item.id,
                 idn: itemn.id,
-                sl: $('#edit-sl').val(),
+                sl: int,
               },
               function (json) {
 
@@ -1737,7 +1747,49 @@
     });
   }
   function del_setup_combo(items, itemn) {
-    alert(['coding... del_setup_combo', items.name, itemn.name + ' x ' + itemn.sl])
+    var dialog_del_combo = $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-circle-question',
+      title: 'Xác nhận xóa?',
+      content: 'Bạn có chắc muốn xóa khỏi combo  <b>' + items.name + '</b> đơn nguyên <b>' + itemn.name + '</b> x ' + itemn.sl + ' ?',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      type: 'red',
+      columnClass: 's',
+      escapeKey: 'cancel',
+      autoClose: 'cancel|15000',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-circle-check"></i> ok Xóa đi',
+          btnClass: 'btn-red',
+          keys: ['enter', 'x', 'X'],
+          action: function () {
+            //gửi đi api: y/c xóa
+            $.post(api,
+              {
+                action: 'del_combo',
+                id: item.id
+              },
+              function (json) {
+                if (json.ok) {
+                  list_setup_combo();
+                  dialog_del_combo.close()
+                } else {
+                  thong_bao_loi(json); //báo lỗi khi delete_user
+                }
+                return false;
+              }
+            );//end $.post
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc', 'c', 'C'],
+          btnClass: 'btn-blue',
+        }
+      }
+    });
   }
   //end setup combo
   function thuc_don() {
@@ -1826,6 +1878,7 @@
       onContentReady: function () {
         var dialog = this;
         list_suat_an();
+        list_don_nguyen();
         $('button.tab-thuc-don').click(function () {
           var id = $(this)[0].id;
           $('button.cmd-in-tab').hide();
@@ -2796,7 +2849,7 @@
                 </tr>
                 <tr>
                   <td id="goi-y-hay-an" title="Click để xem công ty này từng ăn món nào" nowarp>Hay&nbsp;ăn&nbsp;<i class="fa fa-circle-question" style="color:red"></i>:</td>
-                  <td><select class="form-control" id="cbo_default_order" name="order[]" multiple="multiple" style="width: 100%">${default_order}</select></td>
+                  <td><select class="form-select" id="cbo_default_order" name="order[]" multiple="multiple" style="width: 100%">${default_order}</select></td>
                 </tr>
               </tbody>
               <!--
@@ -2810,12 +2863,10 @@
       </div>
     `;
     function add_row_suat_an(item) {
-      console.log(['add_row_suat_an item', item])
       var thu = [2, 3, 4, 5, 6, 7, 8]
       for (var df of item_cong_ty.default) {
         if (df.id == item.id) {
           thu = df.thu;
-          console.log(['add_row_suat_an thu', thu])
           break;
         }
       }
@@ -2823,7 +2874,6 @@
       for (var suat_item of json.suat) {
         if (suat_item.id == item.id) {
           suat = suat_item;
-          console.log(['add_row_suat_an suat', suat])
           break;
         }
       }
