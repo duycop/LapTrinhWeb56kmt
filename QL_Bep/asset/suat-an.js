@@ -270,7 +270,7 @@
         break;
       }
       //else
-      //ds_ca += `<option value="${ca_item}" >${ca_name[ca_item]}</option>`;
+      //ds_ca += `<option value="${ca_item}">${ca_name[ca_item]}</option>`;
     }
     ds_suat += '<option selected="true" disabled="disabled" value="0">--Chọn suất--</option>';
     for (var suat_item of json.suat) {
@@ -673,7 +673,7 @@
   function copy_order() {
     var nay = Date2().toISOString().split('T')[0];
     var mai = Date2().
-    mai.setDate(mai.getDate() + 1);
+      mai.setDate(mai.getDate() + 1);
     mai = mai.toISOString().split('T')[0];
     var content = `
       <p>Hôm nay là ngày: <span class="badge rounded-pill bg-info">${nay}</span></p>
@@ -1237,6 +1237,7 @@
     });
   }
   //begin-đơn nguyên
+  var json_don_nguyen;
   function list_don_nguyen() {
     $.post(api,
       {
@@ -1244,21 +1245,24 @@
       },
       function (json) {
         if (json.ok) {
+          json_don_nguyen = json;
           var content = '<div class="table-responsive">' +
             '<table id="table-list-don-nguyen" class="table table-bordered table-hover table-striped">' +
             '<thead><tr class="table-info fw-bold">' +
             '<th class="text-center" width="10px">ID</th>' +
             '<th>Name</th>' +
             '<th>Mô tả</th>' +
-            '<th width="10px">Action</th>' +
+            '<th width="10px">In&nbsp;Combo</th>' +
+            '<th width="70px">Action</th>' +
             '</tr></thead><tbody>';
           for (var item of json.data) {
             var action = `<button class="btn btn-sm btn-warning btn-edit-don-nguyen" data-action="edit" data-did="${item.id}">Sửa</button> `
             action += `<button class="btn btn-sm btn-danger btn-edit-don-nguyen" data-action="del" data-did="${item.id}">Xóa</button>`
             content += `<tr data-cid="${item.id}">` +
-              '<td align=center nowarp class="btn-company-order">' + (item.id) + '</td>' +
-              '<td align="left" nowarp class="btn-company-order">' + (item.name) + '</td>' +
-              '<td align="left" nowarp class="btn-company-order">' + (item.des) + '</td>' +
+              '<td align=center nowarp>' + (item.id) + '</td>' +
+              '<td align="left" nowarp>' + (item.name) + '</td>' +
+              '<td align="left" nowarp>' + (item.des) + '</td>' +
+              '<td align="center" nowarp>' + (item.sl) + '</td>' +
               '<td align="left" nowarp class="btn-company-order">' + (action) + '</td>' +
               '</tr>';
           }
@@ -1386,6 +1390,7 @@
               {
                 action: 'edit_don_nguyen',
                 id: $('#edit-id').val(),
+                id_old: item.id,
                 name: $('#edit-name').val(),
                 des: $('#edit-des').val(),
               },
@@ -1415,22 +1420,228 @@
     });
   }
   function del_don_nguyen(item) {
-    alert('del_don_nguyen: coding...' + item.name)
+    var content = `Xác nhận muốn xóa<br>Đơn nguyên <span class="badge rounded-pill bg-danger">${item.name}</span>?`;
+    if (item.sl > 0) content += `<br>Sẽ có <span class="badge rounded-pill bg-danger">${item.sl} combo</span>  bị xóa thành phần này!?`;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-circle-question',
+      title: 'Xác nhận xóa đơn nguyên',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'm',
+      type: 'red',
+      escapeKey: 'cancel',
+      content: content,
+      autoClose: "cancel|5000",
+      buttons: {
+        yes: {
+          text: '<i class="fa fa-trash-can"></i> Yes',
+          keys: ['enter', 'y'],
+          btnClass: 'btn-danger',
+          action: function () {
+            $.post(api,
+              {
+                action: 'del_don_nguyen',
+                id: item.id
+              },
+              function (json) {
+                if (json.ok) {
+                  list_don_nguyen();
+                }
+                else
+                  thong_bao_loi(json);
+              }
+            );//end $.post
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-check"></i> No no no',
+          keys: ['n'],
+          btnClass: 'btn-blue',
+        }
+      }
+    });
   }
   //end-đơn nguyên
 
   //begin setup combo
   function list_setup_combo() {
-
+    $.post(api,
+      {
+        action: 'list_combo'
+      },
+      function (json) {
+        if (json.ok) {
+          var content = `<div class= "table-responsive">
+        <table id="table-list-combo" class="table table-bordered">
+          <thead class="table-info fw-bold"><tr>
+            <th rowspan="2" class="text-center" width="20px" valign="middle">STT</th>
+            <th rowspan="2" valign="middle">Suất ăn</th>
+            <th rowspan="2" class="text-center" valign="middle" width="20px">Loại</th>
+            <th rowspan="2" style="text-align:center;width:50px;" valign="middle">Giá</th>
+            <th colspan="5" style="text-align:center">Thành phần đơn nguyên</th>
+          </tr>
+            <tr>
+              <th style="text-align:center">Đơn nguyên</th>
+              <th style="text-align:center" width="10px">Số&nbsp;lượng</th>
+              <th style="text-align:center" width="10px">Sửa</th>
+              <th style="text-align:center" width="10px">Xóa</th>
+              <th style="text-align:center" width="10px">Thêm</th>
+            </tr>
+          </thead>
+          <tbody>`;
+          var stt = 0;
+          for (var item of json.data) {
+            var tp = show_thanh_phan(item);
+            content += `<tr class="row_combo" data-ids="${item.id}">
+              <td rowspan="${tp.sl}" align="center" valign="middle">${++stt}</td>
+              <td rowspan="${tp.sl}" align="left" valign="middle" title="${item.name}">${item.sign}</td>
+              <td rowspan="${tp.sl}" align="center" valign="middle"">${item.tenloai}</td>
+            <td rowspan="${tp.sl}" align="center" valign="middle">${format_price(item.price)}</td>
+            ${tp.html}
+          </tr>`;
+          }
+          content += `</tbody></table></div> `;
+          $('#list-combo').html(content);
+          $('tr.row_combo').hover(function () {
+            var ids = $(this).data('ids')
+            $(`tr.row_combo[data-ids= '${ids}']`).addClass('table-warning')
+          }, function () {
+            var ids = $(this).data('ids')
+            $(`tr.row_combo[data-ids= '${ids}']`).removeClass('table-warning')
+          });
+          $('.btn-action-combo').click(function () {
+            var action = $(this).data('action');
+            var ids = $(this).data('ids');
+            for (var items of json.data) {
+              if (items.id == ids) {
+                switch (action) {
+                  case 'add':
+                    add_setup_combo(items);
+                    break;
+                  case 'edit':
+                  case 'del':
+                    var idn = $(this).data('idn');
+                    for (var itemn of items.combo) {
+                      if (itemn.id == idn) {
+                        if (action == 'edit')
+                          edit_setup_combo(items, itemn);
+                        else
+                          del_setup_combo(items, itemn);
+                      }
+                    }
+                    break;
+                }
+                break;
+              }
+            }
+          });
+        } else {
+          thong_bao_loi(json, { w: 0, t: 1 });
+        }
+      }
+    )
   }
-  function add_setup_combo() {
-
+  function show_thanh_phan(item_combo) {
+    var tp = { sl: 0, html: '' }
+    var s = '';
+    var add_button = `<button class="btn btn-sm btn-info btn-action-combo" data-action="add" data-ids="${item_combo.id}" title="Thêm thành phần vào combo">Add</button>`;
+    for (var item of item_combo.combo) {
+      var edit_button = `<button class="btn btn-sm btn-warning btn-action-combo" data-action="edit" data-ids="${item_combo.id}" data-idn="${item.id}" title="Sửa thành phần trong combo"> Edit</button>`;
+      var del_button = `<button class="btn btn-sm btn-danger btn-action-combo"  data-action="del" data-ids="${item_combo.id}" data-idn="${item.id}" title="Xóa thành phần trong combo"> Del</button>`;
+      tp.sl++;
+      if (tp.sl > 1) s += `<tr class="row_combo" data-ids="${item_combo.id}"> `;
+      s += `<td title="${item.des}"> ${item.name}</td>
+           <td align="center" title="${item.name} có số lượng = ${item.sl}">${item.sl}</td>
+           <td align="center">${edit_button}</td>
+           <td align="center">${del_button}</td>`;
+      if (tp.sl == 1)
+        s += `<td rowspan="${item_combo.combo.length}" valign="middle"> ${add_button}</td>`;
+      s += '</tr>';
+    }
+    tp.html = s;
+    if (tp.sl == 0) {
+      tp.sl = 1;
+      tp.html = `<td colspan="4" valign="middle"> Không có dữ liệu thành phần</td><td valign="middle">${add_button}</td></tr>`;
+    }
+    return tp;
   }
-  function edit_setup_combo(item) {
+  function add_setup_combo(item) {
+    //alert(['coding... add_setup_combo', item.name])
+    var ds_chon = '';
+    for (var item_dn of json_don_nguyen.data) {
+      ds_chon += `<option value="${item_dn.id}">${item_dn.name}</option>`;
+    }
+    var content = `
+    <table width="100%">
+    <tr><td>Combo:</td><td>${item.name} (${format_price(item.price)})</td></tr>
+    <tr><td>Đơn nguyên:</td>
+    <td><select class="form-select form-control cbo-don-nguyen" id="edit-id" style="width: 100%"><option selected="true" disabled="disabled" value="0">--Chọn đơn nguyên--</option>
+    ${ds_chon}
+    </select></td></tr>
+    <tr><td>Số lượng:</td>
+    <td><input type="number" class="form-control" id="edit-sl"></td>
+    </tr></table>
+    `;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: `Thêm đơn nguyên vào combo`,
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'm',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        add: {
+          text: '<i class="fa fa-utensils"></i> Add',
+          btnClass: 'btn-primary',
+          action: function () {
+            var self = this;
+            $.post(api,
+              {
+                action: 'add_combo',
+                ids: item.id,
+                idn: $('#edit-id').val(),
+                sl: $('#edit-sl').val(),
+              },
+              function (json) {
 
+                if (json.ok) {
+                  self.close();
+                  list_setup_combo();
+                } else {
+                  thong_bao_loi(json)
+                }
+              }
+            );//end $.post
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        $('#edit-id').select2({
+          placeholder: 'Chọn đơn nguyên',
+          closeOnSelect: true,
+          allowClear: true,
+        });
+        $('#edit-id').focus();
+      }
+    });
   }
-  function del_setup_combo(item) {
-
+  function edit_setup_combo(items, itemn) {
+    alert(['coding... edit_setup_combo', items.name, itemn.name + ' x ' + itemn.sl])
+  }
+  function del_setup_combo(items, itemn) {
+    alert(['coding... del_setup_combo', items.name, itemn.name + ' x ' + itemn.sl])
   }
   //end setup combo
   function thuc_don() {
@@ -1445,22 +1656,24 @@
         <button class="nav-link tab-thuc-don" id="tab-3" data-bs-toggle="tab" data-bs-target="#tab-3-content" type="button" role="tab" aria-controls="tab-3-content" aria-selected="false">Setup</button>
       </li>      
     </ul>
-    <div class="tab-content" id="myTabContent">
-      <div class="tab-pane fade show active" id="tab-1-content" role="tabpanel" aria-labelledby="tab-1" tabindex="0">
-        <div id="list-suat-an">Loading...</div>
-      </div>
-      <div class="tab-pane fade" id="tab-2-content" role="tabpanel" aria-labelledby="tab-2" tabindex="1">
-        <div id="list-don-nguyen">
-        Loading...
-        Sẽ liệt kê các đơn vị cấu thành lên một combo, đơn nguyên này ko thể chia nhỏ hơn.
+      <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="tab-1-content" role="tabpanel" aria-labelledby="tab-1" tabindex="0">
+          <div id="list-suat-an">Loading...</div>
         </div>
-      </div>
-      <div class="tab-pane fade" id="tab-3-content" role="tabpanel" aria-labelledby="tab-3" tabindex="2">
-        loading...
-        Mỗi combo sẽ gồm các đơn nguyên và số lượng, mặc định số lượng = 1. 
-        Cho phép thêm các đơn nguyên vào 1 combo
-      </div>
-    </div>`;
+        <div class="tab-pane fade" id="tab-2-content" role="tabpanel" aria-labelledby="tab-2" tabindex="1">
+          <div id="list-don-nguyen">
+            Loading...<br>
+              Sẽ liệt kê các đơn vị cấu thành lên một combo, đơn nguyên này ko thể chia nhỏ hơn.
+          </div>
+        </div>
+        <div class="tab-pane fade" id="tab-3-content" role="tabpanel" aria-labelledby="tab-3" tabindex="2">
+          <div id="list-combo">
+            loading...<br>
+              Mỗi combo sẽ gồm các đơn nguyên và số lượng, mặc định số lượng = 1.<br>
+                Cho phép thêm các đơn nguyên vào 1 combo
+              </div>
+          </div>
+        </div>`;
     $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -1495,15 +1708,6 @@
           isHidden: true,
           action: function () {
             add_don_nguyen();
-            return false;
-          }
-        },
-        tab3_them: {
-          text: '<i class="fa fa-flask"></i> Thêm Combo',
-          btnClass: 'btn-blue cmd-in-tab cmd-in-tab-3',
-          isHidden: true,
-          action: function () {
-            thong_bao_loi({ ok: 0, msg: 'Thêm Combo: coding...' })
             return false;
           }
         },
@@ -1602,15 +1806,15 @@
   function add_loai() {
     var item = { id: '', name: '' };
     var content = `<div class="table-responsive-sm"><table align="center" width="100%">
-    <tr>
-    <td>ID:</td>
-    <td><input type="text" class="form-control" id="edit-id" value="`+ item.id + `"></td>
-    </tr>
-    <tr>
-    <td>Name:</td>
-    <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `"></td>
-    </tr>
-    </table></div>`;
+          <tr>
+            <td>ID:</td>
+            <td><input type="text" class="form-control" id="edit-id" value="`+ item.id + `"></td>
+          </tr>
+          <tr>
+            <td>Name:</td>
+            <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `"></td>
+          </tr>
+        </table></div>`;
     $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -1660,15 +1864,15 @@
   }
   function edit_loai(item) {
     var content = `<div class="table-responsive-sm"><table align="center" width="100%">
-    <tr>
-    <td>ID:</td>
-    <td><input type="text" class="form-control" id="edit-id" value="`+ item.id + `" disabled></td>
-    </tr>
-    <tr>
-    <td>Name:</td>
-    <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `"></td>
-    </tr>
-    </table></div>`;
+          <tr>
+            <td>ID:</td>
+            <td><input type="text" class="form-control" id="edit-id" value="`+ item.id + `" disabled></td>
+          </tr>
+          <tr>
+            <td>Name:</td>
+            <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `"></td>
+          </tr>
+        </table></div>`;
     $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -1935,23 +2139,23 @@
       all_option_roles += '<option value="' + item.role + '">' + item.rolename + '</option>'
     }
     var html_4input = `
-      <div class="mb-3 mt-3">
-        <label for="nhap-uid" class="form-label">uid:</label>
-        <input type="text" class="form-control" id="nhap-uid" placeholder="Nhập uid">
-      </div>
-      <div class="mb-3 mt-3">
-        <label for="nhap-pwd" class="form-label">Password:</label>
-        <input type="password" class="form-control" id="nhap-pwd" placeholder="Nhập Password">
-      </div>
-      <div class="mb-3 mt-3">
-        <label for="nhap-fullname" class="form-label">Fullname:</label>
-        <input type="text" class="form-control" id="nhap-fullname" placeholder="Nhập Fullname">
-      </div>
-      <div class="mb-3 mt-3">
-        <label for="nhap-role" class="form-label">Role:</label>
-        <select class="form-select" id="nhap-role" >`+ all_option_roles + `</select>
-    </div>
-    `;
+            <div class="mb-3 mt-3">
+              <label for="nhap-uid" class="form-label">uid:</label>
+              <input type="text" class="form-control" id="nhap-uid" placeholder="Nhập uid">
+            </div>
+            <div class="mb-3 mt-3">
+              <label for="nhap-pwd" class="form-label">Password:</label>
+              <input type="password" class="form-control" id="nhap-pwd" placeholder="Nhập Password">
+            </div>
+            <div class="mb-3 mt-3">
+              <label for="nhap-fullname" class="form-label">Fullname:</label>
+              <input type="text" class="form-control" id="nhap-fullname" placeholder="Nhập Fullname">
+            </div>
+            <div class="mb-3 mt-3">
+              <label for="nhap-role" class="form-label">Role:</label>
+              <select class="form-select" id="nhap-role">`+ all_option_roles + `</select>
+            </div>
+            `;
     var dialog_add = $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -2013,15 +2217,15 @@
     //người khác thì set ok
     //cần 1 form nhập pw mới, (ko cần pw cũ)
     var html_input = `
-      <div class="mb-3 mt-3">
-        <label for="set-uid" class="form-label">uid:</label>
-        <input type="text" class="form-control" id="set-uid" value="`+ uid + `" disabled>
-      </div>
-      <div class="mb-3 mt-3">
-        <label for="set-pwd" class="form-label">Password mới:</label>
-        <input type="password" class="form-control" id="set-pwd" placeholder="Nhập Password">
-      </div>
-    `;
+            <div class="mb-3 mt-3">
+              <label for="set-uid" class="form-label">uid:</label>
+              <input type="text" class="form-control" id="set-uid" value="`+ uid + `" disabled>
+            </div>
+            <div class="mb-3 mt-3">
+              <label for="set-pwd" class="form-label">Password mới:</label>
+              <input type="password" class="form-control" id="set-pwd" placeholder="Nhập Password">
+            </div>
+            `;
     var dialog_set_pw = $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -2162,19 +2366,19 @@
     //gửi đi: action='do_change_pw',  uid (cookie  tự gửi), pwd, pwd2
     let uid = get_store('uid');
     var content = `
-      <div class="mb-3 mt-3">
-        <label for="old-uid" class="form-label">uid:</label>
-        <input type="text" class="form-control" id="old-uid" value="`+ uid + `" disabled>
-      </div>
-      <div class="mb-3 mt-3">
-        <label for="old-pwd" class="form-label">Password cũ:</label>
-        <input type="password" class="form-control" id="old-pwd" placeholder="Nhập Password cũ">
-      </div>
-      <div class="mb-3 mt-3">
-        <label for="new-pwd" class="form-label">Password mới:</label>
-        <input type="password" class="form-control" id="new-pwd" placeholder="Nhập Password mới">
-      </div>
-    `;
+            <div class="mb-3 mt-3">
+              <label for="old-uid" class="form-label">uid:</label>
+              <input type="text" class="form-control" id="old-uid" value="`+ uid + `" disabled>
+            </div>
+            <div class="mb-3 mt-3">
+              <label for="old-pwd" class="form-label">Password cũ:</label>
+              <input type="password" class="form-control" id="old-pwd" placeholder="Nhập Password cũ">
+            </div>
+            <div class="mb-3 mt-3">
+              <label for="new-pwd" class="form-label">Password mới:</label>
+              <input type="password" class="form-control" id="new-pwd" placeholder="Nhập Password mới">
+            </div>
+            `;
     var dialog_change_pw = $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -2294,37 +2498,37 @@
   function show_add_company() {
     //giống edit
     var content = `
-    <div class="table-responsive-sm"><table align="center" width="100%" class="table-company">
+            <div class="table-responsive-sm"><table align="center" width="100%" class="table-company">
+              <tr>
+                <td>Name:</td>
+                <td><input type="text" class="form-control" id="edit-name" placeholder="Nhập tên công ty"></td>
+              </tr>
+              <tr>
+                <td>Address:</td>
+                <td><input type="text" class="form-control" id="edit-address" placeholder="Nhập địa chỉ"></td>
+              </tr>
+              <tr>
+                <td>GPS:</td>
+                <td>
+                  <div class="input-group">
+                    <input type="search" class="form-control" id="edit-gps" value="" placeholder="vd: 21.5842342,105.7934998">
+                      <button class="btn btn-outline-primary" type="button" id="cmd_get_gps" title="Lấy tọa độ GPS của vị trí hiện tại">Get</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Phone:</td>
+                <td><input type="text" class="form-control" id="edit-phone" placeholder="Nhập sđt"></td>
+              </tr>
+              <tr>
+                <td>Zalo:</td>
+                <td><input type="text" class="form-control" id="edit-zalo" placeholder="https://zalo.me/..."></td>
+              </tr
     <tr>
-    <td>Name:</td>
-    <td><input type="text" class="form-control" id="edit-name" placeholder="Nhập tên công ty"></td>
-    </tr>
-    <tr>
-    <td>Address:</td>
-    <td><input type="text" class="form-control" id="edit-address" placeholder="Nhập địa chỉ"></td>
-    </tr>
-    <tr>
-    <td>GPS:</td>
-    <td>
-      <div class="input-group">
-          <input type="search" class="form-control" id="edit-gps" value="" placeholder="vd: 21.5842342,105.7934998">
-          <button class="btn btn-outline-primary" type="button" id="cmd_get_gps" title="Lấy tọa độ GPS của vị trí hiện tại">Get</button>
-      </div>
-    </td>
-    </tr>
-    <tr>
-    <td>Phone:</td>
-    <td><input type="text" class="form-control" id="edit-phone" placeholder="Nhập sđt"></td>
-    </tr>
-    <tr>
-    <td>Zalo:</td>
-    <td><input type="text" class="form-control" id="edit-zalo" placeholder="https://zalo.me/..."></td>
-    </tr
-    <tr>
-    <td colspan=2>Chọn trước món cho cty này ở chức năng Sửa</td>
-    </tr>
-    </table></div>
-    `;
+                <td colspan=2>Chọn trước món cho cty này ở chức năng Sửa</td>
+            </tr>
+            </table></div>
+          `;
     var dialog_company_edit = $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -2466,48 +2670,48 @@
         default_order += `<option value="${suat_item.id}">${suat_item.name} (${format_price(suat_item.price)})</option>`;
     }
     var content = `
-    <div class="table-responsive-sm">
-    <table align="center" width="100%" class="table-company" id="table-list-company">
-    <tbody>
-    <tr>
-    <td width="12%">Name:</td>
-    <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `" placeholder="Nhập tên công ty"></td>
-    </tr>
-    <tr>
-    <td>Address:</td>
-    <td><input type="text" class="form-control" id="edit-address" value="`+ item.address + `" placeholder="Nhập địa chỉ"></td>
-    </tr>
-    <tr>
-    <td>GPS:</td>
-    <td>
-      <div class="input-group">
-          <input type="search" class="form-control" id="edit-gps" value="`+ item.lat + `, ` + item.lng + `" placeholder="vd: 21.5842342,105.7934998">
-          <button class="btn btn-outline-primary" type="button" id="cmd_get_gps" title="Lấy tọa độ GPS của vị trí hiện tại">Get</button>
-      </div>
-    </td>
-    </tr>
-    <tr>
-    <td>Phone:</td>
-    <td><input type="text" class="form-control" id="edit-phone" value="`+ item.phone + `" placeholder="Nhập sđt"></td>
-    </tr>
-    <tr>
-    <td>Zalo:</td>
-    <td><input type="text" class="form-control" id="edit-zalo" value="`+ item.zalo + `" placeholder="https://zalo.me/..."></td>
-    </tr>
-    <tr>
-    <td id="goi-y-hay-an" title="Click để xem công ty này từng ăn món nào" nowarp>Hay&nbsp;ăn&nbsp;<i class="fa fa-circle-question" style="color:red"></i>:</td>
-    <td><select class="form-control" id="cbo_default_order" name="order[]" multiple="multiple" style="width: 100%">${default_order}</select></td>
-    </tr>
-    </tbody>
-    <!--
-    <tfoot>
-    <tr><td colspan=2>
-    <button class="btn btn-info btnsm add-row-suat-an">add</button>   
-    </td></tr>
-    </tfoot>
+          <div class="table-responsive-sm">
+            <table align="center" width="100%" class="table-company" id="table-list-company">
+              <tbody>
+                <tr>
+                  <td width="12%">Name:</td>
+                  <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `" placeholder="Nhập tên công ty"></td>
+                </tr>
+                <tr>
+                  <td>Address:</td>
+                  <td><input type="text" class="form-control" id="edit-address" value="`+ item.address + `" placeholder="Nhập địa chỉ"></td>
+                </tr>
+                <tr>
+                  <td>GPS:</td>
+                  <td>
+                    <div class="input-group">
+                      <input type="search" class="form-control" id="edit-gps" value="`+ item.lat + `, ` + item.lng + `" placeholder="vd: 21.5842342,105.7934998">
+                        <button class="btn btn-outline-primary" type="button" id="cmd_get_gps" title="Lấy tọa độ GPS của vị trí hiện tại">Get</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Phone:</td>
+                  <td><input type="text" class="form-control" id="edit-phone" value="`+ item.phone + `" placeholder="Nhập sđt"></td>
+                </tr>
+                <tr>
+                  <td>Zalo:</td>
+                  <td><input type="text" class="form-control" id="edit-zalo" value="`+ item.zalo + `" placeholder="https://zalo.me/..."></td>
+                </tr>
+                <tr>
+                  <td id="goi-y-hay-an" title="Click để xem công ty này từng ăn món nào" nowarp>Hay&nbsp;ăn&nbsp;<i class="fa fa-circle-question" style="color:red"></i>:</td>
+                  <td><select class="form-control" id="cbo_default_order" name="order[]" multiple="multiple" style="width: 100%">${default_order}</select></td>
+                </tr>
+              </tbody>
+              <!--
+              <tfoot>
+                <tr><td colspan=2>
+                  <button class="btn btn-info btnsm add-row-suat-an">add</button>
+                </td></tr>
+            </tfoot>
     -->
-    </table>
-    </div>
+          </table>
+      </div>
     `;
     function add_row_suat_an(item) {
       var thu = [2, 3, 4, 5, 6, 7, 8]
@@ -2528,45 +2732,45 @@
         }
       }
       var s = `
-        <div class="input-group" id="nhom-ngay-${item.id}">
-          <input type="text" class="form-control pc-only" value="${suat.name} (${format_price(suat.price)})" disabled>
-          <div class="input-group-text pp-checkbox" title="Thứ 2">
-            <input type="checkbox" value="2" ${hasThu(2) ? 'checked' : ''}>
+      <div class= "input-group" id = "nhom-ngay-${item.id}">
+      <input type="text" class="form-control pc-only" value="${suat.name} (${format_price(suat.price)})" disabled>
+        <div class="input-group-text pp-checkbox" title="Thứ 2">
+          <input type="checkbox" value="2" ${hasThu(2) ? 'checked' : ''}>
             <label class="thu">
-            <div>2</div></label>
-          </div>
-          <div class="input-group-text pp-checkbox" title="Thứ 3">
-            <input type="checkbox" value="3" ${hasThu(3) ? 'checked' : ''}>
+              <div>2</div></label>
+        </div>
+        <div class="input-group-text pp-checkbox" title="Thứ 3">
+          <input type="checkbox" value="3" ${hasThu(3) ? 'checked' : ''}>
             <label class="thu">
-            <div>3</div></label>
-          </div>
-          <div class="input-group-text pp-checkbox" title="Thứ 4">
-            <input type="checkbox" value="4" ${hasThu(4) ? 'checked' : ''}>
+              <div>3</div></label>
+        </div>
+        <div class="input-group-text pp-checkbox" title="Thứ 4">
+          <input type="checkbox" value="4" ${hasThu(4) ? 'checked' : ''}>
             <div>4</div></label>
+          <label class="thu">
+        </div>
+        <div class="input-group-text pp-checkbox" title="Thứ 5">
+          <input type="checkbox" value="5" ${hasThu(5) ? 'checked' : ''}>
             <label class="thu">
-          </div>
-          <div class="input-group-text pp-checkbox" title="Thứ 5">
-            <input type="checkbox" value="5" ${hasThu(5) ? 'checked' : ''}>
+              <div>5</div></label>
+        </div>
+        <div class="input-group-text pp-checkbox" title="Thứ 6">
+          <input type="checkbox" value="6" ${hasThu(6) ? 'checked' : ''}>
             <label class="thu">
-            <div>5</div></label>
-          </div>
-          <div class="input-group-text pp-checkbox" title="Thứ 6">
-            <input type="checkbox" value="6" ${hasThu(6) ? 'checked' : ''}>
+              <div>6</div></label>
+        </div>
+        <div class="input-group-text pp-checkbox" title="Thứ 7">
+          <input type="checkbox" value="7" ${hasThu(7) ? 'checked' : ''}>
             <label class="thu">
-            <div>6</div></label>
-          </div>
-          <div class="input-group-text pp-checkbox" title="Thứ 7">
-            <input type="checkbox" value="7" ${hasThu(7) ? 'checked' : ''}>
+              <div>7</div></label>
+        </div>
+        <div class="input-group-text pp-checkbox" title="Chủ nhật">
+          <input type="checkbox" value="8" ${hasThu(8) ? 'checked' : ''}>
             <label class="thu">
-            <div>7</div></label>
-          </div>
-          <div class="input-group-text pp-checkbox" title="Chủ nhật">
-            <input type="checkbox" value="8" ${hasThu(8) ? 'checked' : ''}>
-            <label class="thu">
-            <div>CN</div></label>
-          </div>
-        </div>`;
-      var row = `<tr class="row-them-chon-ngay"><td>
+              <div>CN</div></label>
+        </div>
+      </div>`;
+      var row = `<tr class= "row-them-chon-ngay"><td>
       <span class="pc-only">Chọn ngày:</span>
       <span class="mobile-only">${suat.sign}:</span>
       </td><td>${s}</td></tr>`;
@@ -2613,7 +2817,7 @@
         //    for (var op of selected) {
         //      var id = op.value;
         //      var ngay = []
-        //      var thus = $(`#nhom-ngay-${id}`).find('input:checked')
+        //      var thus = $(`#nhom - ngay - ${ id }`).find('input:checked')
         //      for (var thu of thus) {
         //        ngay.push(thu.value);
         //      }
@@ -2644,7 +2848,7 @@
             for (var op of selected) {
               var id = parseInt(op.value);
               var arr_thu = []
-              var thus = $(`#nhom-ngay-${id}`).find('input:checked')
+              var thus = $(`#nhom - ngay - ${id}`).find('input:checked')
               for (var thu of thus) {
                 arr_thu.push(parseInt(thu.value));
               }
@@ -2854,7 +3058,7 @@
             var suat = get_suat(item.default, json.suat)
             var hay_an = '';
             for (var s of suat) {
-              hay_an += `<span class="badge bg-info">${s.name}</span> `;
+              hay_an += `<span class= "badge bg-info"> ${s.name}</span> `;
             }
             content += '<tr>' +
               '<td align=center nowarp>' + (++stt) + '</td>' +
@@ -2964,7 +3168,7 @@
         break;
     }
     var content = `
-      <div class="mb-3 mt-3">
+    <div class= "mb-3 mt-3">
         <label for="set-key" class="form-label">Key:</label>
         <input type="text" class="form-control" id="set-key" value="`+ item.key + `" disabled>
       </div>

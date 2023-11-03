@@ -714,6 +714,81 @@ namespace SuatAn
                             cm.Parameters.Add("@des", SqlDbType.NVarChar, 255).Value = context.Request["des"];
                             break;
                     }
+                    switch (action)
+                    {
+                        case "edit_don_nguyen":
+                            cm.Parameters.Add("@id_old", SqlDbType.Int).Value = context.Request["id_old"];
+                            break;
+                    }
+                    json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
+                }
+            }
+            catch (Exception ex) //bẫy lỗi
+            {
+                reply.msg = ex.Message; //lấy lỗi bẫy được
+                reply.ok = false; //báo lỗi qua ok
+                json = JsonConvert.SerializeObject(reply); //dùng json net để tạo chuỗi
+            }
+            context.Response.Write(json); //gửi về client
+        }
+
+        void xuly_combo(string action)
+        {
+            Reply reply = new Reply(); //tạo đối tượng để trả về lỗi
+            string json = "";
+            try
+            {
+                reply.ok = true;
+                SqlServer db = new SqlServer(); //dùng thư viện SqlServer
+                SqlCommand cm = db.GetCmd("SP_Combo", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
+
+                switch (action)
+                {
+                    case "add_combo":
+                    case "edit_combo":
+                    case "del_combo":
+                        int role = get_role();
+                        if (role == 3 || role == 100)
+                        {
+                            reply.ok = true;
+                            string uid = context.Request.Cookies["uid"].Value;
+                            string cookie = context.Request.Cookies["ck"].Value;
+                            if (uid != null && uid != "" && cookie != null && cookie != "")
+                            {
+                                cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = uid;
+                                cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = cookie;
+                            }
+                        }
+                        else
+                        {
+                            reply.ok = false;
+                            reply.msg = "Bạn không có quyền";
+                        }
+                        break;
+                }
+
+                if (reply.ok)
+                {
+                    switch (action)
+                    {
+                        case "list_combo":
+                            //ko cần thêm tham số
+                            break;
+                        case "add_combo":
+                        case "edit_combo":
+                        case "del_combo":
+                            cm.Parameters.Add("@ids", SqlDbType.Int).Value = context.Request["ids"];
+                            break;
+                    }
+
+                    switch (action)
+                    {
+                        case "add_combo":
+                        case "edit_combo":
+                            cm.Parameters.Add("@idn", SqlDbType.Int).Value = context.Request["idn"];
+                            cm.Parameters.Add("@sl", SqlDbType.Int).Value = context.Request["sl"];
+                            break;
+                    }
                     json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
                 }
             }
@@ -788,6 +863,13 @@ namespace SuatAn
                 case "edit_don_nguyen":
                 case "del_don_nguyen":
                     xuly_don_nguyen(action);
+                    break;
+
+                case "list_combo":
+                case "add_combo":
+                case "edit_combo":
+                case "del_combo":
+                    xuly_combo(action);
                     break;
             }
         }
