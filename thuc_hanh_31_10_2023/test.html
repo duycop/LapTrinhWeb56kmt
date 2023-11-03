@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="asset/jquery.min.js"></script>
+</head>
+<body>
+    <button id="nut1">CLick here</button>
+    <pre>
+    <div id="hello">xin chào</div>
+    khi click vào nút "CLick here" thì div#hello
+    thay đổi text: xin chào => 1 bài thơ "ayetcdc"
+    code js là gì?
+
+    sử dụng thư viện jquery
+    1. đưa lib js jquery vào header : done
+    2. cần tuân thủ quy tắc của jquery
+
+    thu đc kinh nghiệm:
+        xác định đối tượng bị click: dùng id =>$('#id')
+        đổi text của 1 đối tượng: định vị nó, dùng hàm html(xxxx)
+            cụ thể: $("div#hello").html(bai_tho);
+    </pre>
+    <script>
+        $(document).ready(function () {
+            $("#nut1").click(function () {
+                var bai_tho = `
+                Anh yêu em từ chân đến cổ
+                Còn cái đầu vứt tổ nó đi.
+                `;
+                $("div#hello").html(bai_tho);
+            });
+        });
+    </script>
+</body>
+</html>
