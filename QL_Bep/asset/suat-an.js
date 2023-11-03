@@ -1637,8 +1637,80 @@
       }
     });
   }
-  function edit_setup_combo(items, itemn) {
-    alert(['coding... edit_setup_combo', items.name, itemn.name + ' x ' + itemn.sl])
+  function edit_setup_combo(item, itemn) {
+    //alert(['coding... edit_setup_combo', items.name, itemn.name + ' x ' + itemn.sl])
+    var ds_chon = '';
+    for (var item_dn of json_don_nguyen.data) {
+      if (item_dn.id == itemn.id) {
+        ds_chon += `<option value="${item_dn.id}" selected>${item_dn.name}</option>`;
+        break;
+      }
+      //else
+       // ds_chon += `<option value="${item_dn.id}">${item_dn.name}</option>`;
+    }
+    var content = `
+    <table width="100%">
+    <tr><td>Combo:</td><td>${item.name} (${format_price(item.price)})</td></tr>
+    <tr><td>Đơn nguyên:</td>
+    <td><select class="form-select form-control cbo-don-nguyen" id="edit-id" style="width: 100%"><option selected="true" disabled="disabled" value="0">--Chọn đơn nguyên--</option>
+    ${ds_chon}
+    </select></td></tr>
+    <tr><td>Số lượng:</td>
+    <td><input type="number" class="form-control" id="edit-sl" value="${itemn.sl}"></td>
+    </tr></table>
+    `;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: `Cập nhật đơn nguyên trong combo`,
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'm',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        add: {
+          text: '<i class="fa fa-utensils"></i> Update',
+          btnClass: 'btn-primary',
+          action: function () {
+            var self = this;
+            $.post(api,
+              {
+                action: 'edit_combo',
+                ids: item.id,
+                idn: itemn.id,
+                sl: $('#edit-sl').val(),
+              },
+              function (json) {
+
+                if (json.ok) {
+                  self.close();
+                  list_setup_combo();
+                } else {
+                  thong_bao_loi(json)
+                }
+              }
+            );//end $.post
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        //$('#edit-id').select2({
+        //  placeholder: 'Chọn đơn nguyên',
+        //  closeOnSelect: true,
+        //  allowClear: true,
+        //});
+        $('#edit-sl').focus();
+      }
+    });
   }
   function del_setup_combo(items, itemn) {
     alert(['coding... del_setup_combo', items.name, itemn.name + ' x ' + itemn.sl])
@@ -2848,7 +2920,7 @@
             for (var op of selected) {
               var id = parseInt(op.value);
               var arr_thu = []
-              var thus = $(`#nhom - ngay - ${id}`).find('input:checked')
+              var thus = $(`#nhom-ngay-${id}`).find('input:checked')
               for (var thu of thus) {
                 arr_thu.push(parseInt(thu.value));
               }
