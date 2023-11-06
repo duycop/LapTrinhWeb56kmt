@@ -112,7 +112,7 @@
   }
   function playSound(url, text, sanbay) {
     if (gtts_playing) return;
-    var url2 = sanbay ? (mp3 + 'san_bay.mp3'):url;
+    var url2 = sanbay ? (mp3 + 'san_bay.mp3') : url;
     var audio = new Audio(url2);
     audio.addEventListener("ended", function () {
       if (sanbay) {
@@ -139,7 +139,7 @@
       toastr["warning"]("Hãy bật loa và CLICK vào trình duyệt để cho phép nói ra loa nhé");
     });
   }//hết hàm playSound
-  function play_tts(text,sanbay=1) {              //nhận txt là chuỗi cần tts
+  function play_tts(text, sanbay = 1) {              //nhận txt là chuỗi cần tts
     if (text == null || text == '') return;
     $.post(mp3,  //gọi API tạo tts
       { text: text },                     //truyền lên chuỗi cần tts
@@ -158,7 +158,7 @@
       var item = Q.dequeue();
       Q_done.enqueue(item);
       if (item.text != '')
-        play_tts(item.text,1); //có tiếng sân bay
+        play_tts(item.text, 1); //có tiếng sân bay
     };
   }
 
@@ -258,17 +258,27 @@
                   <th>Time</th>
                   </tr></thead><tbody>`;
             for (var item of json.data) {
+              var talk = '';
+              if (item.input == 'mp3_short' || item.input == 'mp3_long') {
+                talk = ` <button class="btn btn-sm btn-info btn-talk-log" data-lid="${item.id}">Nói</button> `;
+              }
               content += `<tr>
                     <td nowarp align="center">${item.id}</td>
-                    <td nowarp>${item.log.replaceAll(';', '<br>')}</td>
+                    <td nowarp>${talk}<span id="log-content-${item.id}">${item.log.replaceAll(';', '<br>')}</span></td>
                     <td nowarp align="center">${item.time}</td>
                   </tr>`;
             }
             content += '</tbody></table></div>';
             $('#list-history-order').html(content);
             if (json.data.length > 10) {
-              sort_table('#table-list-history-order', "Log history", 2000);
+              sort_table('#table-list-history-order', "Log history", 20);
             }
+            //btn-talk-log
+            $('#table-list-history-order tbody').on('click', '.btn-talk-log', function () {
+              var lid = $(this).data('lid');
+              var text = $('#log-content-' + lid).text();
+              Q.enqueue({ id: lid, text: text });
+            });
           } else {
             $('#list-history-order').html(json.msg);
             thong_bao_loi(json, { w0, t: 1 });
@@ -3054,7 +3064,7 @@
                   <td>GPS:</td>
                   <td>
                     <div class="input-group">
-                      <input type="search" class="form-control" id="edit-gps" value="${item.lat},${item.lng}" placeholder="vd: 21.5842342,105.7934998">
+                      <input type="search" class="form-control" id="edit-gps" value="${item.lat ? item.lat + ',' : ''}${item.lng ? item.lng : ''}" placeholder="vd: 21.5842342,105.7934998">
                         <button class="btn btn-outline-primary" type="button" id="cmd_get_gps" title="Lấy tọa độ GPS của vị trí hiện tại">Get</button>
                     </div>
                   </td>
