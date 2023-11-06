@@ -56,6 +56,7 @@
     <Content Include="asset\select2.min.js" />
     <Content Include="icon\site.webmanifest" />
     <Content Include="api.ashx" />
+    <Content Include="nodered\maifood_flows.json" />
     <None Include="packages.config" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>

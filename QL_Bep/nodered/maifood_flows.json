@@ -1,0 +1,611 @@
+[
+    {
+        "id": "fe25aceeaf2784cb",
+        "type": "tab",
+        "label": "MaiFood",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "387fed6f0c8d1642",
+        "type": "group",
+        "z": "fe25aceeaf2784cb",
+        "name": "mp3 ghép",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "41bab0bffc65ac47",
+            "5b365efd49373d27",
+            "0669bfdd31c2446a",
+            "93748e7799d2703c",
+            "6965ae58a60799cd",
+            "dfa41703a0b3d32b",
+            "d026140bd1a988fd",
+            "5e0795a03ef22288"
+        ],
+        "x": 14,
+        "y": 299,
+        "w": 912,
+        "h": 142
+    },
+    {
+        "id": "c4ce1d79f1264d96",
+        "type": "group",
+        "z": "fe25aceeaf2784cb",
+        "name": "chát telegram",
+        "style": {
+            "label": true
+        },
+        "nodes": [
+            "76d1bdc6f01089e1",
+            "b213ee6cce41509b",
+            "324586dc31f32738",
+            "414003338e78effe",
+            "d9325fbe49c6b3ce",
+            "d79d4314269eca07",
+            "bb59ed8532dc5482",
+            "dde57fb268bb31e3",
+            "69c933f3c6738adb",
+            "72247901d868147e",
+            "6120dab56db1c73b",
+            "305ce9faaf4bcabf"
+        ],
+        "x": 14,
+        "y": 19,
+        "w": 1032,
+        "h": 242
+    },
+    {
+        "id": "76d1bdc6f01089e1",
+        "type": "telegram receiver",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "Get chat",
+        "bot": "3c6837c4adc19496",
+        "saveDataDir": "",
+        "filterCommands": false,
+        "x": 100,
+        "y": 60,
+        "wires": [
+            [
+                "b213ee6cce41509b"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "b213ee6cce41509b",
+        "type": "function",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "Split",
+        "func": "msg.bak = msg.payload;\nvar s=msg.payload.content;\n\nif(s[0]=='/') s = s.substring(1)\ns = s.toLowerCase();\n\nvar arr = s.split(' ');\nmsg.loai=arr[0];\n\nswitch (msg.loai){\n    case 'loai':\n    case 'loại':\n        msg.loai = 'loai';          \n        break;\n    case 'suat':\n    case 'suất':\n        msg.loai = 'suat';\n        break;\n    case 'don':\n    case 'đơn':\n    case 'nguyen':\n    case 'nguyên':\n    case 'donnguyen':\n    case 'đơnnguyên':\n    case 'nguyendon':\n    case 'nguyênđơn':\n    case 'nguyenlieu':\n    case 'nguyênliệu':\n        msg.loai = 'don_nguyen';\n        break;\n    case 'log':\n        flow.set('last_log_id',0)\n        return;\n}\n\nmsg.ngay = null;\nif (arr.length > 2) {\n    switch (arr[1]) {\n        case 'hom':\n        case 'hôm':\n            arr[1] = arr[2];\n            break;\n    }\n}     \n\nif (arr.length > 1) {\n    var delta = 0;\n    switch (arr[1]) {\n        case 'qua':\n        case 'homqua':\n        case 'hom_qua':\n            delta = -1;\n            break;\n        case 'kia':\n        case 'homkia':\n        case 'hom_kia':\n            delta = -2;\n            break;\n        default:\n            if (!isNaN(arr[1])) {\n                delta = parseInt(arr[1]);\n                if (delta > 0) delta = 0;\n            }\n            break;\n    }\n    if (delta != 0) {\n        var x = new Date();\n        x.setDate(x.getDate() + delta);\n        msg.ngay = x.toISOString().split('T')[0];\n    }\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 270,
+        "y": 60,
+        "wires": [
+            [
+                "d79d4314269eca07"
+            ]
+        ]
+    },
+    {
+        "id": "324586dc31f32738",
+        "type": "telegram sender",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "Reply",
+        "bot": "3c6837c4adc19496",
+        "haserroroutput": false,
+        "outputs": 1,
+        "x": 810,
+        "y": 100,
+        "wires": [
+            [
+                "d9325fbe49c6b3ce"
+            ]
+        ]
+    },
+    {
+        "id": "414003338e78effe",
+        "type": "function",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "Prepare",
+        "func": "var kq = msg.payload[0].kq;\nmsg.payload = msg.bak;\nmsg.payload.content = kq;\nmsg.payload.options = { parse_mode: \"HTML\" };\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 60,
+        "wires": [
+            [
+                "324586dc31f32738"
+            ]
+        ]
+    },
+    {
+        "id": "d9325fbe49c6b3ce",
+        "type": "debug",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "debug",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 950,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "d79d4314269eca07",
+        "type": "MSSQL",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "mssqlCN": "21d8723489026417",
+        "name": "Query DB",
+        "outField": "payload",
+        "returnType": 0,
+        "throwErrors": 1,
+        "query": "SP_Telegram",
+        "modeOpt": "",
+        "modeOptType": "execute",
+        "queryOpt": "payload",
+        "queryOptType": "editor",
+        "paramsOpt": "",
+        "paramsOptType": "editor",
+        "rows": "rows",
+        "rowsType": "msg",
+        "parseMustache": true,
+        "params": [
+            {
+                "output": false,
+                "name": "action",
+                "type": "NVarChar(50)",
+                "valueType": "msg",
+                "value": "loai",
+                "options": {
+                    "nullable": true,
+                    "primary": false,
+                    "identity": false,
+                    "readOnly": false
+                }
+            },
+            {
+                "output": false,
+                "name": "ngay",
+                "type": "Date",
+                "valueType": "msg",
+                "value": "ngay",
+                "options": {
+                    "nullable": true,
+                    "primary": false,
+                    "identity": false,
+                    "readOnly": false
+                }
+            },
+            {
+                "output": false,
+                "name": "msg",
+                "type": "NVarChar(max)",
+                "valueType": "msg",
+                "value": "payload.content",
+                "options": {
+                    "nullable": true,
+                    "primary": false,
+                    "identity": false,
+                    "readOnly": false
+                }
+            }
+        ],
+        "x": 500,
+        "y": 60,
+        "wires": [
+            [
+                "414003338e78effe"
+            ]
+        ]
+    },
+    {
+        "id": "bb59ed8532dc5482",
+        "type": "inject",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "1S",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 110,
+        "y": 140,
+        "wires": [
+            [
+                "dde57fb268bb31e3"
+            ]
+        ]
+    },
+    {
+        "id": "dde57fb268bb31e3",
+        "type": "MSSQL",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "mssqlCN": "21d8723489026417",
+        "name": "Db: AutoLog",
+        "outField": "payload",
+        "returnType": 0,
+        "throwErrors": 1,
+        "query": "SP_Telegram",
+        "modeOpt": "",
+        "modeOptType": "execute",
+        "queryOpt": "payload",
+        "queryOptType": "editor",
+        "paramsOpt": "",
+        "paramsOptType": "editor",
+        "rows": "rows",
+        "rowsType": "msg",
+        "parseMustache": true,
+        "params": [
+            {
+                "output": false,
+                "name": "action",
+                "type": "NVarChar(50)",
+                "valueType": "str",
+                "value": "auto",
+                "options": {
+                    "nullable": true,
+                    "primary": false,
+                    "identity": false,
+                    "readOnly": false
+                }
+            },
+            {
+                "output": false,
+                "name": "last_log_id",
+                "type": "int",
+                "valueType": "flow",
+                "value": "last_log_id",
+                "options": {
+                    "nullable": true,
+                    "primary": false,
+                    "identity": false,
+                    "readOnly": false
+                }
+            }
+        ],
+        "x": 290,
+        "y": 140,
+        "wires": [
+            [
+                "305ce9faaf4bcabf"
+            ]
+        ]
+    },
+    {
+        "id": "69c933f3c6738adb",
+        "type": "function",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "MSG",
+        "func": "if(msg.payload.length>0){\n    var last_log_id = msg.payload[0].ID;\n    flow.set('last_log_id',last_log_id);\n    \n    for (let index = 0; index < msg.payload.length; index++) {\n        const item = msg.payload[index];\n       \n\n        var txt ='👉AUTO LOG ['+item.ID+']\\r\\n⏰'+item.time+'\\r\\n'+item.input+'\\r\\n'+item.output.replaceAll(';','\\r\\n')\n        var item_chat = {\n                payload:{\n                    chatId: -4032161202,\n                    type: \"message\",\n                    content : txt,\n                    options : { parse_mode: \"HTML\" }\n                }\n            };\n        node.send(item_chat);\n    }\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 140,
+        "wires": [
+            [
+                "324586dc31f32738"
+            ]
+        ]
+    },
+    {
+        "id": "72247901d868147e",
+        "type": "inject",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 220,
+        "wires": [
+            [
+                "6120dab56db1c73b"
+            ]
+        ]
+    },
+    {
+        "id": "6120dab56db1c73b",
+        "type": "change",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "Reset Flow.last_log_id",
+        "rules": [
+            {
+                "t": "set",
+                "p": "last_log_id",
+                "pt": "flow",
+                "to": "0",
+                "tot": "num"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 320,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "305ce9faaf4bcabf",
+        "type": "rbe",
+        "z": "fe25aceeaf2784cb",
+        "g": "c4ce1d79f1264d96",
+        "name": "",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "payload",
+        "topi": "topic",
+        "x": 490,
+        "y": 140,
+        "wires": [
+            [
+                "69c933f3c6738adb"
+            ]
+        ]
+    },
+    {
+        "id": "41bab0bffc65ac47",
+        "type": "http in",
+        "z": "fe25aceeaf2784cb",
+        "d": true,
+        "g": "387fed6f0c8d1642",
+        "name": "",
+        "url": "/mp3",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 100,
+        "y": 340,
+        "wires": [
+            [
+                "6965ae58a60799cd"
+            ]
+        ]
+    },
+    {
+        "id": "5b365efd49373d27",
+        "type": "exec",
+        "z": "fe25aceeaf2784cb",
+        "d": true,
+        "g": "387fed6f0c8d1642",
+        "command": "c:\\Python311\\python.exe c:\\www\\XuatAn\\web\\mp3\\ghep_mp3.py",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "Exec",
+        "x": 490,
+        "y": 360,
+        "wires": [
+            [
+                "5e0795a03ef22288"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "0669bfdd31c2446a",
+        "type": "function",
+        "z": "fe25aceeaf2784cb",
+        "d": true,
+        "g": "387fed6f0c8d1642",
+        "name": "cmd",
+        "func": "var txt = msg.payload.text;\nmsg.payload = '\"' + txt + '\"';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 370,
+        "y": 360,
+        "wires": [
+            [
+                "5b365efd49373d27"
+            ]
+        ]
+    },
+    {
+        "id": "93748e7799d2703c",
+        "type": "debug",
+        "z": "fe25aceeaf2784cb",
+        "d": true,
+        "g": "387fed6f0c8d1642",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 820,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "6965ae58a60799cd",
+        "type": "md5",
+        "z": "fe25aceeaf2784cb",
+        "d": true,
+        "g": "387fed6f0c8d1642",
+        "name": "",
+        "fieldToHash": "payload",
+        "fieldTypeToHash": "msg",
+        "hashField": "md5",
+        "hashFieldType": "msg",
+        "x": 250,
+        "y": 360,
+        "wires": [
+            [
+                "0669bfdd31c2446a"
+            ]
+        ]
+    },
+    {
+        "id": "dfa41703a0b3d32b",
+        "type": "http response",
+        "z": "fe25aceeaf2784cb",
+        "d": true,
+        "g": "387fed6f0c8d1642",
+        "name": "",
+        "statusCode": "200",
+        "headers": {
+            "content-type": "application/json"
+        },
+        "x": 820,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "d026140bd1a988fd",
+        "type": "http in",
+        "z": "fe25aceeaf2784cb",
+        "d": true,
+        "g": "387fed6f0c8d1642",
+        "name": "",
+        "url": "/mp3",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 100,
+        "y": 400,
+        "wires": [
+            [
+                "6965ae58a60799cd"
+            ]
+        ]
+    },
+    {
+        "id": "5e0795a03ef22288",
+        "type": "function",
+        "z": "fe25aceeaf2784cb",
+        "d": true,
+        "g": "387fed6f0c8d1642",
+        "name": "json",
+        "func": "var fn = msg.payload.trim();\nmsg.payload={\n    ok:1,\n    msg:\"ok\",\n    fn:fn\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 340,
+        "wires": [
+            [
+                "dfa41703a0b3d32b",
+                "93748e7799d2703c"
+            ]
+        ]
+    },
+    {
+        "id": "3c6837c4adc19496",
+        "type": "telegram bot",
+        "botname": "MaiFood bot",
+        "usernames": "",
+        "chatids": "",
+        "baseapiurl": "",
+        "updatemode": "polling",
+        "pollinterval": "300",
+        "usesocks": false,
+        "sockshost": "",
+        "socksprotocol": "socks5",
+        "socksport": "6667",
+        "socksusername": "anonymous",
+        "sockspassword": "",
+        "bothost": "",
+        "botpath": "",
+        "localbotport": "8443",
+        "publicbotport": "8443",
+        "privatekey": "",
+        "certificate": "",
+        "useselfsignedcertificate": false,
+        "sslterminated": false,
+        "verboselogging": false
+    },
+    {
+        "id": "21d8723489026417",
+        "type": "MSSQL-CN",
+        "tdsVersion": "7_4",
+        "name": "MaiFood",
+        "server": "127.0.0.1",
+        "port": "49259",
+        "encyption": true,
+        "trustServerCertificate": true,
+        "database": "SuatAn",
+        "useUTC": true,
+        "connectTimeout": "15000",
+        "requestTimeout": "15000",
+        "cancelTimeout": "5000",
+        "pool": "5",
+        "parseJSON": false,
+        "enableArithAbort": true,
+        "readOnlyIntent": false
+    }
+]
