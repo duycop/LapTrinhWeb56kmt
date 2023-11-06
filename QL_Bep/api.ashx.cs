@@ -219,11 +219,21 @@ namespace SuatAn
                 {
                     msg += $"{item}={context.Request.Form[item]};";
                 }
+
+                bool has_today = false;
                 foreach (string item in context.Request.Cookies)
                 {
                     if (!item.StartsWith("_"))
-                        if (item.StartsWith("uid") || item.StartsWith("today"))
+                        if (item.StartsWith("uid") || item.Contains("today"))
+                        {
+                            if (item == "today") has_today = true;
                             msg += $"{item}={context.Request.Cookies[item].Value};";
+                        }
+                }
+                if (!has_today)
+                {
+                    string item = "today";
+                    msg += $"{item}={context.Request[item]};";
                 }
                 //var userAgent = context.Request.Headers["User-Agent"];
                 //msg += $"userAgent={userAgent}";
@@ -308,7 +318,7 @@ namespace SuatAn
                     case "add_company":
                     case "edit_company":
                     case "delete_company":
-                        if (role==3||role==100)
+                        if (role == 3 || role == 100)
                         {
                             //ok
                         }
@@ -325,29 +335,30 @@ namespace SuatAn
                 }
                 else if (action == "edit_company")
                 {
-                    
-                        cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
-                        cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["ck"].Value;
 
-                        //xử lý gps -> 2 số thực
-                        float? lat = null, lng = null;
-                        try
-                        {
-                            string[] items = context.Request["gps"].Split(',');
-                            lat = float.Parse(items[0]);
-                            lng = float.Parse(items[1]);
-                        }
-                        catch { }
+                    cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
+                    cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["ck"].Value;
 
-                        cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
-                        cm.Parameters.Add("@name", SqlDbType.NVarChar, 255).Value = context.Request["name"];
-                        cm.Parameters.Add("@address", SqlDbType.NVarChar, 255).Value = context.Request["address"];
-                        cm.Parameters.Add("@lat", SqlDbType.Float).Value = lat;
-                        cm.Parameters.Add("@lng", SqlDbType.Float).Value = lng;
-                        cm.Parameters.Add("@phone", SqlDbType.VarChar, 50).Value = context.Request["phone"];
-                        cm.Parameters.Add("@zalo", SqlDbType.VarChar, 100).Value = context.Request["zalo"];
-                        cm.Parameters.Add("@data_order", SqlDbType.NVarChar, 4000).Value = context.Request["data_order"];
-                    
+                    //xử lý gps -> 2 số thực
+                    float? lat = null, lng = null;
+                    try
+                    {
+                        string[] items = context.Request["gps"].Split(',');
+                        lat = float.Parse(items[0]);
+                        lng = float.Parse(items[1]);
+                    }
+                    catch { }
+
+                    cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                    cm.Parameters.Add("@name", SqlDbType.NVarChar, 255).Value = context.Request["name"];
+                    cm.Parameters.Add("@tenviet", SqlDbType.NVarChar, 255).Value = context.Request["tenviet"];
+                    cm.Parameters.Add("@address", SqlDbType.NVarChar, 255).Value = context.Request["address"];
+                    cm.Parameters.Add("@lat", SqlDbType.Float).Value = lat;
+                    cm.Parameters.Add("@lng", SqlDbType.Float).Value = lng;
+                    cm.Parameters.Add("@phone", SqlDbType.VarChar, 50).Value = context.Request["phone"];
+                    cm.Parameters.Add("@zalo", SqlDbType.VarChar, 100).Value = context.Request["zalo"];
+                    cm.Parameters.Add("@data_order", SqlDbType.NVarChar, 4000).Value = context.Request["data_order"];
+
                 }
                 else if (action == "add_company")
                 {
@@ -365,6 +376,7 @@ namespace SuatAn
                     catch { }
 
                     cm.Parameters.Add("@name", SqlDbType.NVarChar, 255).Value = context.Request["name"];
+                    cm.Parameters.Add("@tenviet", SqlDbType.NVarChar, 255).Value = context.Request["tenviet"];
                     cm.Parameters.Add("@address", SqlDbType.NVarChar, 255).Value = context.Request["address"];
                     cm.Parameters.Add("@lat", SqlDbType.Float).Value = lat;
                     cm.Parameters.Add("@lng", SqlDbType.Float).Value = lng;
@@ -377,10 +389,10 @@ namespace SuatAn
                     cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["ck"].Value;
                     cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
                 }
-                //else if (action == "get_company")
-                //{
-                //    cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
-                //}
+                else if (action == "get_company")
+                {
+                    cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                }
                 else
                 {
                     cm = null;
@@ -446,6 +458,10 @@ namespace SuatAn
                     if (today != null && today != "")
                         cm.Parameters.Add("@ngay", SqlDbType.Date).Value = today; //truyền tham số cho cm
                 }
+                if (action == "get_mp3")
+                {
+                    cm.Parameters.Add("@last_log_id", SqlDbType.Int).Value = context.Request["last_mp3_id"];
+                }
                 string json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
                 context.Response.Write(json); //trả về client, trong này có ok=true rồi
             }
@@ -460,19 +476,20 @@ namespace SuatAn
         }
         void suat_an(string action)
         {
-            string xx = "";
             try
             {
                 SqlServer db = new SqlServer();
                 SqlCommand cm = db.GetCmd("SP_SuatAn", action);
                 int role = get_role();
-
+                string today = "";
                 HttpCookie obj = context.Request.Cookies["today"];
                 if (obj != null)
                 {
-                    string today = obj.Value;
+                    today = obj.Value;
                     if (today != null && today != "")
+                    {
                         cm.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm
+                    }
                 }
 
                 switch (action)
@@ -481,13 +498,13 @@ namespace SuatAn
                     case "disable_suat_an":
                     case "enable_suat_an":
                     case "delete_suat_an":
-                    //case "dem_suat_an":
 
-                    case "add_order":
-                    case "delete_order":
+                    //case "add_order":
+                    //case "delete_order":
                     case "save_order":
                     case "goi_y_order":
                     case "copy_order":
+                    case "list_history_order":
                         if (role == 3 || role == 100)
                         {
                             cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
@@ -503,6 +520,7 @@ namespace SuatAn
                 switch (action)
                 {
                     case "list_suat_an":
+                    case "list_all_history_order":
                         //ko cần tham số
                         break;
                     case "add_suat_an":
@@ -533,46 +551,61 @@ namespace SuatAn
                         break;
 
                     case "save_order":
-                        //1 xóa hết order cũ
-                        SqlCommand cm2 = db.GetCmd("SP_SuatAn", "remove_order_cty_ca");
-                        cm2.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
-                        cm2.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
+                        ////1 xóa hết order cũ
+                        //SqlCommand cm2 = db.GetCmd("SP_SuatAn", "remove_order_cty_ca");
+                        //cm2.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
+                        //cm2.Parameters.Add("@today", SqlDbType.Date).Value = today;//fixbug: ko có cái này thì sẽ ko đúng ngày
+                        //cm2.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
 
-                        db.RunSQL(cm2);
+                        //db.RunSQL(cm2);
 
-                        //2 add từng order mới
-                        string order_id = context.Request.Form["order_id[]"];
-                        string order_sl = context.Request.Form["order_sl[]"];
-                        char[] sep = { ',' };
-                        string[] arr_id = order_id.Split(sep);
-                        string[] arr_sl = order_sl.Split(sep);
-                        for (int i = 0; i < arr_id.Length; i++)
-                        {
-                            string ids = arr_id[i];
-                            string sl = arr_sl[i];
-                            if (sl == "0" || sl == "" || sl == "NaN")
-                            {
-                                //ko làm gi
-                            }
-                            else
-                            {
-                                xx = " lần này sl = " + sl;
-                                SqlCommand cm3 = db.GetCmd("SP_SuatAn", "add_order_cty_ca");
-                                cm3.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
-                                cm3.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
-                                cm3.Parameters.Add("@id_suat", SqlDbType.Int).Value = ids;
-                                cm3.Parameters.Add("@so_luong", SqlDbType.Int).Value = sl;
+                        ////2 add từng order mới
+                        //string order_id = context.Request.Form["order_id[]"];
+                        //string order_sl = context.Request.Form["order_sl[]"];
+                        //char[] sep = { ',' };
+                        //string[] arr_id = order_id.Split(sep);
+                        //string[] arr_sl = order_sl.Split(sep);
+                        //for (int i = 0; i < arr_id.Length; i++)
+                        //{
+                        //    string ids = arr_id[i];
+                        //    string sl = arr_sl[i];
+                        //    if (sl == "0" || sl == "" || sl == "NaN")
+                        //    {
+                        //        //ko làm gi
+                        //    }
+                        //    else
+                        //    {
+                        //        int so_luong;
+                        //        if (int.TryParse(sl, out so_luong))
+                        //        {
+                        //            if (so_luong > 0)
+                        //            {
+                        //                SqlCommand cm3 = db.GetCmd("SP_SuatAn", "add_order_cty_ca");
+                        //                cm3.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
+                        //                cm3.Parameters.Add("@today", SqlDbType.Date).Value = today; //fixbug: ko có cái này thì sẽ ko đúng ngày
+                        //                cm3.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
+                        //                cm3.Parameters.Add("@id_suat", SqlDbType.Int).Value = ids;
+                        //                cm3.Parameters.Add("@so_luong", SqlDbType.Int).Value = sl;
+                        //                db.RunSQL(cm3);
+                        //            }
+                        //        }
+                        //    }
+                        //}
+                        //Reply reply = new Reply();
+                        //reply.msg = $"Đã cập nhật số lượng suất ăn thành công ca={context.Request["id_ca"]}, ngày {today}, công ty={context.Request["id_company"]}";
+                        //reply.ok = true;
+                        //string json_save = JsonConvert.SerializeObject(reply);
+                        //context.Response.Write(json_save);
+                        //return;
 
-                                db.RunSQL(cm3);
-                            }
-                        }
-                        Reply reply = new Reply();
-                        reply.msg = "Đã cập nhật số lượng suất ăn thành công";
-                        reply.ok = true;
-                        string json_save = JsonConvert.SerializeObject(reply);
-                        context.Response.Write(json_save);
-                        return;
+                        //cm.Parameters.Add("@today", SqlDbType.Date).Value = today;//fixbug: ko có cái này thì sẽ ko đúng ngày
+                        cm.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
+                        cm.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
+                        cm.Parameters.Add("@order_id", SqlDbType.VarChar, 4000).Value = context.Request.Form["order_id[]"];
+                        cm.Parameters.Add("@order_sl", SqlDbType.VarChar, 4000).Value = context.Request.Form["order_sl[]"];
+                        break;
                     case "goi_y_order":
+                    case "list_history_order":
                         cm.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
                         cm.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
                         break;
@@ -587,7 +620,7 @@ namespace SuatAn
             catch (Exception ex)
             {
                 Reply reply = new Reply();
-                reply.msg = ex.Message + xx;
+                reply.msg = ex.Message;
                 reply.ok = false;
                 string json = JsonConvert.SerializeObject(reply);
                 context.Response.Write(json);
@@ -662,6 +695,12 @@ namespace SuatAn
                             cm.Parameters.Add("@name", SqlDbType.NVarChar, 50).Value = context.Request["name"];
                             break;
                     }
+                    switch (action)
+                    {
+                        case "edit_loai":
+                            cm.Parameters.Add("@id_old", SqlDbType.Int).Value = context.Request["id_old"];
+                            break;
+                    }
                     json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
                 }
             }
@@ -716,6 +755,7 @@ namespace SuatAn
                         case "list_don_nguyen":
                             //ko cần thêm tham số
                             break;
+                        case "dem_don_nguyen":
                         case "add_don_nguyen":
                         case "edit_don_nguyen":
                         case "del_don_nguyen":
@@ -823,7 +863,39 @@ namespace SuatAn
             context.Response.ContentType = "application/json";
             remove_ck();
             string action = context.Request["action"];
-            add_log(action);
+
+            switch (action)
+            {
+                case "add_suat_an":
+                case "enable_suat_an":
+                case "disable_suat_an":
+                case "delete_suat_an":
+                case "save_order":
+                case "copy_order":
+                case "edit_setting":
+                case "get_setting":
+                case "add_company":
+                case "edit_company":
+                case "delete_company":
+                case "do_login":
+                case "do_logout":
+                case "do_change_pw":
+                case "add_user":
+                case "delete_user":
+                case "set_pw":
+                case "add_loai":
+                case "edit_loai":
+                case "del_loai":
+                case "add_don_nguyen":
+                case "edit_don_nguyen":
+                case "del_don_nguyen":
+                case "add_combo":
+                case "edit_combo":
+                case "del_combo":
+                    add_log(action);
+                    break;
+            }
+
             switch (action)
             {
                 case "list_suat_an":
@@ -832,6 +904,9 @@ namespace SuatAn
                 case "disable_suat_an":
                 case "delete_suat_an":
                 case "dem_suat_an":
+                case "list_history_order":
+                case "list_all_history_order":
+
                 //case "add_order":
                 //case "delete_order":
                 case "save_order":
@@ -841,6 +916,7 @@ namespace SuatAn
                     break;
 
                 case "monitor":
+                case "get_mp3":
                     report(action);
                     break;
 
@@ -851,6 +927,7 @@ namespace SuatAn
                     break;
 
                 case "list_company":
+                case "get_company":
                 case "add_company":
                 case "edit_company":
                 case "delete_company":
@@ -876,6 +953,7 @@ namespace SuatAn
                     break;
 
                 case "list_don_nguyen":
+                case "dem_don_nguyen":
                 case "add_don_nguyen":
                 case "edit_don_nguyen":
                 case "del_don_nguyen":
@@ -888,6 +966,7 @@ namespace SuatAn
                 case "del_combo":
                     xuly_combo(action);
                     break;
+
             }
         }
 

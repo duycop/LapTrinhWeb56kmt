@@ -58,7 +58,7 @@
   //--end ck---
 
   //--auto play mp3---
-  /*
+
   class Queue {
     constructor() {
       this.queue = [];
@@ -90,84 +90,74 @@
       }
       return false;
     }
-
-    enqueue2(item) {
-      if (!this.checkExist(item)) this.enqueue(item);
-    }
-    xoa_sach() {
-      for (var index in this.queue) {
-        this.queue.splice(index, 1);
-      }
-    }
-    clear() {
-      for (var index in this.queue) {
-        var item = this.queue[index];
-        if (item.vip == undefined) {
-          this.queue.splice(index, 1);
-        }
-      }
-    }
-    remove(itemX) {
-      if (!this.isEmpty()) {
-        for (var index in this.queue) {
-          var item = this.queue[index];
-          if (item.id == itemX.id) {
-            if (item.vip == undefined) {
-              this.queue.splice(index, 1);
-            }
-            return;
-          }
-        }
-      }
-    }
   }
   var Q = new Queue();
+  var Q_done = new Queue();
   var gtts_playing = 0;               //biến đánh dấu xem có đang bận play ko
-  var audio;
-  function play_vip(id) {
-    Q.xoa_sach();
-    if (audio && gtts_playing) {
-      audio.pause();
+  var last_mp3_id = getLocal('last_mp3_id')
+  if (last_mp3_id == null || last_mp3_id == "") last_mp3_id = 0;
+
+  function mp3_hangdoi(id, text) {
+    if (text == null || text == '') return;
+    var item = { id: id, text: text };
+    if (!Q_done.checkExist(item)) {
+      last_mp3_id = id;
+      setLocal('last_mp3_id', last_mp3_id)
+      Q.enqueue(item);
     }
-    Q.enqueue({ id: id, vip: 1, text: setting.het_gio + ' ' + id });
-    gtts_playing = 0;
   }
-  function play_nomal(id) {
-    Q.clear();
-    Q.enqueue({ id: id, text: setting.het_gio + ' ' + id });
-  }
-  function playSound(url, txt) {           //hàm này nhận 1 url audio để play
-    if (gtts_playing) return;         //nếu đang bận playing thì thoát
-    audio = new Audio(url);
-    audio.play().then(() => {       //gọi play() và khi thực sự play thì:
-      gtts_playing = 1;             //đánh dấu đang play
-      toastr["info"]("Đang nói ra loa, hãy bật loa!<br>" + txt);
+  function playSound(url, text, sanbay) {
+    if (gtts_playing) return;
+    var url2 = sanbay ? (mp3 + 'san_bay.mp3'):url;
+    var audio = new Audio(url2);
+    audio.addEventListener("ended", function () {
+      if (sanbay) {
+        var audio2 = new Audio(url);
+        audio2.addEventListener("ended", function () {
+          setTimeout(function () { gtts_playing = 0; }, 5 * 1000);//nghỉ 5 giây mới nói tiếp
+        });
+        audio2.play().then(() => {
+          gtts_playing = 1;
+          toastr["info"]("<b>Thông báo đặt suất ăn:</b><br>" + text);
+        }).catch(e => {
+          console.log(e);
+          toastr["warning"]("Hãy bật loa và CLICK vào trình duyệt để cho phép nói ra loa nhé");
+        });
+      } else {
+        setTimeout(function () { gtts_playing = 0; }, 5 * 1000);//nghỉ 5 giây mới nói tiếp
+      }
+    });
+    audio.play().then(() => {
+      gtts_playing = 1;
+      toastr["info"]("Đang nói ra loa, hãy bật loa!");
     }).catch(e => {
       console.log(e);
       toastr["warning"]("Hãy bật loa và CLICK vào trình duyệt để cho phép nói ra loa nhé");
-    })                           //hết hàm play
-    audio.addEventListener("ended", //đăng ký sự kiện play xong thì:
-      function () {                 //play xong thì hàm này chạy
-        //bỏ đánh dấu bận => hết bận
-        setTimeout(function () { gtts_playing = 0; }, setting.tts_delay * 1000);//nghỉ 3 giây mới nói tiếp
-      });
+    });
   }//hết hàm playSound
-  function play_tts(txt) {              //nhận txt là chuỗi cần tts
+  function play_tts(text,sanbay=1) {              //nhận txt là chuỗi cần tts
+    if (text == null || text == '') return;
     $.post(mp3,  //gọi API tạo tts
-      { text: txt },                     //truyền lên chuỗi cần tts
-      function (json) {             //nhận về tên file mp3
-        var tts = JSON.parse(json);
-        console.log(['play audio', Q, mp3 + tts.fn, txt]);
-        playSound(mp3 + tts.fn, txt);  //play url=file này trong thư mục mp3
+      { text: text },                     //truyền lên chuỗi cần tts
+      function (tts) {             //nhận về tên file mp3
+        //var tts = JSON.parse(json);
+        //console.log(['play audio', Q, mp3 + tts.fn, text]);
+        if (tts.ok)
+          playSound(mp3 + tts.fn, text, sanbay);  //play url=file này trong thư mục mp3
+        else
+          toastr["warning"](tts.msg + '<br>' + tts.text);
       }
     );//end ajax post
   }
   function auto_play_in_queue() {
     if (!gtts_playing && !Q.isEmpty()) {
       var item = Q.dequeue();
-      play_tts(item.text);
+      Q_done.enqueue(item);
+      if (item.text != '')
+        play_tts(item.text,1); //có tiếng sân bay
     };
   }
+
   /**/
   //--end auto play mp3---
   function monitor(action, callback, callback2) {
@@ -199,14 +189,14 @@
           ok: {
             text: '<i class="fa fa-circle-check"></i> Đăng nhập luôn',
             btnClass: 'btn-blue',
-            keys: ['enter', 'n'],
+            keys: ['enter'],
             action: function () {
               do_login();
             }
           },
           cancel: {
             text: '<i class="fa fa-circle-xmark"></i> Cancel',
-            keys: ['esc', 'c', 'C'],
+            keys: ['esc'],
             btnClass: 'btn-red',
           }
         }
@@ -235,16 +225,83 @@
     if (id == 0) s += '</ol>';
     return s;
   }
-  function listLoaiSuat(arr) {
+  function listLoaiSuat(arr, type_bulet = 'ul', type_sl = 'info') {
     var s = '';
-    s += '<ul style="margin:0">';
+    s += '<' + type_bulet + ' style="margin:0">';
     for (var item of arr) {
       s += '<li>';
-      s += `<span title="${item.name}">${item.name} <span class="badge rounded-pill bg-info">${item.sl}</span></span> `;
+      s += `<span title="${item.name}">${item.name} <span class="badge rounded-pill bg-${type_sl}">${item.sl}</span></span> `;
       s += '</li>';
     }
-    s += '</ul>';
+    s += '</' + type_bulet + '>';
     return s;
+  }
+
+  function view_history_order(data) {
+    function get_log(data) {
+      $.post(api,
+        data,
+        function (json) {
+          if (json.ok) {
+            thong_bao_ok(json, { w: 0, t: 1 });
+            var content = '';
+            content += `<div class="table-responsive-sm">
+                  <table width="100%" class="table table-hover table-striped" id="table-list-history-order">
+                  <thead>
+                  <tr class="table-info">
+                  <th>ID</th>
+                  <th>Log</th>
+                  <th>Time</th>
+                  </tr></thead><tbody>`;
+            for (var item of json.data) {
+              content += `<tr>
+                    <td nowarp align="center">${item.id}</td>
+                    <td nowarp>${item.log.replaceAll(';', '<br>')}</td>
+                    <td nowarp align="center">${item.time}</td>
+                  </tr>`;
+            }
+            content += '</tbody></table></div>';
+            $('#list-history-order').html(content);
+            if (json.data.length > 10) {
+              sort_table('#table-list-history-order', "Log history", 2000);
+            }
+          } else {
+            $('#list-history-order').html(json.msg);
+            thong_bao_loi(json, { w0, t: 1 });
+          }
+        }
+      );
+    }
+    dialog_order = $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-clock',
+      title: 'Xem lịch sử sửa đổi',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'xl',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: '<div id="list-history-order">Loading...</div>',
+      buttons: {
+        all: {
+          text: '<i class="fa fa-clock-rotate-left"></i> History All Day',
+          btnClass: 'btn-primary',
+          action: function () {
+            get_log({ action: 'list_all_history_order' });
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        get_log(data);
+      }
+    });
   }
   function company_order(item_company, ca, json) {
     if (alert_not_login()) return;// cần login trước khi order
@@ -315,12 +372,12 @@
             var item_suat = getItem(json.suat, order_item.id);
             if (item_suat) {
               var content = `<tr id="order_suat_${item_suat.id}">
-              <td>${item_suat.name}</td>
+              <td>${item_suat.sign}</td>
               <td>${format_price(item_suat.price)}</td>
               <td><span class="badge rounded-pill bg-primary">${order_item.sl}</span></td>
               <td>
                 <button class="btn btn-sm btn-warning btn-order-edit" data-suat="${item_suat.id}" data-sl="${order_item.sl}">Sửa</button>
-                <button class="btn btn-sm btn-danger btn-order-delete" data-name="${item_suat.name}" data-suat="${item_suat.id}" data-sl="${order_item.sl}">Xóa</button>
+                <button class="btn btn-sm btn-danger btn-order-delete" data-name="${item_suat.sign}" data-suat="${item_suat.id}" data-sl="${order_item.sl}">Xóa</button>
               </td>
               </tr>`;
               s.push(content);
@@ -334,7 +391,8 @@
         kq = `<span class="badge rounded-pill bg-danger">Chưa đặt suất ăn nào</span>`;
       } else {
         kq += 'Đã đặt các suất ăn:';
-        kq += `<table width="100%" class="table table-hover table-striped"><thead><tr class="table-info">
+        kq += `<div class="table-responsive-sm">
+              <table width="100%" class="table table-hover table-striped"><thead><tr class="table-info">
               <th>Tên</th>
               <th>Giá</th>
               <th>Số&nbsp;lượng</th>
@@ -343,7 +401,7 @@
         for (var content of s) {
           kq += content;
         }
-        kq += '</tbody></table>';
+        kq += '</tbody></table></div>';
       }
       return kq;
     }
@@ -362,6 +420,7 @@
         },
         function (json) {
           if (json.ok) {
+            thong_bao_ok(json, { w: 0, t: 1 });
             $('#soluong-old').val(json.soluong);
             if (json.soluong == 0) json.soluong = '';
             $('#soluong-new').val(json.soluong);
@@ -422,6 +481,7 @@
                 },
                 function (json) {
                   if (json.ok) {
+                    thong_bao_ok(json, { w: 0, t: 1 });
                     reload_order();
                   }
                   else
@@ -432,62 +492,62 @@
           },
           cancel: {
             text: '<i class="fa fa-circle-check"></i> No no no',
-            keys: ['n'],
+            keys: ['esc', 'n'],
             btnClass: 'btn-blue',
           }
         }
       })
     }
-    function save_button() {
-      var id_suat = $('#edit-suat').val();
-      if (!id_suat) {
-        thong_bao_loi({ ok: 0, msg: 'Chưa chọn suất ăn!' }, { w: 1, t: 1 }, function () {
-          $('edit-suat').focus();
-        })
-        return;
-      }
+    //function save_button() {
+    //  var id_suat = $('#edit-suat').val();
+    //  if (!id_suat) {
+    //    thong_bao_loi({ ok: 0, msg: 'Chưa chọn suất ăn!' }, { w: 1, t: 1 }, function () {
+    //      $('edit-suat').focus();
+    //    })
+    //    return;
+    //  }
 
-      var id_company = $('#edit-company').val();
-      var id_ca = $('#edit-ca').val();
-      var so_luong = $('#soluong-new').val();
-      if (so_luong == '' || so_luong <= 0) {
-        thong_bao_loi({ ok: 0, msg: 'Phải nhập số lượng suất ăn chứ!' }, { w: 1, t: 1 }, function () {
-          $('#soluong-new').focus();
-        })
-        return false;
-      }
-      $.post(api,
-        {
-          action: 'add_order',
-          id_company: id_company,
-          id_ca: id_ca,
-          id_suat: id_suat,
-          so_luong: so_luong
-        },
-        function (json) {
+    //  var id_company = $('#edit-company').val();
+    //  var id_ca = $('#edit-ca').val();
+    //  var so_luong = $('#soluong-new').val();
+    //  if (so_luong == '' || so_luong <= 0) {
+    //    thong_bao_loi({ ok: 0, msg: 'Phải nhập số lượng suất ăn chứ!' }, { w: 1, t: 1 }, function () {
+    //      $('#soluong-new').focus();
+    //    })
+    //    return false;
+    //  }
+    //  $.post(api,
+    //    {
+    //      action: 'add_order',
+    //      id_company: id_company,
+    //      id_ca: id_ca,
+    //      id_suat: id_suat,
+    //      so_luong: so_luong
+    //    },
+    //    function (json) {
 
-          if (json.ok) {
-            $('#soluong-old').val(so_luong);
-            reload_order();
-          } else {
-            thong_bao_loi(json)
-          }
-        }
-      );//end $.post
-      return false;
-    }
-    function edit_button(id_suat, soluong) {
-      $('#edit-suat').val(id_suat);
-      $('#soluong-old').val(soluong);
-      if (soluong == 0) soluong = '';
-      $('#soluong-new').val(soluong);
-      $('#soluong-new').focus();
-    }
+    //      if (json.ok) {
+    //        thong_bao_ok(json, { w: 0, t: 1 });
+    //        $('#soluong-old').val(so_luong);
+    //        reload_order();
+    //      } else {
+    //        thong_bao_loi(json)
+    //      }
+    //    }
+    //  );//end $.post
+    //  return false;
+    //}
+    //function edit_button(id_suat, soluong) {
+    //  $('#edit-suat').val(id_suat);
+    //  $('#soluong-old').val(soluong);
+    //  if (soluong == 0) soluong = '';
+    //  $('#soluong-new').val(soluong);
+    //  $('#soluong-new').focus();
+    //}
 
     function edit_hay_an(item_company) {
-      $.post(api, { action: 'list_company' }, function (json) {
-        json_company = json;
-        show_edit_company(item_company, json_company)
+      $.post(api, { action: 'get_company', id: item_company.id }, function (json) {
+        show_edit_company(item_company, json)
       })
     }
     var row_order_nhanh = '';
@@ -524,12 +584,12 @@
             }
             row_order_nhanh += `
             <tr>
-              <td>${item.name}:</td>
+              <td>${item.sign}:</td>
               <td>
               <div class="input-group">
-                <span class="input-group-text">Số lượng đặt:</span>
+                <span class="input-group-text">SL:</span>
                 <input type="number" min="0" max="5000" oninput="validity.valid||(value='');" data-sid="${item.id}" class="form-control input_soluong_order" value="${so_luong}">
-                <span class="input-group-text"> Giá: ${format_price(item.price)}</span>
+                <span class="input-group-text">${format_price(item.price)}</span>
               </div>
               </td>
             </tr>`
@@ -572,6 +632,7 @@
     //<hr>
     //<div class="table-responsive-sm" id="list-order-done">${list_order_done(item_company.id, ca)}</div>
     //`;
+
     dialog_order = $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -593,7 +654,10 @@
             var order_id = [], order_sl = [];
             $('.input_soluong_order').each(function (i, item) {
               order_id.push($(item).data('sid'))
-              order_sl.push(parseInt(item.value))
+              var sl = parseInt(item.value);
+              if (isNaN(sl)) sl = 0;
+              if (sl < 0) sl = 0;
+              order_sl.push(sl);
             })
             var data_save = {
               action: 'save_order',
@@ -606,6 +670,8 @@
               data_save,
               function (json) {
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
+                  mp3_hangdoi(json.id, json.mp3); //nói ra loa ở thuộc tính mp3 của json
                   //đóng hộp thoại edit
                   dialog_order.close();
                   //tải lại dữ liệu
@@ -620,6 +686,18 @@
             return false;
           }
         },
+        History: {
+          text: '<i class="fa fa-utensils"></i> History',
+          btnClass: 'btn-warning',
+          action: function () {
+            view_history_order({
+              action: 'list_history_order',
+              id_company: item_company.id,
+              id_ca: ca
+            });
+            return false;
+          }
+        },
         reload: {
           text: '<i class="fa fa-utensils"></i> Reload',
           btnClass: 'btn-info',
@@ -629,7 +707,7 @@
           }
         },
         hay_an: {
-          text: '<i class="fa fa-splotch"></i> Hay ăn',
+          text: '<i class="fa fa-splotch"></i> Hay ăn!',
           btnClass: 'btn-warning',
           action: function () {
             edit_hay_an(item_company);
@@ -637,43 +715,43 @@
           }
         },
         cancel: {
-          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc'],
           btnClass: 'btn-red',
         }
       },
       onContentReady: function () {
-        $('.cbo-order').on('change', function () {
-          update_soluong();
-        });
-        $('#edit-company').on('change', function () {
-          update_name_cty();
-        });
-        $('#save-order').click(function () {
-          save_button();
-        });
-        $('.btn-order-delete').click(function () {
-          var id_suat = $(this).data('suat');
-          var ten = $(this).data('name');
-          var sl = $(this).data('sl');
-          delete_button(id_suat, ten, sl);
-        });
-        $('.btn-order-edit').click(function () {
-          var id_suat = $(this).data('suat');
-          var sl = $(this).data('sl');
-          edit_button(id_suat, sl);
-        });
+        //$('.cbo-order').on('change', function () {
+        //  update_soluong();
+        //});
+        //$('#edit-company').on('change', function () {
+        //  update_name_cty();
+        //});
+        //$('#save-order').click(function () {
+        //  save_button(); //tại button#save-order
+        //});
+        //$('.btn-order-delete').click(function () {
+        //  var id_suat = $(this).data('suat');
+        //  var ten = $(this).data('name');
+        //  var sl = $(this).data('sl');
+        //  delete_button(id_suat, ten, sl);
+        //});
+        //$('.btn-order-edit').click(function () {
+        //  var id_suat = $(this).data('suat');
+        //  var sl = $(this).data('sl');
+        //  edit_button(id_suat, sl);
+        //});
         update_soluong();
         update_name_cty();
-        $('#soluong-new').keyup(function (event) {
-          if (event.keyCode === 13) {
-            if ($('#soluong-new').val() == '')
-              $('#soluong-new').focus();
-            else
-              save_button();
-          }
-        });
-        $('#soluong-new').focus();
+        //$('#soluong-new').keyup(function (event) {
+        //  if (event.keyCode === 13) {
+        //    if ($('#soluong-new').val() == '')
+        //      $('#soluong-new').focus();
+        //    else
+        //      save_button(); //tại #soluong-new enter
+        //  }
+        //});
+        //$('#soluong-new').focus();
       }
     });
   }
@@ -774,7 +852,7 @@
           }
         },
         cancel: {
-          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc'],
           btnClass: 'btn-red',
         }
@@ -828,8 +906,14 @@
       }
     });
   }
+
+  var is_first = 1;
   function draw_init(json, callback2) {
     if (json.ok) {
+      if (!is_first) {
+        thong_bao_ok(json, { w: 0, t: 1 });
+        is_first = 1;
+      }
       var content = '' +
         '<h5>Kế hoạch ngày: <span class="badge rounded-pill bg-info">' + json.ngay + '</span> <button class="btn btn-sm btn-primary chon-ngay-monitor" data-ngay="' + json.ngay + '"><i class="fa fa-calendar-check"></i> Chọn ngày</button></h5>' +
         '<div class="table-responsive">' +
@@ -866,10 +950,19 @@
           content += `<tr data-cid="${item.id}" class="table-warning fw-bold">` +
             '<td align=center nowarp class="btn-company-order"></td>' +
             '<td align="right" nowarp class="btn-company-order">' + item.name + '</td>' +
-            `<td nowarp>${listLoaiSuat(item.c1)}</td>` +
-            `<td nowarp>${listLoaiSuat(item.c2)}</td>` +
-            `<td nowarp>${listLoaiSuat(item.c3)}</td>` +
-            `<td nowarp>${listLoaiSuat(item.c4)}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c1, 'ul', 'info')}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c2, 'ul', 'info')}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c3, 'ul', 'info')}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c4, 'ul', 'info')}</td>` +
+            '</tr>';
+        } else if (item.id == -2) {
+          content += `<tr data-cid="${item.id}" class="table-success fw-bold">` +
+            '<td align=center nowarp class="btn-company-order"></td>' +
+            '<td align="right" nowarp class="btn-company-order">' + item.name + '</td>' +
+            `<td nowarp>${listLoaiSuat(item.c1, 'ol', 'danger')}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c2, 'ol', 'danger')}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c3, 'ol', 'danger')}</td>` +
+            `<td nowarp>${listLoaiSuat(item.c4, 'ol', 'danger')}</td>` +
             '</tr>';
         }
       }
@@ -925,16 +1018,23 @@
             },
             copy: {
               text: '<i class="fa fa-clone"></i> Copy',
-              btnClass: 'btn-warning',
+              btnClass: 'btn-info',
               isHidden: true,
               action: function () {
                 copy_order();
                 return false;
               }
             },
-
+            history: {
+              text: '<i class="fa fa-clock-rotate-left"></i> History',
+              btnClass: 'btn-warning',
+              action: function () {
+                view_history_order({ action: 'list_all_history_order' })
+                return false;
+              }
+            },
             cancel: {
-              text: '<i class="fa fa-circle-xmark"></i> Đóng',
+              text: '<i class="fa fa-circle-xmark"></i> Close',
               keys: ['esc'],
               btnClass: 'btn-red',
             }
@@ -986,6 +1086,7 @@
   function format_price(price) {
     var t = price + 'vnđ';
     t = t.replace('000vnđ', 'K');
+    if (t == '0vnđ') t = '0k';
     return t;
   }
   function list_suat_an() {
@@ -995,6 +1096,7 @@
       },
       function (json) {
         if (json.ok) {
+          thong_bao_ok(json, { w: 0, t: 1 });
           json_suat_an = json;
           content = '<div class="table-responsive-sm"><table id="table-list-suat-an" class="table table-hover table-striped">' +
             '<thead><tr class="table-info fw-bold">' +
@@ -1093,6 +1195,7 @@
               function (json) {
 
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   self.close();
                   list_suat_an();
                 } else {
@@ -1120,6 +1223,7 @@
               function (json) {
 
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   self.close();
                   list_suat_an();
                 } else {
@@ -1150,6 +1254,7 @@
                 yes: {
                   text: '<i class="fa fa-trash-can"></i> Yes',
                   btnClass: 'btn-danger',
+                  keys: ['y'],
                   action: function () {
                     $.post(api,
                       {
@@ -1159,6 +1264,7 @@
                       function (json) {
 
                         if (json.ok) {
+                          thong_bao_ok(json, { w: 0, t: 1 });
                           self.close();
                           list_suat_an();
                         } else {
@@ -1171,6 +1277,7 @@
                 cancel: {
                   text: '<i class="fa fa-circle-check"></i> No no no',
                   btnClass: 'btn-blue',
+                  keys: ['n', 'esc'],
                 }
               }
             });
@@ -1239,6 +1346,7 @@
               function (json) {
 
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   self.close();
                   list_suat_an();
                 } else {
@@ -1269,6 +1377,7 @@
       },
       function (json) {
         if (json.ok) {
+          thong_bao_ok(json, { w: 0, t: 1 });
           json_don_nguyen = json;
           var content = '<div class="table-responsive">' +
             '<table id="table-list-don-nguyen" class="table table-bordered table-hover table-striped">' +
@@ -1286,7 +1395,7 @@
               '<td align=center nowarp>' + (item.id) + '</td>' +
               '<td align="left" nowarp>' + (item.name) + '</td>' +
               '<td align="left" nowarp>' + (item.des) + '</td>' +
-              '<td align="center" nowarp>' + (item.sl) + '</td>' +
+              `<td align="center" nowarp class="btn-edit-don-nguyen" data-action="view" data-did="${item.id}" title="Click để view ${item.sl} các combo (suất ăn) có sử dụng ${item.name}"><span class="badge rounded-pill bg-primary">${item.sl}</span></td>` +
               '<td align="left" nowarp class="btn-company-order">' + (action) + '</td>' +
               '</tr>';
           }
@@ -1300,12 +1409,14 @@
               if (item.id == id) {
                 if (action == 'edit')
                   edit_don_nguyen(item);
-                else
+                else if (action == 'del')
                   del_don_nguyen(item);
+                else if (action == 'view')
+                  view_combo_use_don_nguyen(item);
                 break;
               }
             }
-          })
+          });
         } else {
           thong_bao_loi(json);
         }
@@ -1356,6 +1467,7 @@
               function (json) {
 
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   self.close();
                   list_don_nguyen();
                 } else {
@@ -1422,6 +1534,7 @@
               function (json) {
 
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   self.close();
                   list_don_nguyen();
                 } else {
@@ -1472,6 +1585,7 @@
               },
               function (json) {
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   list_don_nguyen();
                 }
                 else
@@ -1482,9 +1596,72 @@
         },
         cancel: {
           text: '<i class="fa fa-circle-check"></i> No no no',
-          keys: ['n'],
+          keys: ['n', 'esc'],
           btnClass: 'btn-blue',
         }
+      }
+    });
+  }
+  function view_combo_use_don_nguyen(item) {
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: `Danh sách các Combo (suất ăn) có sử dụng: ${item.name}`,
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'l',
+      type: 'blue',
+      escapeKey: 'ok',
+      content: '<div id="ds-combo-use-don-nguyen">Loading...</div>',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        //api get data -> #ds-combo-use-don-nguyen
+        $.post(api,
+          {
+            action: 'dem_don_nguyen', //liệt kê combo sử dụng don_nguyen này
+            id: item.id,
+          },
+          function (json) {
+            if (json.ok) {
+              thong_bao_ok(json, { w: 0, t: 1 });
+              var content = `<div class="table-responsive-sm">
+              <table width="100%" class="table table-hover table-striped"><thead><tr class="table-info">
+              <th>STT</th>
+              <th>Tên</th>
+              <th>Giá</th>
+              <th>Các đơn nguyên</th>
+              </tr></thead><tbody>`;
+              var stt = 0;
+              function show_don_nguyen(don_nguyen) {
+                var s = '<ol style="margin:0">';
+                for (var item of don_nguyen) {
+                  s += `<li>${item.name} <span class="badge rounded-pill bg-primary">${item.sl}</span></li>`;
+                }
+                s += '</ol>';
+                return s;
+              }
+              for (var item of json.data) {
+                content += `<tr>
+                <td>${++stt}</td>
+                <td>${item.name}</td>
+                <td>${format_price(item.price)}</td>
+                <td>${show_don_nguyen(item.don_nguyen)}</td>
+                </tr>`;
+              }
+              content += '</tbody></table></div>';
+              $('#ds-combo-use-don-nguyen').html(content);
+            } else {
+              thong_bao_loi(json);
+            }
+          }
+        );
       }
     });
   }
@@ -1498,6 +1675,7 @@
       },
       function (json) {
         if (json.ok) {
+          thong_bao_ok(json, { w: 0, t: 1 });
           json_setup_combo = json;
           var content = `<div class= "table-responsive">
         <table id="table-list-combo" class="table table-bordered">
@@ -1599,6 +1777,7 @@
       ds_chon += `<option value="${item_dn.id}">${item_dn.name}</option>`;
     }
     var content = `
+    <div class="table-responsive-sm">
     <table width="100%">
     <tr><td>Combo:</td><td>${item.name} (${format_price(item.price)})</td></tr>
     <tr><td>Đơn nguyên:</td>
@@ -1607,7 +1786,7 @@
     </select></td></tr>
     <tr><td>Số lượng:</td>
     <td><input type="number" class="form-control" id="edit-sl"></td>
-    </tr></table>
+    </tr></table></div>
     `;
     $.confirm({
       animateFromElement: false,
@@ -1640,6 +1819,7 @@
               },
               function (json) {
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   self.close();
                   list_setup_combo();
                 } else {
@@ -1668,7 +1848,6 @@
   }
   function edit_setup_combo(item, itemn) {
     var ds_chon = '';
-    console.log(json_don_nguyen)
     for (var item_dn of json_don_nguyen.data) {
       if (item_dn.id == itemn.id) {
         ds_chon += `<option value="${item_dn.id}" selected>${item_dn.name}</option>`;
@@ -1678,7 +1857,7 @@
       // ds_chon += `<option value="${item_dn.id}">${item_dn.name}</option>`;
     }
     var content = `
-    <table width="100%">
+    <div class="table-responsive-sm"><table width="100%">
     <tr><td>Combo:</td><td>${item.name} (${format_price(item.price)})</td></tr>
     <tr><td>Đơn nguyên:</td>
     <td><select class="form-select form-control cbo-don-nguyen" id="edit-id" style="width: 100%"><option selected="true" disabled="disabled" value="0">--Chọn đơn nguyên--</option>
@@ -1686,7 +1865,7 @@
     </select></td></tr>
     <tr><td>Số lượng:</td>
     <td><input type="number" class="form-control" id="edit-sl" value="${itemn.sl}"></td>
-    </tr></table>
+    </tr></table></div>
     `;
     $.confirm({
       animateFromElement: false,
@@ -1715,11 +1894,12 @@
                 action: 'edit_combo',
                 ids: item.id,
                 idn: itemn.id,
-                sl: int,
+                sl: sl,
               },
               function (json) {
 
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   self.close();
                   list_setup_combo();
                 } else {
@@ -1763,7 +1943,7 @@
         ok: {
           text: '<i class="fa fa-circle-check"></i> ok Xóa đi',
           btnClass: 'btn-red',
-          keys: ['enter', 'x', 'X'],
+          keys: ['enter'],
           action: function () {
             //gửi đi api: y/c xóa
             $.post(api,
@@ -1773,6 +1953,7 @@
               },
               function (json) {
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   list_setup_combo();
                   dialog_del_combo.close()
                 } else {
@@ -1785,7 +1966,7 @@
         },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
-          keys: ['esc', 'c', 'C'],
+          keys: ['esc'],
           btnClass: 'btn-blue',
         }
       }
@@ -1878,7 +2059,8 @@
       onContentReady: function () {
         var dialog = this;
         list_suat_an();
-        list_don_nguyen();
+        //list_don_nguyen();  //bỏ đi vì ko muốn popup thông báo
+        $.post(api, { action: 'list_don_nguyen' }, function (json) { if (json.ok) { json_don_nguyen = json; } });
         $('button.tab-thuc-don').click(function () {
           var id = $(this)[0].id;
           $('button.cmd-in-tab').hide();
@@ -1911,11 +2093,13 @@
       },
       function (json) {
         if (json.ok) {
+          thong_bao_ok(json, { w: 0, t: 1 });
           json_loai = json;
           var content = '<div class="table-responsive-sm"><table id="table_list_loai" class="table table-hover table-striped">' +
             '<thead><tr class="table-info fw-bold">' +
             '<th>ID</th>' +
-            '<th>Tên</th>' +
+            '<th>Tên loại</th>' +
+            '<th style="text-align:center">Đếm suất</th>' +
             '<th style="text-align:center">Action</th>' +
             '</tr></thead><tbody>';
           for (var item of json.data) {
@@ -1924,6 +2108,7 @@
             content += '<tr>' +
               '<td>' + item.id + '</td>' +
               '<td>' + item.name + '</td>' +
+              '<td align="center">' + item.sl + '</td>' +
               '<td align=center>' + sua + xoa + '</td>' +
               '</tr>'
           }
@@ -1987,6 +2172,7 @@
               function (json) {
 
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   self.close();
                   list_loai();
                 } else {
@@ -2012,7 +2198,7 @@
     var content = `<div class="table-responsive-sm"><table align="center" width="100%">
           <tr>
             <td>ID:</td>
-            <td><input type="text" class="form-control" id="edit-id" value="`+ item.id + `" disabled></td>
+            <td><input type="text" class="form-control" id="edit-id" value="`+ item.id + `"></td>
           </tr>
           <tr>
             <td>Name:</td>
@@ -2039,12 +2225,14 @@
             $.post(api,
               {
                 action: 'edit_loai',
+                id_old: item.id,
                 id: $('#edit-id').val(),
                 name: $('#edit-name').val(),
               },
               function (json) {
 
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   self.close();
                   list_loai();
                 } else {
@@ -2083,7 +2271,7 @@
         ok: {
           text: '<i class="fa fa-circle-check"></i> ok Xóa đi',
           btnClass: 'btn-red',
-          keys: ['enter', 'x', 'X'],
+          keys: ['enter'],
           action: function () {
             //gửi đi api: y/c xóa
             $.post(api,
@@ -2093,6 +2281,7 @@
               },
               function (json) {
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   list_loai();
                 } else {
                   thong_bao_loi(json); //báo lỗi khi delete_user
@@ -2103,7 +2292,7 @@
         },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
-          keys: ['esc', 'c', 'C'],
+          keys: ['esc'],
           btnClass: 'btn-blue',
         }
       }
@@ -2268,7 +2457,7 @@
         buttons: {
           cancel: {
             text: '<i class="fa fa-circle-xmark"></i> Cancel',
-            keys: ['esc', 'c', 'C'],
+            keys: ['esc'],
             btnClass: 'btn-red',
           }
         }
@@ -2335,6 +2524,7 @@
               },
               function (json) {
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   list_user();  //sau khi add_user thì tải lại
                   dialog_add.close(); //đóng thằng dialog_add lại
                 } else {
@@ -2440,7 +2630,7 @@
         ok: {
           text: '<i class="fa fa-circle-check"></i> ok Xóa đi',
           btnClass: 'btn-red',
-          keys: ['enter', 'x', 'X'],
+          keys: ['enter'],
           action: function () {
             //gửi đi api: y/c xóa
             $.post(api,
@@ -2450,6 +2640,7 @@
               },
               function (json) {
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   list_user(); //sau khi delete_user thì tải lại
                 } else {
                   thong_bao_loi(json); //báo lỗi khi delete_user
@@ -2460,7 +2651,7 @@
         },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
-          keys: ['esc', 'c', 'C'],
+          keys: ['esc'],
           btnClass: 'btn-blue',
         }
       }
@@ -2473,6 +2664,7 @@
       },
       function (json) {
         if (json.ok) {
+          thong_bao_ok(json, { w: 0, t: 1 });
           json_user = json;
           all_quyen = json.quyen;
           var s = '<h4>Danh sách user</h4>' +
@@ -2552,11 +2744,10 @@
               },
               function (json) {
                 if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
                   //cần lưu cookie mới
                   setLocal("ck", json.cookie)
                   setCookie('ck', json.cookie, 30);
-                  if (json.msg != null && json.msg != "")
-                    toastr["info"](json.msg)
                   dialog_change_pw.close();
                 } else {
                   thong_bao_loi(json) //báo lỗi khi do_change_pw
@@ -2624,7 +2815,7 @@
         },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
-          keys: ['esc', 'c', 'C'],
+          keys: ['esc'],
           btnClass: 'btn-red',
         }
       },
@@ -2649,6 +2840,15 @@
               <tr>
                 <td>Name:</td>
                 <td><input type="text" class="form-control" id="edit-name" placeholder="Nhập tên công ty"></td>
+              </tr>
+              <tr>
+                <td>Tên Việt:</td>
+                <td>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="edit-tenviet" placeholder="Nhập tên tiếng Việt" >
+                    <button class="btn btn-success noi-tieng-viet" type="button">Nói thử</button>
+                  </div>
+                </td>
               </tr>
               <tr>
                 <td>Address:</td>
@@ -2681,6 +2881,7 @@
       typeAnimated: false,
       icon: 'fa fa-pen-to-square',
       title: 'Thêm công ty mới',
+      columnClass: 'l',
       content: content,
       type: 'green',
       buttons: {
@@ -2692,6 +2893,7 @@
             var data = {
               action: 'add_company',
               name: $('#edit-name').val(),
+              tenviet: $('#edit-tenviet').val(),
               address: $('#edit-address').val(),
               gps: $('#edit-gps').val(),
               phone: $('#edit-phone').val(),
@@ -2729,6 +2931,9 @@
             toastr["warning"]('Không lấy được gps');
           }
         });
+        $('.noi-tieng-viet').click(function () {
+          play_tts($('#edit-tenviet').val(), 0); //ko san bay
+        });
       }
     });
   }
@@ -2753,7 +2958,9 @@
         },
         function (json) {
           if (json.ok) {
-            var content = `Công ty ${item.name} đã đặt các suất ăn:<div class="table-responsive-sm">
+            thong_bao_ok(json, { w: 0, t: 1 });
+            var content = `Công ty ${item.name} đã đặt các suất ăn:
+              <div class="table-responsive-sm">
                 <table class="table table-hover"><thead>
                 <tr class="table-info">
                 <th>STT</th>
@@ -2824,28 +3031,37 @@
               <tbody>
                 <tr>
                   <td width="12%">Name:</td>
-                  <td><input type="text" class="form-control" id="edit-name" value="`+ item.name + `" placeholder="Nhập tên công ty"></td>
+                  <td><input type="text" class="form-control" id="edit-name" value="${item.name}" placeholder="Nhập tên công ty"></td>
+                </tr>
+                <tr>
+                  <td width="12%">Tên Việt:</td>
+                  <td>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="edit-tenviet" value="${item.tenviet}" placeholder="Nhập tên tiếng Việt" >
+                    <button class="btn btn-success noi-tieng-viet" type="button">Nói thử</button>
+                  </div>
+                  </td>
                 </tr>
                 <tr>
                   <td>Address:</td>
-                  <td><input type="text" class="form-control" id="edit-address" value="`+ item.address + `" placeholder="Nhập địa chỉ"></td>
+                  <td><input type="text" class="form-control" id="edit-address" value="${item.address}" placeholder="Nhập địa chỉ"></td>
                 </tr>
                 <tr>
                   <td>GPS:</td>
                   <td>
                     <div class="input-group">
-                      <input type="search" class="form-control" id="edit-gps" value="`+ item.lat + `, ` + item.lng + `" placeholder="vd: 21.5842342,105.7934998">
+                      <input type="search" class="form-control" id="edit-gps" value="${item.lat},${item.lng}" placeholder="vd: 21.5842342,105.7934998">
                         <button class="btn btn-outline-primary" type="button" id="cmd_get_gps" title="Lấy tọa độ GPS của vị trí hiện tại">Get</button>
                     </div>
                   </td>
                 </tr>
                 <tr>
                   <td>Phone:</td>
-                  <td><input type="text" class="form-control" id="edit-phone" value="`+ item.phone + `" placeholder="Nhập sđt"></td>
+                  <td><input type="text" class="form-control" id="edit-phone" value="${item.phone}" placeholder="Nhập sđt"></td>
                 </tr>
                 <tr>
                   <td>Zalo:</td>
-                  <td><input type="text" class="form-control" id="edit-zalo" value="`+ item.zalo + `" placeholder="https://zalo.me/..."></td>
+                  <td><input type="text" class="form-control" id="edit-zalo" value="${item.zalo}" placeholder="https://zalo.me/..."></td>
                 </tr>
                 <tr>
                   <td id="goi-y-hay-an" title="Click để xem công ty này từng ăn món nào" nowarp>Hay&nbsp;ăn&nbsp;<i class="fa fa-circle-question" style="color:red"></i>:</td>
@@ -2884,7 +3100,7 @@
       }
       var s = `
       <div class= "input-group" id = "nhom-ngay-${item.id}">
-      <input type="text" class="form-control pc-only" value="${suat.name} (${format_price(suat.price)})" disabled>
+      <input type="text" class="form-control pc-only" value="${suat.sign} (${format_price(suat.price)})" disabled>
         <div class="input-group-text pp-checkbox" title="Thứ 2">
           <input type="checkbox" value="2" ${hasThu(2) ? 'checked' : ''}>
             <label class="thu">
@@ -3009,6 +3225,7 @@
               action: 'edit_company',
               id: item.id,
               name: $('#edit-name').val(),
+              tenviet: $('#edit-tenviet').val(),
               address: $('#edit-address').val(),
               gps: $('#edit-gps').val(),
               phone: $('#edit-phone').val(),
@@ -3069,6 +3286,10 @@
           change_suat_an_select2();
         });
 
+        $('.noi-tieng-viet').click(function () {
+          play_tts($('#edit-tenviet').val(), 0); //ko san bay
+        });
+
 
         //$('.add-row-suat-an').click(function () {
         //  add_row_suat_an();
@@ -3108,7 +3329,6 @@
       buttons: {
         ok: {
           text: '<i class="fa fa-circle-question"></i> Xóa ngay',
-          keys: ['t'],
           btnClass: 'btn-red',
           action: function () {
             //gửi api để xóa
@@ -3162,12 +3382,14 @@
       },
       function (json) {
         if (json.ok) {
+          thong_bao_ok(json, { w: 0, t: 1 });
           json_company = json;
           var content = '<div class="table-responsive-sm">' +
             '<table id="ds_company" class="table table-hover table-striped">' +
             '<thead><tr class="table-info fw-bold">' +
             '<th class="text-center">STT</th>' +
             '<th>Công ty</th>' +
+            '<th>Tên Tiếng Việt</th>' +
             '<th>Hay ăn</th>' +
             '<th>Địa chỉ</th>' +
             '<th>Chỉ đường</th>' +
@@ -3214,6 +3436,7 @@
             content += '<tr>' +
               '<td align=center nowarp>' + (++stt) + '</td>' +
               '<td align=left nowarp>' + (item.name) + '</td>' +
+              '<td align=left nowarp>' + (item.tenviet) + '</td>' +
               '<td align=left nowarp>' + (hay_an) + '</td>' +
               '<td align=left nowarp>' + (item.address) + '</td>' +
               '<td align=left nowarp>' + gps + '</td>' +
@@ -3261,7 +3484,6 @@
       buttons: {
         add: {
           text: '<i class="fa fa-address-card"></i> Add new',
-          keys: ['t'],
           btnClass: 'btn-blue',
           isHidden: true,
           action: function () {
@@ -3277,7 +3499,6 @@
             if (user_info.role == 100 || user_info.role == 3)//nếu đủ quyền
             {
               list_company();
-              thong_bao_ok({ ok: 1, msg: "Đã tải lại dữ liệu" }, { t: 1, w: 0 })
               return false;
             }
           }
@@ -3349,7 +3570,7 @@
               //giống thì ko cần cập nhật
               thong_bao_ok({
                 ok: 1, msg: "<b>" + item.key + " = " + item.value + "</b><br>Vẫn thế, không đổi!"
-              });
+              }, { w: 0, t: 1 });
               dialog_edit_setting.close();
             } else {
               //khác thì mới gửi
@@ -3444,6 +3665,7 @@
       function (json) {
         var content = '';
         if (json.ok) {
+          thong_bao_ok(json, { w: 0, t: 1 });
           json_setting = json;
           apply_setting(json);
           content = '<div class="table-responsive-sm">' +
@@ -3519,7 +3741,8 @@
                   },
                   function (json) {
                     if (json.ok) {
-                      toastr["info"]('[' + wait + '] ' + json.msg);
+                      thong_bao_ok(json, { w: 0, t: 1 });
+                      //toastr["info"]('[' + wait + '] ' + json.msg);
                     }
                     wait--;
                     if (wait == 0) list_setting();
@@ -3535,14 +3758,12 @@
         },
         reload: {
           text: '<i class="fa fa-arrows-rotate"></i> Reload',
-          keys: ['r'],
           btnClass: 'btn-info',
           isHidden: true,
           action: function () {
             if (user_info.role == 100 || user_info.role == 3)//nếu đủ quyền
             {
               list_setting();
-              thong_bao_ok({ ok: 1, msg: "Đã tải lại dữ liệu" }, { t: 1, w: 0 })
               return false;
             }
           }
@@ -3653,7 +3874,7 @@
                     buttons: {
                       OK: {
                         text: '<i class="fa fa-circle-check"></i> Close',
-                        keys: ['enter', 't'],
+                        keys: ['enter'],
                         btnClass: 'btn-red',
                         action: function () {
                         }
@@ -3716,6 +3937,7 @@
       },
       function (json) {
         if (json.ok) {
+          thong_bao_ok(json, { w: 0, t: 1 });
           logined = false;
           gui_first = 0;
           eraseCookie('ck');
@@ -3783,12 +4005,28 @@
 
     monitor('monitor', draw_init);
     setInterval(function () {
-      wait_monitor++;
-      if (wait_monitor > setting.monitor_interval) {
-        wait_monitor = 0;
-        //monitor('monitor', update_status);
-      }
+      $.post(api,
+        {
+          action: 'get_mp3',
+          last_mp3_id: last_mp3_id
+        },
+        function (json) {
+          if (json.ok) {
+            monitor('monitor', draw_init);
+            mp3_hangdoi(json.id, json.mp3);
+          }
+        }
+      );
+      auto_play_in_queue();
     }, 1000);
+
+    //setInterval(function () {
+    //  wait_monitor++;
+    //  if (wait_monitor > setting.monitor_interval) {
+    //    wait_monitor = 0;
+    //    //monitor('monitor', update_status);
+    //  }
+    //}, 1000);
     $('.btn-thuc-don').click(function () { thuc_don(); });
     $('#cmdLogin').click(function () { do_login() });
     $('#cmdLogout').click(function () { do_logout(); });
