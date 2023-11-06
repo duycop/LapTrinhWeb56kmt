@@ -101,9 +101,13 @@
     if (text == null || text == '') return;
     var item = { id: id, text: text };
     if (!Q_done.checkExist(item)) {
-      last_mp3_id = id;
-      setLocal('last_mp3_id', last_mp3_id)
-      Q.enqueue(item);
+      if (id > last_mp3_id) {
+        {
+          last_mp3_id = id;
+          setLocal('last_mp3_id', last_mp3_id)
+          Q.enqueue(item);
+        }
+      }
     }
   }
   function playSound(url, text, sanbay) {
@@ -4013,12 +4017,14 @@
         function (json) {
           if (json.ok) {
             monitor('monitor', draw_init);
-            mp3_hangdoi(json.id, json.mp3);
+            for (var item of json.data) {
+              mp3_hangdoi(item.id, item.mp3);
+            }
           }
         }
       );
       auto_play_in_queue();
-    }, 1000);
+    }, 3210);
 
     //setInterval(function () {
     //  wait_monitor++;
