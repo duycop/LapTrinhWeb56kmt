@@ -220,19 +220,19 @@ namespace SuatAn
                     msg += $"{item}={context.Request.Form[item]};";
                 }
 
-                bool has_today = false;
+                bool has_ngay = false;
                 foreach (string item in context.Request.Cookies)
                 {
                     if (!item.StartsWith("_"))
-                        if (item.StartsWith("uid") || item.Contains("today"))
+                        if (item.StartsWith("uid") || item.Equals("ngay"))
                         {
-                            if (item == "today")
+                            if (item == "ngay")
                             {
-                                string today = context.Request.Cookies[item].Value;
-                                if (today != null && today != "")
+                                string ngay = context.Request.Cookies[item].Value;
+                                if (ngay != null && ngay != "")
                                 {
-                                    has_today = true;
-                                    msg += $"{item}={today};";
+                                    has_ngay = true;
+                                    msg += $"{item}={ngay};";
                                 }
                             }
                             else
@@ -241,11 +241,11 @@ namespace SuatAn
                             }
                         }
                 }
-                if (!has_today)
+                if (!has_ngay)
                 {
-                    string item = "today";
-                    string today = DateTime.Now.ToString("yyyy-MM-dd");
-                    msg += $"{item}={today};";
+                    string item = "ngay";
+                    string ngay = DateTime.Now.ToString("yyyy-MM-dd");
+                    msg += $"{item}={ngay};";
                 }
                 //var userAgent = context.Request.Headers["User-Agent"];
                 //msg += $"userAgent={userAgent}";
@@ -369,7 +369,7 @@ namespace SuatAn
                     cm.Parameters.Add("@lng", SqlDbType.Float).Value = lng;
                     cm.Parameters.Add("@phone", SqlDbType.VarChar, 50).Value = context.Request["phone"];
                     cm.Parameters.Add("@zalo", SqlDbType.VarChar, 100).Value = context.Request["zalo"];
-                    cm.Parameters.Add("@data_order", SqlDbType.NVarChar, 4000).Value = context.Request["data_order"];
+                    cm.Parameters.Add("@data_order", SqlDbType.NVarChar, -1).Value = context.Request["data_order"];
 
                 }
                 else if (action == "add_company")
@@ -463,12 +463,12 @@ namespace SuatAn
             {
                 SqlServer db = new SqlServer(); //dùng thư viện SqlServer
                 SqlCommand cm = db.GetCmd("SP_Report", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
-                HttpCookie obj = context.Request.Cookies["today"];
+                HttpCookie obj = context.Request.Cookies["ngay"];
                 if (obj != null)
                 {
-                    string today = obj.Value;
-                    if (today != null && today != "")
-                        cm.Parameters.Add("@ngay", SqlDbType.Date).Value = today; //truyền tham số cho cm
+                    string ngay = obj.Value;
+                    if (ngay != null && ngay != "")
+                        cm.Parameters.Add("@ngay", SqlDbType.Date).Value = ngay; //truyền tham số cho cm
                 }
                 if (action == "get_mp3")
                 {
@@ -493,14 +493,14 @@ namespace SuatAn
                 SqlServer db = new SqlServer();
                 SqlCommand cm = db.GetCmd("SP_SuatAn", action);
                 int role = get_role();
-                string today = "";
-                HttpCookie obj = context.Request.Cookies["today"];
+                string ngay = "";
+                HttpCookie obj = context.Request.Cookies["ngay"];
                 if (obj != null)
                 {
-                    today = obj.Value;
-                    if (today != null && today != "")
+                    ngay = obj.Value;
+                    if (ngay != null && ngay != "")
                     {
-                        cm.Parameters.Add("@today", SqlDbType.Date).Value = today; //truyền tham số cho cm
+                        cm.Parameters.Add("@ngay", SqlDbType.Date).Value = ngay; //truyền tham số cho cm
                     }
                 }
 
@@ -613,8 +613,8 @@ namespace SuatAn
                         //cm.Parameters.Add("@today", SqlDbType.Date).Value = today;//fixbug: ko có cái này thì sẽ ko đúng ngày
                         cm.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
                         cm.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
-                        cm.Parameters.Add("@order_id", SqlDbType.VarChar, 4000).Value = context.Request.Form["order_id[]"];
-                        cm.Parameters.Add("@order_sl", SqlDbType.VarChar, 4000).Value = context.Request.Form["order_sl[]"];
+                        cm.Parameters.Add("@order_id", SqlDbType.VarChar, -1).Value = context.Request.Form["order_id[]"];
+                        cm.Parameters.Add("@order_sl", SqlDbType.VarChar, -1).Value = context.Request.Form["order_sl[]"];
                         break;
                     case "goi_y_order":
                     case "list_history_order":
@@ -642,7 +642,7 @@ namespace SuatAn
         {
             try
             {
-                string[] cks = { "xbc", "__pat", "__pvi", "__tbc" };
+                string[] cks = { "xbc", "__pat", "__pvi", "__tbc","today" };
                 foreach (string ck in cks)
                 {
                     context.Request.Cookies.Remove(ck);
@@ -872,6 +872,74 @@ namespace SuatAn
             }
             context.Response.Write(json); //gửi về client
         }
+
+        void xuly_talk(string action)
+        {
+            Reply reply = new Reply(); //tạo đối tượng để trả về lỗi
+            string json = "";
+            try
+            {
+                reply.ok = true;
+                SqlServer db = new SqlServer(); //dùng thư viện SqlServer
+                SqlCommand cm = db.GetCmd("SP_TALK", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
+
+                switch (action)
+                {
+                    case "add_talk":
+                    case "edit_talk":
+                    case "del_talk":
+                        int role = get_role();
+                        if (role == 3 || role == 100)
+                        {
+                            reply.ok = true;
+                            string uid = context.Request.Cookies["uid"].Value;
+                            string cookie = context.Request.Cookies["ck"].Value;
+                            if (uid != null && uid != "" && cookie != null && cookie != "")
+                            {
+                                cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = uid;
+                                cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = cookie;
+                            }
+                        }
+                        else
+                        {
+                            reply.ok = false;
+                            reply.msg = "Bạn không có quyền";
+                        }
+                        break;
+                }
+
+                if (reply.ok)
+                {
+                    switch (action)
+                    {
+                        case "list_talk":
+                            //ko cần thêm tham số
+                            break;
+                        case "edit_talk":
+                        case "del_talk":
+                            cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                            break;
+                    }
+
+                    switch (action)
+                    {
+                        case "add_talk":
+                        case "edit_talk":
+                            cm.Parameters.Add("@message", SqlDbType.NVarChar,-1).Value = context.Request["message"];
+                            cm.Parameters.Add("@time_say", SqlDbType.DateTime).Value = context.Request["time_say"];
+                            break;
+                    }
+                    json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
+                }
+            }
+            catch (Exception ex) //bẫy lỗi
+            {
+                reply.msg = ex.Message; //lấy lỗi bẫy được
+                reply.ok = false; //báo lỗi qua ok
+                json = JsonConvert.SerializeObject(reply); //dùng json net để tạo chuỗi
+            }
+            context.Response.Write(json); //gửi về client
+        }
         public void ProcessRequest(HttpContext context)
         {
             this.context = context;
@@ -980,6 +1048,13 @@ namespace SuatAn
                 case "edit_combo":
                 case "del_combo":
                     xuly_combo(action);
+                    break;
+
+                case "list_talk":
+                case "add_talk":
+                case "edit_talk":
+                case "del_talk":
+                    xuly_talk(action);
                     break;
 
             }

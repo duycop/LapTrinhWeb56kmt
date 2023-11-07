@@ -4,6 +4,7 @@
     app_title: "MAI FOOD VN, Co. Ltd",
     app_sologan: "An toàn, đa dạng, hợp lý!",
     monitor_interval: 1,
+    talk_begin: "Công ty"
   }
   const default_setting = {};
   const ca_name = { '1': 'Sáng', '2': 'Trưa', '3': 'Tối', '4': 'Đêm' };
@@ -12,14 +13,14 @@
   const api = '/api.ashx';
   const mp3 = '/mp3/';
 
-  var logined = false, user_info, all_quyen, today = '';
+  var logined = false, user_info, all_quyen, ngay = '';
   var json_global, json_suat_an, json_company, json_don_nguyen, json_setup_combo, json_loai, json_user, json_setting;
 
   //--begin ck---
   function setCookie(name, value, days) {
     var expires = "";
     if (days) {
-      var date = Date2();
+      var date = new Date();
       date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
       expires = "; expires=" + date.toUTCString();
     }
@@ -95,11 +96,11 @@
   var Q_done = new Queue();
   var gtts_playing = 0;               //biến đánh dấu xem có đang bận play ko
   var last_mp3_id = getLocal('last_mp3_id')
-  if (last_mp3_id == null || last_mp3_id == "") last_mp3_id = 0;
+  if (last_mp3_id == null || last_mp3_id == "" || last_mp3_id == undefined) last_mp3_id = 0;
 
   function mp3_hangdoi(id, text) {
     if (text == null || text == '') return;
-    var item = { id: id, text: text };
+    var item = { id: id, text: json_setting.talk_begin + ' ' + text };
     if (!Q_done.checkExist(item)) {
       if (id > last_mp3_id) {
         {
@@ -114,9 +115,10 @@
     if (gtts_playing) return;
     var url2 = sanbay ? (mp3 + 'san_bay.mp3') : url;
     var audio = new Audio(url2);
+    var audio2;
+    if (sanbay) audio2 = new Audio(url);
     audio.addEventListener("ended", function () {
       if (sanbay) {
-        var audio2 = new Audio(url);
         audio2.addEventListener("ended", function () {
           setTimeout(function () { gtts_playing = 0; }, 5 * 1000);//nghỉ 5 giây mới nói tiếp
         });
@@ -685,7 +687,7 @@
               function (json) {
                 if (json.ok) {
                   thong_bao_ok(json, { w: 0, t: 1 });
-                  mp3_hangdoi(json.id, json.mp3); //nói ra loa ở thuộc tính mp3 của json
+                  mp3_hangdoi(json.id, json.mp3); //nhập xong là nói luôn
                   //đóng hộp thoại edit
                   dialog_order.close();
                   //tải lại dữ liệu
@@ -1024,8 +1026,8 @@
               text: '<i class="fa fa-calendar-check"></i> Chọn ngày',
               btnClass: 'btn-primary',
               action: function () {
-                today = $('#txt-ngay-chon').val();
-                setCookie("today", today, 1);
+                ngay = $('#txt-ngay-chon').val();
+                setCookie("ngay", ngay, 1);
                 monitor('monitor', draw_init);
               }
             },
@@ -1987,6 +1989,122 @@
     });
   }
   //end setup combo
+
+  //begin talk
+  function list_talk() {
+    $.post(api,
+      {
+        action: 'list_talk'
+      },
+      function (json) {
+        if (json.ok) {
+          var content = '';
+          content += `<div class="table-responsive-sm">
+                  <table width="100%" class="table table-hover table-striped" id="table-list-talk">
+                  <thead>
+                  <tr class="table-info">
+                  <th width="10px">ID</th>
+                  <th>Message</th>
+                  <th width="100px">Time</th>
+                  <th width="70px">Talk</th>
+                  </tr></thead><tbody>`;
+          for (var item of json.data) {
+            content += `<tr>
+                    <td nowarp align="center">${item.id}</td>
+                    <td nowarp id="talk-content-${item.id}">${item.message}</td>
+                    <td nowarp align="center">${item.time}</td>
+                    <td nowarp align="center">
+                      <button class="btn btn-sm btn-info btn-talk" data-tid="${item.id}">Nói</button>
+                    </td>
+                  </tr>`;
+          }
+          content += '</tbody></table></div>';
+          $('#list-talk').html(content);
+          sort_table('#table-list-talk', "Log talk", 20);
+          $('#table-list-talk tbody').on('click', '.btn-talk', function () {
+            var tid = $(this).data('tid');
+            var text = $('#talk-content-' + tid).text();
+            Q.enqueue({ id: tid, text: text });
+          });
+        } else {
+          thong_bao_loi(json, { w: 0, t: 1 });
+        }
+      }
+    )
+  }
+  function add_talk() {
+    var item = { id: '', message: '', time: '' };
+    var date = Date2();
+    date.setTime(date.getTime() + 60 * 1000);
+
+    item.time = date.toISOString().substr(0, 16);
+    var content = `<div class="table-responsive-sm">
+    <table align="center" width="100%">
+    <tr>
+    <td>Giờ hẹn:</td>
+    <td><input type="datetime-local" class="form-control" id="edit-time" value="${item.time}"></td>
+    </tr>
+    <tr>
+    <td>Text:</td>
+    <td><textarea class="form-control" id="edit-message">${item.message}</textarea></td>
+    </tr>    
+    </table></div>`;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: 'Thêm thông điệp hẹn nói',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'm',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        Add: {
+          text: '<i class="fa fa-clock"></i> Thêm',
+          btnClass: 'btn-primary',
+          action: function () {
+            var self = this;
+            $.post(api,
+              {
+                action: 'add_talk',
+                message: $('#edit-message').val(),
+                time_say: $('#edit-time').val(),
+              },
+              function (json) {
+
+                if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
+                  self.close();
+                  list_talk();
+                } else {
+                  thong_bao_loi(json)
+                }
+              }
+            );//end $.post
+            return false;
+          }
+        },
+
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        $('#edit-message').focus();
+      }
+    });
+  }
+  function edit_talk(item) {
+
+  }
+  function del_talk(item) {
+
+  }
+  //end talk
   function thuc_don() {
     var content = `
     <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -1998,7 +2116,10 @@
       </li>      
       <li class="nav-item" role="presentation">
         <button class="nav-link tab-thuc-don" id="tab-3" data-bs-toggle="tab" data-bs-target="#tab-3-content" type="button" role="tab" aria-controls="tab-3-content" aria-selected="false">Setup</button>
-      </li>      
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link tab-thuc-don" id="tab-4" data-bs-toggle="tab" data-bs-target="#tab-4-content" type="button" role="tab" aria-controls="tab-4-content" aria-selected="false">Talk mp3</button>
+      </li> 
     </ul>
     <div class="tab-content" id="myTabContent">
       <div class="tab-pane fade show active" id="tab-1-content" role="tabpanel" aria-labelledby="tab-1" tabindex="0">
@@ -2012,6 +2133,10 @@
       <div class="tab-pane fade" id="tab-3-content" role="tabpanel" aria-labelledby="tab-3" tabindex="2">
         <p>Mỗi combo sẽ gồm các {đơn nguyên và số lượng}</p>
         <div id="list-combo">loading...</div>
+      </div>
+      <div class="tab-pane fade" id="tab-4-content" role="tabpanel" aria-labelledby="tab-4" tabindex="3">
+        <p>Nơi thiết lập lịch tự động nói ra loa</p>
+        <div id="list-talk">loading...</div>
       </div>
     </div>`;
     $.confirm({
@@ -2061,7 +2186,15 @@
           }
         },
 
-
+        tab4_them: {
+          text: '<i class="fa fa-clock"></i> Thêm hẹn',
+          btnClass: 'btn-info cmd-in-tab cmd-in-tab-4',
+          isHidden: true,
+          action: function () {
+            add_talk();
+            return false;
+          }
+        },
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Đóng',
           btnClass: 'btn-red',
@@ -2091,6 +2224,10 @@
             case 'tab-3':
               dialog.setTitle('Setup combo');
               list_setup_combo();
+              break;
+            case 'tab-4':
+              dialog.setTitle('Cấu hình hẹn giờ nói ra loa');
+              list_talk();
               break;
           }
         });
@@ -3621,7 +3758,9 @@
   }
   function apply_setting(json) {
     if (json.ok) {
+      json_setting = json;
       for (var item of json.data) {
+        json[item.key] = item.value;
         switch (item.key) {
           case 'tts_delay':
             setting.tts_delay = parseInt(item.value);
@@ -3680,7 +3819,6 @@
         var content = '';
         if (json.ok) {
           thong_bao_ok(json, { w: 0, t: 1 });
-          json_setting = json;
           apply_setting(json);
           content = '<div class="table-responsive-sm">' +
             '<table id="thong-ke-chi-tiet" class="table table-hover table-striped">' +
@@ -3759,7 +3897,8 @@
                       //toastr["info"]('[' + wait + '] ' + json.msg);
                     }
                     wait--;
-                    if (wait == 0) list_setting();
+                    if (wait == 0)
+                      list_setting(); //sau khi reset
                   }
                 );//end $.post
               }
@@ -3793,7 +3932,7 @@
         {
           this.buttons.reset_default.show();
           this.buttons.reload.show();
-          list_setting();
+          list_setting(); //cài đặt các thông số
         }
       }
     });
@@ -3955,7 +4094,7 @@
           logined = false;
           gui_first = 0;
           eraseCookie('ck');
-          eraseCookie('today');
+          eraseCookie('ngay');
           delLocal('ck');
           localStorage.clear();
           load_gui();
@@ -3993,7 +4132,7 @@
   //--end login zone--
 
   function main_init() {
-    var ck_del = ['xbc', '__pat', '__pvi', '__tbc'];
+    var ck_del = ['xbc', '__pat', '__pvi', '__tbc', 'today'];
     for (var cki of ck_del) eraseCookie(cki);
 
     toastr.options = {
@@ -4015,8 +4154,7 @@
     }
     get_list_setting();
 
-    var wait_monitor = 0;
-    today = getLocal('ngay');
+    ngay = getLocal('ngay');
 
     monitor('monitor', draw_init);
     setInterval(function () {
@@ -4029,21 +4167,14 @@
           if (json.ok) {
             monitor('monitor', draw_init);
             for (var item of json.data) {
-              mp3_hangdoi(item.id, item.mp3);
+              mp3_hangdoi(item.id, item.mp3); //khi có dữ liệu mới
             }
           }
         }
       );
       auto_play_in_queue();
-    }, 3210);
+    }, 3000); //3s
 
-    //setInterval(function () {
-    //  wait_monitor++;
-    //  if (wait_monitor > setting.monitor_interval) {
-    //    wait_monitor = 0;
-    //    //monitor('monitor', update_status);
-    //  }
-    //}, 1000);
     $('.btn-thuc-don').click(function () { thuc_don(); });
     $('#cmdLogin').click(function () { do_login() });
     $('#cmdLogout').click(function () { do_logout(); });
