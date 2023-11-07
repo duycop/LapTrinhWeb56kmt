@@ -996,14 +996,13 @@
         }
       });
       $('.chon-ngay-monitor').click(function () {
-        var ngay = $(this).data("ngay");
-
+        var ngay_monitor = $(this).data("ngay");
         var content = `
         <p>Hôm nay là ngày: <span class="badge rounded-pill bg-info">${Date2().toISOString().split('T')[0]}</span></p>
         Chọn ngày:
         <div class="input-group">
           <button class="btn btn-warning nut_tang_giam" type="button" data-delta="-1">Back</button>
-          <input type="date" class="form-control" id="txt-ngay-chon" value="${ngay}" style="text-align:center">
+          <input type="date" class="form-control" id="txt-ngay-chon" value="${ngay_monitor}" style="text-align:center">
           <button class="btn btn-info nut_tang_giam" type="button" data-delta="0" title="Chọn ngày: ${Date2().toISOString().split('T')[0]}">Today</button>
           <button class="btn btn-success nut_tang_giam" data-delta="1" type="button">Next</button>
         </div>
@@ -3956,6 +3955,7 @@
           logined = false;
           gui_first = 0;
           eraseCookie('ck');
+          eraseCookie('today');
           delLocal('ck');
           localStorage.clear();
           load_gui();

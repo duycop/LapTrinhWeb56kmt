@@ -235,6 +235,10 @@ namespace SuatAn
                                     msg += $"{item}={today};";
                                 }
                             }
+                            else
+                            {
+                                msg += $"{item}={context.Request.Cookies[item].Value};";
+                            }
                         }
                 }
                 if (!has_today)

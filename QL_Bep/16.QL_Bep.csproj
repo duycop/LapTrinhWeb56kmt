@@ -54,6 +54,7 @@
   <ItemGroup>
     <Content Include="asset\select2.min.css" />
     <Content Include="asset\select2.min.js" />
+    <Content Include="asset\tesst.js" />
     <Content Include="icon\site.webmanifest" />
     <Content Include="api.ashx" />
     <Content Include="nodered\maifood_flows.json" />
