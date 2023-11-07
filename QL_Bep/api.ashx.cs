@@ -226,14 +226,22 @@ namespace SuatAn
                     if (!item.StartsWith("_"))
                         if (item.StartsWith("uid") || item.Contains("today"))
                         {
-                            if (item == "today") has_today = true;
-                            msg += $"{item}={context.Request.Cookies[item].Value};";
+                            if (item == "today")
+                            {
+                                string today = context.Request.Cookies[item].Value;
+                                if (today != null && today != "")
+                                {
+                                    has_today = true;
+                                    msg += $"{item}={today};";
+                                }
+                            }
                         }
                 }
                 if (!has_today)
                 {
                     string item = "today";
-                    msg += $"{item}={context.Request[item]};";
+                    string today = DateTime.Now.ToString("yyyy-MM-dd");
+                    msg += $"{item}={today};";
                 }
                 //var userAgent = context.Request.Headers["User-Agent"];
                 //msg += $"userAgent={userAgent}";
@@ -833,8 +841,11 @@ namespace SuatAn
                             break;
                         case "add_combo":
                         case "edit_combo":
+                            cm.Parameters.Add("@ids", SqlDbType.Int).Value = context.Request["ids"];
+                            break;
                         case "del_combo":
                             cm.Parameters.Add("@ids", SqlDbType.Int).Value = context.Request["ids"];
+                            cm.Parameters.Add("@idn", SqlDbType.Int).Value = context.Request["idn"];
                             break;
                     }
 

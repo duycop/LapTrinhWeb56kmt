@@ -1963,7 +1963,8 @@
             $.post(api,
               {
                 action: 'del_combo',
-                id: item.id
+                ids: items.id,
+                idn: itemn.id,
               },
               function (json) {
                 if (json.ok) {
