@@ -4,7 +4,8 @@
     app_title: "MAI FOOD VN, Co. Ltd",
     app_sologan: "An toàn, đa dạng, hợp lý!",
     monitor_interval: 1,
-    talk_begin: "Công ty"
+    talk_begin: "Công ty",
+    talk_delay: 5,
   }
   const default_setting = {};
   const ca_name = { '1': 'Sáng', '2': 'Trưa', '3': 'Tối', '4': 'Đêm' };
@@ -95,9 +96,25 @@
   var Q = new Queue();
   var Q_done = new Queue();
   var gtts_playing = 0;               //biến đánh dấu xem có đang bận play ko
+
   var last_mp3_id = getLocal('last_mp3_id')
   if (last_mp3_id == null || last_mp3_id == "" || last_mp3_id == undefined) last_mp3_id = 0;
 
+  var last_talk_id = getLocal('last_talk_id')
+  if (last_talk_id == null || last_talk_id == "" || last_talk_id == undefined) last_talk_id = 0;
+
+  function mp3_talk(id, text) {
+    if (text == null || text == '') return;
+    var item = { id: id, text: text };
+    //if (id >= last_talk_id) 
+    {
+      {
+        last_talk_id = id;
+        setLocal('last_talk_id', last_talk_id);
+        Q.enqueue(item);
+      }
+    }
+  }
   function mp3_hangdoi(id, text) {
     if (text == null || text == '') return;
     var item = { id: id, text: json_setting.talk_begin + ' ' + text };
@@ -120,7 +137,7 @@
     audio.addEventListener("ended", function () {
       if (sanbay) {
         audio2.addEventListener("ended", function () {
-          setTimeout(function () { gtts_playing = 0; }, 5 * 1000);//nghỉ 5 giây mới nói tiếp
+          setTimeout(function () { gtts_playing = 0; }, json_setting.talk_delay * 1000);//nghỉ 5 giây mới nói tiếp
         });
         audio2.play().then(() => {
           gtts_playing = 1;
@@ -130,12 +147,12 @@
           toastr["warning"]("Hãy bật loa và CLICK vào trình duyệt để cho phép nói ra loa nhé");
         });
       } else {
-        setTimeout(function () { gtts_playing = 0; }, 5 * 1000);//nghỉ 5 giây mới nói tiếp
+        setTimeout(function () { gtts_playing = 0; }, json_setting.talk_delay * 1000);//nghỉ 5 giây mới nói tiếp
       }
     });
     audio.play().then(() => {
       gtts_playing = 1;
-      toastr["info"]("Đang nói ra loa, hãy bật loa!");
+      toastr["info"]('Đang nói ra loa, hãy bật loa!' + (Q.length > 0 ? ('<hr>Hàng đợi: còn ' + Q.length + ' thông báo') : ''));
     }).catch(e => {
       console.log(e);
       toastr["warning"]("Hãy bật loa và CLICK vào trình duyệt để cho phép nói ra loa nhé");
@@ -189,7 +206,7 @@
         type: 'red',
         closeIcon: true,
         closeIconClass: 'fa fa-close',
-        columnClass: 's',
+        columnClass: 'm',
         escapeKey: 'cancel',
         buttons: {
           ok: {
@@ -318,6 +335,101 @@
         get_log(data);
       }
     });
+  }
+  function show_order_total_one_company(item_company) {
+    if (alert_not_login()) return;// cần login trước khi order
+    if (!(logined && (user_info.role == 3 || user_info.role == 100))) {
+      thong_bao_loi({ ok: 0, msg: 'Bạn không có quyền' });
+      return;
+    }
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: `Chi tiết: ${item_company.name}`,
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'l',
+      type: 'blue',
+      escapeKey: 'ok',
+      content: '<div id="one-company-detail">Loading...</div>',
+      buttons: {
+        History: {
+          text: '<i class="fa fa-utensils"></i> History company',
+          btnClass: 'btn-warning',
+          action: function () {
+            view_history_order({
+              action: 'list_history_company_order',
+              id_company: item_company.id,
+            });
+            return false;
+          }
+        },
+        ok: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        $.post(api,
+          {
+            action: 'report_1_congty',
+            id: item_company.id
+          },
+          function (json) {
+            if (json.ok) {
+              thong_bao_ok(json, { w: 0, t: 1 });
+              function show_detail(arr, name, type) {
+                var s = `<tr class="table-info"><th colspan="2">${name}</th></tr>`
+                for (var ca_item of arr) {
+                  var myclass = '';
+                  if (ca_item.ca == 2) myclass = 'table-success'
+                  if (ca_item.data == null) {
+                    s += `<tr class="row_combo table-danger" data-ids="${type}${ca_item.ca}"><th>Ca ${ca_item.ca}</th><td colspan="2">Không có dữ liệu</td></tr>`;
+                  } else {
+                    s += `<tr class="row_combo ${myclass}" data-ids="${type}${ca_item.ca}" valign="middle"><th rowspan="${ca_item.data.length}">Ca ${ca_item.ca}</th>`;
+                    var stt = 0;
+                    for (var item of ca_item.data) {
+                      stt++;
+                      if (stt > 1) s += `<tr class="row_combo ${myclass}" data-ids="${type}${ca_item.ca}">`;
+                      s += `
+                      <td>${item.name} <span class="badge rounded-pill bg-primary">${item.sl}</span></td>
+                    </tr>`;
+                    }
+                  }
+                }
+                return s;
+              }
+              var content = `<div class="table-responsive-sm">
+                  <table width="100%" class="table table-bordered">
+                  <thead>
+                  <tr class="table-primary">
+                  <th width="50px">Ca</th>
+                  <th>Thống kê</th>
+                  </tr></thead><tbody>`+
+                show_detail(json.suat, 'Thống kê theo Suất ăn', 's') +
+                show_detail(json.loai, 'Thống kê theo Loại', 'l') +
+                show_detail(json.don, 'Thống kê theo Đơn nguyên', 'd') +
+                '</tbody></table></div>';
+
+              $('#one-company-detail').html(content);
+              $('tr.row_combo').hover(function () {
+                var ids = $(this).data('ids')
+                $(`tr.row_combo[data-ids= '${ids}']`).addClass('table-warning')
+              }, function () {
+                var ids = $(this).data('ids')
+                $(`tr.row_combo[data-ids= '${ids}']`).removeClass('table-warning')
+              });
+
+            } else {
+              thong_bao_loi(json);
+            }
+          }
+        );
+      }
+    });
+
   }
   function company_order(item_company, ca, json) {
     if (alert_not_login()) return;// cần login trước khi order
@@ -703,7 +815,7 @@
           }
         },
         History: {
-          text: '<i class="fa fa-utensils"></i> History',
+          text: '<i class="fa fa-utensils"></i> History cty/ca',
           btnClass: 'btn-warning',
           action: function () {
             view_history_order({
@@ -946,8 +1058,8 @@
       for (var item of json.data) {
         if (item.id > 0) {
           content += `<tr data-cid="${item.id}">` +
-            '<td align=center nowarp class="btn-company-order">' + (++stt) + '</td>' +
-            '<td align="left" nowarp class="btn-company-order">' + (item.name) + (item.vip == 1 ? ' <i class="fa fa-star" style="color:red"></i>' : '') + '</td>' +
+            '<td align=center nowarp class="btn-company-order" data-ca="0">' + (++stt) + '</td>' +
+            '<td align="left" nowarp class="btn-company-order" data-ca="0">' + (item.name) + (item.vip == 1 ? ' <i class="fa fa-star" style="color:red"></i>' : '') + '</td>' +
             `<td align=left nowarp class="btn-company-order" data-ca="1" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['1']}">${listSuat(json.suat, item.c1, item)}</td>` +
             `<td align=left nowarp class="btn-company-order" data-ca="2" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['2']}">${listSuat(json.suat, item.c2, item)}</td>` +
             `<td align=left nowarp class="btn-company-order" data-ca="3" title="Click để đặt suất ăn cho công ty ${item.name} ca ${ca_name['3']}">${listSuat(json.suat, item.c3, item)}</td>` +
@@ -955,8 +1067,8 @@
             '</tr>';
         } else if (item.id == 0) {
           content += `<tr data-cid="${item.id}" class="table-info fw-bold">` +
-            '<td align=center nowarp class="btn-company-order"></td>' +
-            '<td align="right" nowarp class="btn-company-order">' + item.name + '</td>' +
+            '<td align=center nowarp ></td>' +
+            '<td align="right" nowarp>' + item.name + '</td>' +
             `<td nowarp>${listSuat(json.suat, item.c1, item)}</td>` +
             `<td nowarp>${listSuat(json.suat, item.c2, item)}</td>` +
             `<td nowarp>${listSuat(json.suat, item.c3, item)}</td>` +
@@ -964,8 +1076,8 @@
             '</tr>';
         } else if (item.id == -1) {
           content += `<tr data-cid="${item.id}" class="table-warning fw-bold">` +
-            '<td align=center nowarp class="btn-company-order"></td>' +
-            '<td align="right" nowarp class="btn-company-order">' + item.name + '</td>' +
+            '<td align=center nowarp></td>' +
+            '<td align="right" nowarp>' + item.name + '</td>' +
             `<td nowarp>${listLoaiSuat(item.c1, 'ul', 'info')}</td>` +
             `<td nowarp>${listLoaiSuat(item.c2, 'ul', 'info')}</td>` +
             `<td nowarp>${listLoaiSuat(item.c3, 'ul', 'info')}</td>` +
@@ -973,8 +1085,8 @@
             '</tr>';
         } else if (item.id == -2) {
           content += `<tr data-cid="${item.id}" class="table-success fw-bold">` +
-            '<td align=center nowarp class="btn-company-order"></td>' +
-            '<td align="right" nowarp class="btn-company-order">' + item.name + '</td>' +
+            '<td align=center nowarp></td>' +
+            '<td align="right" nowarp>' + item.name + '</td>' +
             `<td nowarp>${listLoaiSuat(item.c1, 'ol', 'danger')}</td>` +
             `<td nowarp>${listLoaiSuat(item.c2, 'ol', 'danger')}</td>` +
             `<td nowarp>${listLoaiSuat(item.c3, 'ol', 'danger')}</td>` +
@@ -991,7 +1103,11 @@
         if (id > 0) {
           for (var item of json.data) {
             if (item.id == id) {
-              company_order(item, ca, json);
+              if (ca == 0) {
+                show_order_total_one_company(item);
+              } else {
+                company_order(item, ca, json);
+              }
               break;
             }
           }
@@ -1041,7 +1157,7 @@
               }
             },
             history: {
-              text: '<i class="fa fa-clock-rotate-left"></i> History',
+              text: '<i class="fa fa-clock-rotate-left"></i> History day',
               btnClass: 'btn-warning',
               action: function () {
                 view_history_order({ action: 'list_all_history_order' })
@@ -1260,7 +1376,7 @@
               icon: 'fa fa-trash-can',
               closeIcon: true,
               closeIconClass: 'fa fa-close',
-              columnClass: 's',
+              columnClass: 'm',
               type: 'red',
               escapeKey: 'cancel',
               title: `Xác nhận xóa: ${item.name} ?`,
@@ -1951,7 +2067,7 @@
       closeIcon: true,
       closeIconClass: 'fa fa-close',
       type: 'red',
-      columnClass: 's',
+      columnClass: 'm',
       escapeKey: 'cancel',
       autoClose: 'cancel|15000',
       buttons: {
@@ -2007,26 +2123,73 @@
                   <th>Message</th>
                   <th width="100px">Time</th>
                   <th width="70px">Talk</th>
+                  <th width="70px">Edit</th>
+                  <th width="70px">Del</th>
                   </tr></thead><tbody>`;
           for (var item of json.data) {
-            content += `<tr>
+            if (item.state == 'new') {
+              content += `<tr>
                     <td nowarp align="center">${item.id}</td>
                     <td nowarp id="talk-content-${item.id}">${item.message}</td>
                     <td nowarp align="center">${item.time}</td>
                     <td nowarp align="center">
-                      <button class="btn btn-sm btn-info btn-talk" data-tid="${item.id}">Nói</button>
+                      <button class="btn btn-sm btn-info btn-talk" data-tid="${item.id}" data-action="talk">Nói</button>
+                    </td>
+                    <td nowarp align="center">
+                      <button class="btn btn-sm btn-warning btn-talk" data-tid="${item.id}" data-action="edit">Edit</button>
+                    </td>
+                    <td nowarp align="center">
+                      <button class="btn btn-sm btn-danger btn-talk" data-tid="${item.id}" data-action="del">Del</button>
                     </td>
                   </tr>`;
+            } else {
+              content += `<tr>
+                    <td nowarp align="center">${item.id}</td>
+                    <td nowarp id="talk-content-${item.id}">${item.message}</td>
+                    <td nowarp align="center">${item.time}</td>
+                    <td nowarp align="center">
+                      <button class="btn btn-sm btn-info btn-talk" data-tid="${item.id}" data-action="talk">Nói</button>
+                    </td>
+                    <td nowarp align="center" title="Can not edit talked">
+                    
+                    <button class="btn btn-sm btn-secondary" disabled>Edit</button>
+                    </td>
+                    <td nowarp align="center">
+                      <button class="btn btn-sm btn-danger btn-talk" data-tid="${item.id}" data-action="del">Del</button>
+                    </td>
+                  </tr>`;
+            }
           }
           content += '</tbody></table></div>';
           $('#list-talk').html(content);
-          sort_table('#table-list-talk', "Log talk", 20);
+          sort_table('#table-list-talk', "Log talk", 10);
           $('#table-list-talk tbody').on('click', '.btn-talk', function () {
             var tid = $(this).data('tid');
-            var text = $('#talk-content-' + tid).text();
-            Q.enqueue({ id: tid, text: text });
+            var action = $(this).data('action');
+            switch (action) {
+              case 'talk':
+                var text = $('#talk-content-' + tid).text();
+                Q.enqueue({ id: tid, text: text });
+                break;
+              case 'edit':
+              case 'del':
+                for (var item of json.data) {
+                  if (item.id == tid) {
+                    switch (action) {
+                      case 'edit':
+                        edit_talk(item);
+                        break;
+                      case 'del':
+                        del_talk(item);
+                        break;
+                    }
+                  }
+                }
+                break;
+            }
           });
         } else {
+          $('#list-talk').html('Không có dữ liệu');
           thong_bao_loi(json, { w: 0, t: 1 });
         }
       }
@@ -2041,11 +2204,14 @@
     var content = `<div class="table-responsive-sm">
     <table align="center" width="100%">
     <tr>
-    <td>Giờ hẹn:</td>
+    <td width="70px">Giờ&nbsp;hẹn:</td>
     <td><input type="datetime-local" class="form-control" id="edit-time" value="${item.time}"></td>
     </tr>
     <tr>
-    <td>Text:</td>
+    <td colspan=2>Nếu giờ hẹn nhỏ hơn hiện tại thì giờ hẹn sẽ là hiện tại</td>
+    </tr>
+    <tr>
+    <td>Thông&nbsp;điệp:</td>
     <td><textarea class="form-control" id="edit-message">${item.message}</textarea></td>
     </tr>    
     </table></div>`;
@@ -2056,12 +2222,12 @@
       title: 'Thêm thông điệp hẹn nói',
       closeIcon: true,
       closeIconClass: 'fa fa-close',
-      columnClass: 'm',
+      columnClass: 'l',
       type: 'blue',
       escapeKey: 'cancel',
       content: content,
       buttons: {
-        Add: {
+        ok: {
           text: '<i class="fa fa-clock"></i> Thêm',
           btnClass: 'btn-primary',
           action: function () {
@@ -2099,26 +2265,126 @@
     });
   }
   function edit_talk(item) {
+    var content = `<div class="table-responsive-sm">
+    <table align="center" width="100%">
+    <tr>
+    <td>Giờ hẹn:</td>
+    <td><input type="datetime-local" class="form-control" id="edit-time" value="${item.time}"></td>
+    </tr>
+    <tr>
+    <td>Text:</td>
+    <td><textarea class="form-control" id="edit-message">${item.message}</textarea></td>
+    </tr>    
+    </table></div>`;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: 'Sửa thông điệp hẹn nói',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'm',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-clock"></i> Update',
+          btnClass: 'btn-primary',
+          action: function () {
+            var self = this;
+            $.post(api,
+              {
+                action: 'edit_talk',
+                id: item.id,
+                message: $('#edit-message').val(),
+                time_say: $('#edit-time').val(),
+              },
+              function (json) {
 
+                if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
+                  self.close();
+                  list_talk();
+                } else {
+                  thong_bao_loi(json)
+                }
+              }
+            );//end $.post
+            return false;
+          }
+        },
+
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        $('#edit-message').focus();
+      }
+    });
   }
   function del_talk(item) {
-
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-circle-question',
+      title: 'Xác nhận xóa?',
+      content: 'Bạn có chắc muốn xóa <b>' + item.message + '</b> ?',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      type: 'red',
+      columnClass: 'm',
+      escapeKey: 'cancel',
+      autoClose: 'cancel|15000',
+      buttons: {
+        ok: {
+          text: '<i class="fa fa-circle-check"></i> ok Xóa đi',
+          btnClass: 'btn-red',
+          keys: ['enter'],
+          action: function () {
+            //gửi đi api: y/c xóa
+            $.post(api,
+              {
+                action: 'del_talk',
+                id: item.id
+              },
+              function (json) {
+                if (json.ok) {
+                  thong_bao_ok(json, { w: 0, t: 1 });
+                  list_talk();
+                } else {
+                  thong_bao_loi(json); //báo lỗi khi delete_user
+                }
+              }
+            );//end $.post
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-blue',
+        }
+      }
+    });
   }
   //end talk
   function thuc_don() {
     var content = `
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active tab-thuc-don" id="tab-1" data-bs-toggle="tab" data-bs-target="#tab-1-content" type="button" role="tab" aria-controls="tab-1-content" aria-selected="true">Suất ăn</button>
+        <button class="nav-link active tab-thuc-don" id="tab-1" data-bs-toggle="tab" data-bs-target="#tab-1-content" type="button" role="tab" aria-controls="tab-1-content" aria-selected="true">Suất</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link tab-thuc-don" id="tab-2" data-bs-toggle="tab" data-bs-target="#tab-2-content" type="button" role="tab" aria-controls="tab-2-content" aria-selected="false">Đơn nguyên</button>
+        <button class="nav-link tab-thuc-don" id="tab-2" data-bs-toggle="tab" data-bs-target="#tab-2-content" type="button" role="tab" aria-controls="tab-2-content" aria-selected="false">Đơn</button>
       </li>      
       <li class="nav-item" role="presentation">
         <button class="nav-link tab-thuc-don" id="tab-3" data-bs-toggle="tab" data-bs-target="#tab-3-content" type="button" role="tab" aria-controls="tab-3-content" aria-selected="false">Setup</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link tab-thuc-don" id="tab-4" data-bs-toggle="tab" data-bs-target="#tab-4-content" type="button" role="tab" aria-controls="tab-4-content" aria-selected="false">Talk mp3</button>
+        <button class="nav-link tab-thuc-don" id="tab-4" data-bs-toggle="tab" data-bs-target="#tab-4-content" type="button" role="tab" aria-controls="tab-4-content" aria-selected="false">Talk</button>
       </li> 
     </ul>
     <div class="tab-content" id="myTabContent">
@@ -2135,7 +2401,7 @@
         <div id="list-combo">loading...</div>
       </div>
       <div class="tab-pane fade" id="tab-4-content" role="tabpanel" aria-labelledby="tab-4" tabindex="3">
-        <p>Nơi thiết lập lịch tự động nói ra loa</p>
+        <p>Nơi thiết lập lịch tự động nói ra loa trên mọi máy</p>
         <div id="list-talk">loading...</div>
       </div>
     </div>`;
@@ -2304,7 +2570,7 @@
       title: `Thêm loại suất ăn`,
       closeIcon: true,
       closeIconClass: 'fa fa-close',
-      columnClass: 's',
+      columnClass: 'm',
       type: 'blue',
       escapeKey: 'cancel',
       content: content,
@@ -2363,7 +2629,7 @@
       title: `Cập nhật loại suất ăn`,
       closeIcon: true,
       closeIconClass: 'fa fa-close',
-      columnClass: 's',
+      columnClass: 'm',
       type: 'blue',
       escapeKey: 'cancel',
       content: content,
@@ -2415,7 +2681,7 @@
       closeIcon: true,
       closeIconClass: 'fa fa-close',
       type: 'red',
-      columnClass: 's',
+      columnClass: 'm',
       escapeKey: 'cancel',
       autoClose: 'cancel|15000',
       buttons: {
@@ -2457,7 +2723,7 @@
       title: 'Danh sách loại suất ăn',
       closeIcon: true,
       closeIconClass: 'fa fa-close',
-      columnClass: 's',
+      columnClass: 'm',
       type: 'blue',
       escapeKey: 'cancel',
       content: '<div id="list_loai"></div>',
@@ -2603,7 +2869,7 @@
         type: 'red',
         closeIcon: true,
         closeIconClass: 'fa fa-close',
-        columnClass: 's',
+        columnClass: 'm',
         escapeKey: 'cancel',
         buttons: {
           cancel: {
@@ -2651,7 +2917,7 @@
       closeIcon: true,
       closeIconClass: 'fa fa-close',
       type: 'blue',
-      columnClass: 's',
+      columnClass: 'm',
       escapeKey: 'cancel',
       buttons: {
         ok: {
@@ -2722,7 +2988,7 @@
       closeIcon: true,
       closeIconClass: 'fa fa-close',
       type: 'red',
-      columnClass: 's',
+      columnClass: 'm',
       escapeKey: 'cancel',
       buttons: {
         ok: {
@@ -2774,7 +3040,7 @@
       closeIcon: true,
       closeIconClass: 'fa fa-close',
       type: 'red',
-      columnClass: 's',
+      columnClass: 'm',
       escapeKey: 'cancel',
       autoClose: 'cancel|15000',
       buttons: {
@@ -2878,7 +3144,7 @@
       closeIcon: true,
       closeIconClass: 'fa fa-close',
       type: 'red',
-      columnClass: 's',
+      columnClass: 'm',
       escapeKey: 'cancel',
       buttons: {
         ok: {
@@ -2926,7 +3192,7 @@
       closeIcon: true,
       closeIconClass: 'fa fa-close',
       type: 'blue',
-      columnClass: 'l',
+      columnClass: 'xl',
       escapeKey: 'cancel',
       buttons: {
         add_user: {
@@ -3033,6 +3299,8 @@
       icon: 'fa fa-pen-to-square',
       title: 'Thêm công ty mới',
       columnClass: 'l',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
       content: content,
       type: 'green',
       buttons: {
@@ -3324,6 +3592,8 @@
       icon: 'fa fa-pen-to-square',
       title: 'Sửa thông tin công ty',
       columnClass: 'l',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
       content: content,
       type: 'green',
       buttons: {
@@ -3762,35 +4032,14 @@
       for (var item of json.data) {
         json[item.key] = item.value;
         switch (item.key) {
-          case 'tts_delay':
-            setting.tts_delay = parseInt(item.value);
-            break;
-          case 'huy_delay':
-            setting.huy_delay = parseInt(item.value);
-            break;
-          case 'time_tam':
-            setting.time_tam = parseInt(item.value);
-            break;
-          case 'monitor_interval':
-            setting.monitor_interval = parseInt(item.value);
-            break;
-          case 'auto_play_interval':
-            setting.auto_play_interval = parseInt(item.value);
-            break;
-          case 'het_gio':
-            setting.het_gio = item.value;
-            break;
-          case 'dong_cua':
-            setting.dong_cua = item.value;
-            break;
           case 'tab_title':
             document.title = item.value;
             break;
-          case 'app_sologan':
-            $('#app-sologan').html(item.value);
-            break;
           case 'app_title':
             $('#app-title').html(item.value);
+            break;
+          case 'app_sologan':
+            $('#app-sologan').html(item.value);
             break;
         }
       }
@@ -4161,19 +4410,45 @@
       $.post(api,
         {
           action: 'get_mp3',
-          last_mp3_id: last_mp3_id
+          last_mp3_id: last_mp3_id,
+          last_talk_id: last_talk_id
         },
         function (json) {
           if (json.ok) {
-            monitor('monitor', draw_init);
-            for (var item of json.data) {
-              mp3_hangdoi(item.id, item.mp3); //khi có dữ liệu mới
+            if (json.mp3_short.ok) {
+              monitor('monitor', draw_init);
+              for (var item of json.mp3_short.data) {
+                mp3_hangdoi(item.id, item.mp3); //khi có dữ liệu mới
+              }
+            }
+            last_talk_id = json.mp3_talk.last_talk_id;
+            if (json.mp3_talk.ok) {
+              for (var item of json.mp3_talk.data) {
+                //console.log([item.id, item.message])
+                mp3_talk(item.id, item.message); //khi có dữ liệu mới
+              }
             }
           }
         }
       );
       auto_play_in_queue();
     }, 3000); //3s
+
+    //setInterval(function () {
+    //  $.post(api,
+    //    {
+    //      action: 'say_talk',
+    //      last_talk_id: last_talk_id
+    //    },
+    //    function (json) {
+    //      if (json.ok) {
+    //        for (var item of json.data) {
+    //          mp3_talk(item.id, item.message); //khi có dữ liệu mới
+    //        }
+    //      }
+    //    }
+    //  );
+    //}, 3000); //3s
 
     $('.btn-thuc-don').click(function () { thuc_don(); });
     $('#cmdLogin').click(function () { do_login() });

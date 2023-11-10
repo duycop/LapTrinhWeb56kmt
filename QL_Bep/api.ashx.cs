@@ -473,6 +473,11 @@ namespace SuatAn
                 if (action == "get_mp3")
                 {
                     cm.Parameters.Add("@last_log_id", SqlDbType.Int).Value = context.Request["last_mp3_id"];
+                    cm.Parameters.Add("@last_talk_id", SqlDbType.Int).Value = context.Request["last_talk_id"];
+                }
+                if (action == "report_1_congty")
+                {
+                    cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
                 }
                 string json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
                 context.Response.Write(json); //trả về client, trong này có ok=true rồi
@@ -517,6 +522,7 @@ namespace SuatAn
                     case "goi_y_order":
                     case "copy_order":
                     case "list_history_order":
+                    case "list_history_company_order":
                         if (role == 3 || role == 100)
                         {
                             cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["uid"].Value;
@@ -621,6 +627,9 @@ namespace SuatAn
                         cm.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
                         cm.Parameters.Add("@id_ca", SqlDbType.Int).Value = context.Request["id_ca"];
                         break;
+                    case "list_history_company_order":
+                        cm.Parameters.Add("@id_company", SqlDbType.Int).Value = context.Request["id_company"];
+                        break;
                     case "copy_order":
                         cm.Parameters.Add("@ngay_old", SqlDbType.Date).Value = context.Request["ngay_from"];
                         cm.Parameters.Add("@ngay_new", SqlDbType.Date).Value = context.Request["ngay_to"];
@@ -642,7 +651,7 @@ namespace SuatAn
         {
             try
             {
-                string[] cks = { "xbc", "__pat", "__pvi", "__tbc","today" };
+                string[] cks = { "xbc", "__pat", "__pvi", "__tbc", "today" };
                 foreach (string ck in cks)
                 {
                     context.Request.Cookies.Remove(ck);
@@ -917,6 +926,7 @@ namespace SuatAn
                             break;
                         case "edit_talk":
                         case "del_talk":
+                        case "say_talk":
                             cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
                             break;
                     }
@@ -925,7 +935,7 @@ namespace SuatAn
                     {
                         case "add_talk":
                         case "edit_talk":
-                            cm.Parameters.Add("@message", SqlDbType.NVarChar,-1).Value = context.Request["message"];
+                            cm.Parameters.Add("@message", SqlDbType.NVarChar, -1).Value = context.Request["message"];
                             cm.Parameters.Add("@time_say", SqlDbType.DateTime).Value = context.Request["time_say"];
                             break;
                     }
@@ -954,27 +964,39 @@ namespace SuatAn
                 case "disable_suat_an":
                 case "delete_suat_an":
                 case "save_order":
+                
                 case "copy_order":
+                
                 case "edit_setting":
                 case "get_setting":
+                
                 case "add_company":
                 case "edit_company":
                 case "delete_company":
+                
                 case "do_login":
                 case "do_logout":
                 case "do_change_pw":
+                
                 case "add_user":
                 case "delete_user":
                 case "set_pw":
+                
                 case "add_loai":
                 case "edit_loai":
                 case "del_loai":
+                
                 case "add_don_nguyen":
                 case "edit_don_nguyen":
                 case "del_don_nguyen":
+                
                 case "add_combo":
                 case "edit_combo":
                 case "del_combo":
+
+                case "add_talk":
+                case "edit_talk":
+                case "del_talk":
                     add_log(action);
                     break;
             }
@@ -988,6 +1010,7 @@ namespace SuatAn
                 case "delete_suat_an":
                 case "dem_suat_an":
                 case "list_history_order":
+                case "list_history_company_order":
                 case "list_all_history_order":
 
                 //case "add_order":
@@ -1000,6 +1023,7 @@ namespace SuatAn
 
                 case "monitor":
                 case "get_mp3":
+                case "report_1_congty":
                     report(action);
                     break;
 
@@ -1054,9 +1078,9 @@ namespace SuatAn
                 case "add_talk":
                 case "edit_talk":
                 case "del_talk":
+                case "say_talk":
                     xuly_talk(action);
                     break;
-
             }
         }
 
