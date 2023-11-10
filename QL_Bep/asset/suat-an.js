@@ -2131,7 +2131,7 @@
               content += `<tr>
                     <td nowarp align="center">${item.id}</td>
                     <td nowarp id="talk-content-${item.id}">${item.message}</td>
-                    <td nowarp align="center">${item.time}</td>
+                    <td nowarp align="center">${item.time_say}</td>
                     <td nowarp align="center">
                       <button class="btn btn-sm btn-info btn-talk" data-tid="${item.id}" data-action="talk">Nói</button>
                     </td>
@@ -2196,16 +2196,17 @@
     )
   }
   function add_talk() {
-    var item = { id: '', message: '', time: '' };
+    var item = { id: '', message: '', time_say: '' };
     var date = Date2();
-    date.setTime(date.getTime() + 60 * 1000);
+    date.setTime(date.getTime() + 10 * 1000);
 
-    item.time = date.toISOString().substr(0, 16);
+    item.time_say = date.toISOString().substr(0, 16);
+    item.time_say += ':00';
     var content = `<div class="table-responsive-sm">
     <table align="center" width="100%">
     <tr>
     <td width="70px">Giờ&nbsp;hẹn:</td>
-    <td><input type="datetime-local" class="form-control" id="edit-time" value="${item.time}"></td>
+    <td><input type="datetime-local" class="form-control" id="edit-time" value="${item.time_say}"></td>
     </tr>
     <tr>
     <td colspan=2>Nếu giờ hẹn nhỏ hơn hiện tại thì giờ hẹn sẽ là hiện tại</td>
@@ -2235,8 +2236,8 @@
             $.post(api,
               {
                 action: 'add_talk',
-                message: $('#edit-message').val(),
-                time_say: $('#edit-time').val(),
+                message: $('#edit-message').val().replaceAll('\n', ' '),
+                time_say: $('#edit-time').val().replace('T',' '),
               },
               function (json) {
 
@@ -2269,7 +2270,7 @@
     <table align="center" width="100%">
     <tr>
     <td>Giờ hẹn:</td>
-    <td><input type="datetime-local" class="form-control" id="edit-time" value="${item.time}"></td>
+    <td><input type="datetime-local" class="form-control" id="edit-time" value="${item.time_say}"></td>
     </tr>
     <tr>
     <td>Text:</td>
@@ -2297,8 +2298,8 @@
               {
                 action: 'edit_talk',
                 id: item.id,
-                message: $('#edit-message').val(),
-                time_say: $('#edit-time').val(),
+                message: $('#edit-message').val().replaceAll('\n', ' '),
+                time_say: $('#edit-time').val().replace('T', ' '),
               },
               function (json) {
 
