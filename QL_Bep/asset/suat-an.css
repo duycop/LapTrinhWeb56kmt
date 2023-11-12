@@ -118,3 +118,18 @@ a:active {
         bottom: 0px;
         left: 1px;
     }
+
+#table-control-panel td.space-begin {
+    padding-bottom: 10px;
+    padding-right: 5px;
+}
+#table-control-panel td.space {
+    padding-bottom: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+#table-control-panel td.space-end {
+    padding-bottom: 10px;
+    padding-left: 5px;
+    padding-right: 0px;
+}

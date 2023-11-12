@@ -259,16 +259,14 @@
     s += '</' + type_bulet + '>';
     return s;
   }
-
-  function view_history_order(data) {
-    function get_log(data) {
-      $.post(api,
-        data,
-        function (json) {
-          if (json.ok) {
-            thong_bao_ok(json, { w: 0, t: 1 });
-            var content = '';
-            content += `<div class="table-responsive-sm">
+  function get_log(data) {
+    $.post(api,
+      data,
+      function (json) {
+        if (json.ok) {
+          thong_bao_ok(json, { w: 0, t: 1 });
+          var content = '';
+          content += `<div class="table-responsive-sm">
                   <table width="100%" class="table table-hover table-striped" id="table-list-history-order">
                   <thead>
                   <tr class="table-info">
@@ -276,35 +274,37 @@
                   <th>Log</th>
                   <th>Time</th>
                   </tr></thead><tbody>`;
-            for (var item of json.data) {
-              var talk = '';
-              if (item.input == 'mp3_short' || item.input == 'mp3_long') {
-                talk = ` <button class="btn btn-sm btn-info btn-talk-log" data-lid="${item.id}">Nói</button> `;
-              }
-              content += `<tr>
+          for (var item of json.data) {
+            var talk = '';
+            if (item.input == 'mp3_short' || item.input == 'mp3_long') {
+              talk = ` <button class="btn btn-sm btn-info btn-talk-log" data-lid="${item.id}">Nói</button> `;
+            }
+            content += `<tr>
                     <td nowarp align="center">${item.id}</td>
                     <td nowarp>${talk}<span id="log-content-${item.id}">${item.log.replaceAll(';', '<br>')}</span></td>
                     <td nowarp align="center">${item.time}</td>
                   </tr>`;
-            }
-            content += '</tbody></table></div>';
-            $('#list-history-order').html(content);
-            if (json.data.length > 10) {
-              sort_table('#table-list-history-order', "Log history", 20);
-            }
-            //btn-talk-log
-            $('#table-list-history-order tbody').on('click', '.btn-talk-log', function () {
-              var lid = $(this).data('lid');
-              var text = $('#log-content-' + lid).text();
-              Q.enqueue({ id: lid, text: text });
-            });
-          } else {
-            $('#list-history-order').html(json.msg);
-            thong_bao_loi(json, { w0, t: 1 });
           }
+          content += '</tbody></table></div>';
+          $('#list-history-order').html(content);
+          if (json.data.length > 10) {
+            sort_table('#table-list-history-order', "Log history", 20);
+          }
+          //btn-talk-log
+          $('#table-list-history-order tbody').on('click', '.btn-talk-log', function () {
+            var lid = $(this).data('lid');
+            var text = $('#log-content-' + lid).text();
+            Q.enqueue({ id: lid, text: text });
+          });
+        } else {
+          $('#list-history-order').html(json.msg);
+          thong_bao_loi(json, { w0, t: 1 });
         }
-      );
-    }
+      }
+    );
+  }
+  function view_history_order(data) {
+
     dialog_order = $.confirm({
       animateFromElement: false,
       typeAnimated: false,
@@ -2237,7 +2237,7 @@
               {
                 action: 'add_talk',
                 message: $('#edit-message').val().replaceAll('\n', ' '),
-                time_say: $('#edit-time').val().replace('T',' '),
+                time_say: $('#edit-time').val().replace('T', ' '),
               },
               function (json) {
 
@@ -2501,8 +2501,189 @@
       }
     });
   }
+
+  function manager_suat() {
+    var content = `
+        <p>Suất ăn được tạo bởi nhiều đơn nguyên (còn gọi là combo)</p>
+        <div id="list-suat-an">Loading...</div>`;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: 'Danh sách các suất ăn',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'xl',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        them: {
+          text: '<i class="fa fa-utensils"></i> Thêm suất',
+          btnClass: 'btn-blue cmd-in-tab cmd-in-tab-1',
+          action: function () {
+            add_suat_an();
+            return false;
+          }
+        },
+        loai: {
+          text: '<i class="fa fa-layer-group"></i> Loại',
+          btnClass: 'btn-info cmd-in-tab cmd-in-tab-1',
+          action: function () {
+            quan_ly_loai();
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          btnClass: 'btn-red',
+          action: function () {
+            monitor('monitor', draw_init);
+          }
+        }
+      },
+      onContentReady: function () {
+        list_suat_an();
+      }
+    });
+  }
   //--end thuc_don--
 
+  //--begin don nguyen
+  function manager_don() {
+    var content = `<p>Các đơn nguyên là các đơn vị nguyên liệu nhỏ nhất cấu tạo nên 1 suất ăn, có thể đưa vào đây cả mắm, muối, mì chính. Đơn nguyên này ko thể chia nhỏ hơn.</p>
+        <div id="list-don-nguyen">Loading...</div>`;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: 'Danh sách các đơn nguyên',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'xl',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        them: {
+          text: '<i class="fa fa-utensils"></i> Thêm đơn nguyên',
+          btnClass: 'btn-blue cmd-in-tab cmd-in-tab-2',
+          action: function () {
+            add_don_nguyen();
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        list_don_nguyen();
+      }
+    });
+  }
+  //--end don nguyen
+
+  //--begin combo
+  function manager_combo() {
+    var content = `<p>Mỗi combo sẽ gồm các {đơn nguyên và số lượng}</p>
+        <div id="list-combo">loading...</div>`;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: 'Setup combo',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'xl',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        list_setup_combo();
+      }
+    });
+  }
+  //--end combo
+  function manager_order() {
+    thong_bao_ok({ ok: 1, msg: '<ol><li>Chọn ngày</li><li>Click vào cell tại cột SÁNG/TRƯA/TỐI/ĐÊM ứng với công ty cần thêm</li></ol>' }, {w:1,t:0});
+  }
+  function manager_report() {
+    thong_bao_ok({ ok: 1, msg: '<ol><li>Chọn ngày</li><li>Click vào cell tại cột TÊN CÔNG TY để xem thống kê</li></ol>' }, { w: 1, t: 0 });
+  }
+  function manager_talk() {
+    var content = `<p>Nơi thiết lập lịch tự động nói ra loa trên mọi máy</p>
+        <div id="list-talk">loading...</div>`;
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-utensils',
+      title: 'Cấu hình hẹn giờ nói ra loa',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'xl',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        them: {
+          text: '<i class="fa fa-clock"></i> Thêm hẹn',
+          btnClass: 'btn-info cmd-in-tab cmd-in-tab-4',
+          action: function () {
+            add_talk();
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        list_talk();
+      }
+    });
+  }
+  function manager_log() {
+    var content = `<div id="list-history-order"></div>`;
+
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-clock',
+      title: 'Tra cứu log',
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      columnClass: 'xl',
+      type: 'blue',
+      escapeKey: 'cancel',
+      content: content,
+      buttons: {
+        all_day: {
+          text: '<i class="fa fa-clock-rotate-left"></i> Reload',
+          btnClass: 'btn-primary',
+          action: function () {
+            get_log({ action: 'list_all_history_order' });
+            return false;
+          }
+        },
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Đóng',
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        get_log({ action: 'list_all_history_order' });
+      }
+    });
+  }
   //--begin loai--
   function list_loai() {
     $.post(api,
@@ -3182,14 +3363,76 @@
       }
     });
   }
-  function admin_panel() {
+  function admin_control_panel() {
     if (alert_not_login()) return;// khi vào admin_panel
+    var content = `<p>Các tính năng dành cho bạn</p>
+    <div class="table-responsive-sm">
+    <table width="100%" id="table-control-panel">
+    <tr>
+      <td width="25%" align="center" class="space-begin"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-change-pw">1. Đổi mật khẩu</button></div></td>
+      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-user">2. Quản lý User</button></div></td>
+      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-setting">3. Cấu hình</button></div></td>
+      <td width="25%" align="center" class="space-end"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-company">4. Công ty</button></div></td>
+    </tr>
+    <tr>
+      <td width="25%" align="center" class="space-begin"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-suat">5. Suất ăn</button></div></td>
+      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-loai">6. Loại suất ăn</button></div></td>
+      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-don">7. Đơn nguyên</button></div></td>
+      <td width="25%" align="center" class="space-end"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-combo">8. Setup Combo</button></div></td>
+    </tr>
+     <tr>
+      <td width="25%" align="center" class="space-begin"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-order">9. Đặt đồ ăn</button></div></td>
+      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-talk">10. Hẹn giờ nói</button></div></td>
+      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-log">11. Tra cứu log</button></div></td>
+      <td width="25%" align="center" class="space-end"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-report">12. Thống kê</button></div></td>
+    </tr>
+    </table>
+    </div>`;
     $.confirm({
       animateFromElement: false,
       typeAnimated: false,
       icon: 'fa fa-user',
       title: 'Control Panel: <b>' + user_info.fullname + '</b>',
-      content: '<div id="list-user"></div><p>Các tính năng dành cho bạn</p>',
+      content: content,
+      closeIcon: true,
+      closeIconClass: 'fa fa-close',
+      type: 'blue',
+      columnClass: 'm',
+      escapeKey: 'cancel',
+      buttons: {
+        cancel: {
+          text: '<i class="fa fa-circle-xmark"></i> Close',
+          keys: ['esc'],
+          btnClass: 'btn-red',
+        }
+      },
+      onContentReady: function () {
+        if (user_info.role == 100 || user_info.role == 3)//nếu đủ quyền
+        {
+          $('#btn-change-pw').click(function () { do_change_pw(); });
+          $('#btn-manager-user').click(function () { manager_user(); });
+          $('#btn-manager-setting').click(function () { admin_setting(); });
+          $('#btn-manager-company').click(function () { admin_company(); });
+          $('#btn-manager-loai').click(function () { quan_ly_loai(); });
+          $('#btn-manager-suat').click(function () { manager_suat(); });
+          $('#btn-manager-don').click(function () { manager_don(); });
+          $('#btn-manager-combo').click(function () { manager_combo(); });
+          $('#btn-manager-log').click(function () { manager_log(); });
+          $('#btn-manager-talk').click(function () { manager_talk(); });
+          $('#btn-manager-order').click(function () { manager_order(); });
+          $('#btn-manager-report').click(function () { manager_report(); });
+        }
+      }
+    });
+  }
+  function manager_user() {
+    if (alert_not_login()) return;// khi vào admin_panel
+    $.confirm({
+      animateFromElement: false,
+      typeAnimated: false,
+      icon: 'fa fa-user',
+      title: 'Quản lý User</b>',
+      content: '<div id="list-user"></div>',
       closeIcon: true,
       closeIconClass: 'fa fa-close',
       type: 'blue',
@@ -3199,7 +3442,6 @@
         add_user: {
           text: '<i class="fa fa-user-plus"></i> Add user',
           btnClass: 'btn-primary',
-          isHidden: true,
           action: function () {
             add_new_user();
             return false; //ko đóng dialog
@@ -3213,24 +3455,7 @@
             return false; //ko đóng dialog
           }
         },
-        setting: {
-          text: '<i class="fa fa-gear"></i> Setting',
-          btnClass: 'btn-blue',
-          isHidden: true,
-          action: function () {
-            admin_setting();
-            return false; //ko đóng dialog
-          }
-        },
-        company: {
-          text: '<i class="fa fa-building"></i> Company',
-          btnClass: 'btn-info',
-          isHidden: true,
-          action: function () {
-            admin_company();
-            return false; //ko đóng dialog
-          }
-        },
+
         cancel: {
           text: '<i class="fa fa-circle-xmark"></i> Close',
           keys: ['esc'],
@@ -3240,9 +3465,6 @@
       onContentReady: function () {
         if (user_info.role == 100 || user_info.role == 3)//nếu đủ quyền
         {
-          this.buttons.add_user.show();
-          this.buttons.setting.show();
-          this.buttons.company.show();
           list_user(); //khi admin_panel show lần đầu
         }
       }
@@ -4196,7 +4418,9 @@
       $('#cmdLogin').hide();
       $('#cmdLogout, .login_info, .btn-thuc-don, .btn-order').removeClass('not-show');
       $('#cmdLogout, .login_info, .btn-thuc-don, .btn-order').show();
-      $('.login_info').click(function () { admin_panel(); });
+      $('.login_info').click(function () {
+        admin_control_panel();
+      });
     } else {
       //$('.login_info').html('');
       $('#cmdLogin').removeClass('not-show');
