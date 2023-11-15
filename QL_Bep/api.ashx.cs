@@ -950,6 +950,74 @@ namespace SuatAn
             }
             context.Response.Write(json); //gửi về client
         }
+        void xuly_box(string action)
+        {
+            Reply reply = new Reply(); //tạo đối tượng để trả về lỗi
+            string json = "";
+            try
+            {
+                reply.ok = true;
+                SqlServer db = new SqlServer(); //dùng thư viện SqlServer
+                SqlCommand cm = db.GetCmd("SP_BOX", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
+
+                switch (action)
+                {
+                    case "add_box":
+                    case "edit_box":
+                    case "del_box":
+                        int role = get_role();
+                        if (role == 3 || role == 100)
+                        {
+                            reply.ok = true;
+                            string uid = context.Request.Cookies["uid"].Value;
+                            string cookie = context.Request.Cookies["ck"].Value;
+                            if (uid != null && uid != "" && cookie != null && cookie != "")
+                            {
+                                cm.Parameters.Add("@uid", SqlDbType.NVarChar, 50).Value = uid;
+                                cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = cookie;
+                            }
+                        }
+                        else
+                        {
+                            reply.ok = false;
+                            reply.msg = "Bạn không có quyền";
+                        }
+                        break;
+                }
+
+                if (reply.ok)
+                {
+                    switch (action)
+                    {
+                        case "list_box":
+                            //ko cần thêm tham số
+                            break;
+                        case "edit_box":
+                        case "del_box":
+                            cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                            break;
+                    }
+
+                    switch (action)
+                    {
+                        case "add_box":
+                        case "edit_box":
+                            cm.Parameters.Add("@name", SqlDbType.NVarChar, 50).Value = context.Request["name"];
+                            cm.Parameters.Add("@size", SqlDbType.Int).Value = context.Request["size"];
+                            cm.Parameters.Add("@items", SqlDbType.NVarChar, -1).Value = context.Request["items"];
+                            break;
+                    }
+                    json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
+                }
+            }
+            catch (Exception ex) //bẫy lỗi
+            {
+                reply.msg = ex.Message; //lấy lỗi bẫy được
+                reply.ok = false; //báo lỗi qua ok
+                json = JsonConvert.SerializeObject(reply); //dùng json net để tạo chuỗi
+            }
+            context.Response.Write(json); //gửi về client
+        }
         public void ProcessRequest(HttpContext context)
         {
             this.context = context;
@@ -1080,6 +1148,14 @@ namespace SuatAn
                 case "del_talk":
                 case "say_talk":
                     xuly_talk(action);
+                    break;
+
+
+                case "list_box":
+                case "add_box":
+                case "edit_box":
+                case "del_box":
+                    xuly_box(action);
                     break;
             }
         }

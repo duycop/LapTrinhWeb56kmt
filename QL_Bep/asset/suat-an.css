@@ -133,3 +133,7 @@ a:active {
     padding-left: 5px;
     padding-right: 0px;
 }
+
+.btn-xe-oto i{
+    color: red;
+}
