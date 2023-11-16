@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -11,6 +12,7 @@ using System.Threading;
 using System.Web;
 using System.Web.Configuration;
 using System.Web.Security;
+using static System.Collections.Specialized.BitVector32;
 
 namespace SuatAn
 {
@@ -260,7 +262,7 @@ namespace SuatAn
                 db.LogMsg(action, msg);
             }
         }
-        void admin_setting(string action)
+        void admin_setting(string action, bool write_json = true)
         {
             Reply reply = new Reply();
 
@@ -280,8 +282,7 @@ namespace SuatAn
                     cm.Parameters.Add("@cookie", SqlDbType.NVarChar, 50).Value = context.Request.Cookies["ck"].Value;
 
                     cm.Parameters.Add("@key", SqlDbType.NVarChar, 50).Value = context.Request["key"];
-                    cm.Parameters.Add("@note", SqlDbType.NVarChar, 500).Value = context.Request["note"];
-                    cm.Parameters.Add("@value", SqlDbType.NVarChar, 500).Value = context.Request["value"];
+                    cm.Parameters.Add("@value", SqlDbType.NVarChar, 4000).Value = context.Request["value"];
                 }
                 else if (action == "get_setting")
                 {
@@ -297,9 +298,15 @@ namespace SuatAn
                 {
                     string json_str = (string)db.Scalar(cm);
 
-                    context.Response.Write(json_str);
-                    context.Response.End();
-
+                    if (write_json)
+                    {
+                        context.Response.Write(json_str);
+                        context.Response.End();
+                    }
+                    else
+                    {
+                        temp_str = json_str;
+                    }
                     return;
                 }
                 else
@@ -314,8 +321,16 @@ namespace SuatAn
                 reply.msg = ex.Message;
             }
             string json = JsonConvert.SerializeObject(reply);
-            context.Response.Write(json);
+            if (write_json)
+            {
+                context.Response.Write(json);
+            }
+            else
+            {
+                temp_str = json;
+            }
         }
+        string temp_str;
         void admin_company(string action)
         {
             Reply reply = new Reply();
@@ -463,10 +478,11 @@ namespace SuatAn
             {
                 SqlServer db = new SqlServer(); //dùng thư viện SqlServer
                 SqlCommand cm = db.GetCmd("SP_Report", action); //thư viện SqlServer có hàm tạo SqlCommand nhanh
+                string ngay = "";
                 HttpCookie obj = context.Request.Cookies["ngay"];
                 if (obj != null)
                 {
-                    string ngay = obj.Value;
+                    ngay = obj.Value;
                     if (ngay != null && ngay != "")
                         cm.Parameters.Add("@ngay", SqlDbType.Date).Value = ngay; //truyền tham số cho cm
                 }
@@ -478,6 +494,29 @@ namespace SuatAn
                 if (action == "report_1_congty")
                 {
                     cm.Parameters.Add("@id", SqlDbType.Int).Value = context.Request["id"];
+                }
+                if (action == "report_oto")
+                {
+                    admin_setting("edit_setting", false);
+
+                    Reply r = JsonConvert.DeserializeObject<Reply>(temp_str);
+                    if (r != null && r.ok)
+                    {
+                        int id_ca = int.Parse(context.Request["id_ca"]);
+                        string car_json = context.Request["value"];
+                        CAR_DATA car = JsonConvert.DeserializeObject<CAR_DATA>(car_json);
+                        CAR_REP rep = new CAR_REP();
+                        rep.car1 = CAR_DATA.get_report(ngay, id_ca, 1, car.car1);
+                        rep.car2 = CAR_DATA.get_report(ngay, id_ca, 2, car.car2);
+                        rep.car3 = CAR_DATA.get_report(ngay, id_ca, 3, car.car3);
+                        rep.car4 = CAR_DATA.get_report(ngay, id_ca, 4, car.car4);
+                        rep.car5 = CAR_DATA.get_report(ngay, id_ca, 5, car.car5);
+                        rep.ok = true;
+                        rep.msg = "ok";
+                        string json_Car = JsonConvert.SerializeObject(rep); //dùng json net để tạo chuỗi
+                        context.Response.Write(json_Car); //gửi về client
+                    }
+                    return;
                 }
                 string json = (string)db.Scalar(cm); //lấy json trong sp tạo ra (code từ trong db)
                 context.Response.Write(json); //trả về client, trong này có ok=true rồi
@@ -491,6 +530,54 @@ namespace SuatAn
                 context.Response.Write(json); //gửi về client
             }
         }
+        class CAR_REP : Reply
+        {
+            public Reply car1, car2, car3, car4, car5;
+        }
+        class CAR_DATA
+        {
+            public List<int> car1, car2, car3, car4, car5;
+            public static Reply get_report(string ngay, int id_ca, int id_car, List<int> car)
+            {
+                Reply reply = new Reply();
+                try
+                {
+                    string ids_congty = "";
+                    foreach (int id in car)
+                    {
+                        ids_congty += id.ToString() + ",";
+                    }
+                    if (ids_congty != "")
+                    {
+                        ids_congty = ids_congty.Substring(0, ids_congty.Length - 1);
+
+                        SqlServer db = new SqlServer(); //dùng thư viện SqlServer
+                        SqlCommand cm = db.GetCmd("SP_Report", "report_oto"); //thư viện SqlServer có hàm tạo SqlCommand nhanh
+                        cm.Parameters.Add("@ngay", SqlDbType.Date).Value = ngay;
+                        cm.Parameters.Add("@id_ca", SqlDbType.Int).Value = id_ca;
+                        cm.Parameters.Add("@id_car", SqlDbType.Int).Value = id_car;
+                        cm.Parameters.Add("@ids_congty", SqlDbType.NVarChar, 4000).Value = ids_congty;
+                        reply.msg = (string)db.Scalar(cm);
+                        reply.ok = true;
+                    }
+                    else
+                    {
+                        //tạo đối tượng để trả về lỗi
+                        string[] CA_NAME = { "", "Sáng", "Trưa", "Tối", "Đêm" };
+                        reply.msg = $"Không có dữ liệu của xe {id_car}, ca {CA_NAME[id_ca]} ngày {ngay}";
+                        reply.ok = false; //báo lỗi qua ok
+                    }
+                }
+                catch (Exception ex)
+                {
+                    reply.ok = false;
+                    reply.msg = ex.Message;
+                }
+                return reply;
+            }
+            
+        }
+        
         void suat_an(string action)
         {
             try
@@ -1032,32 +1119,32 @@ namespace SuatAn
                 case "disable_suat_an":
                 case "delete_suat_an":
                 case "save_order":
-                
+
                 case "copy_order":
-                
+
                 case "edit_setting":
                 case "get_setting":
-                
+
                 case "add_company":
                 case "edit_company":
                 case "delete_company":
-                
+
                 case "do_login":
                 case "do_logout":
                 case "do_change_pw":
-                
+
                 case "add_user":
                 case "delete_user":
                 case "set_pw":
-                
+
                 case "add_loai":
                 case "edit_loai":
                 case "del_loai":
-                
+
                 case "add_don_nguyen":
                 case "edit_don_nguyen":
                 case "del_don_nguyen":
-                
+
                 case "add_combo":
                 case "edit_combo":
                 case "del_combo":
@@ -1092,6 +1179,7 @@ namespace SuatAn
                 case "monitor":
                 case "get_mp3":
                 case "report_1_congty":
+                case "report_oto":
                     report(action);
                     break;
 

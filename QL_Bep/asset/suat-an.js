@@ -429,7 +429,92 @@
 				);
 			}
 		});
+	}
+	function show_report_oto(id_ca, json_car) {
+		if (alert_not_login()) return;// cần login trước khi order
+		if (!(logined && (user_info.role == 3 || user_info.role == 100))) {
+			thong_bao_loi({ ok: 0, msg: 'Bạn không có quyền' });
+			return;
+		}
 
+		function show_detail(arr, name, type) {
+			var s = `<tr class="table-info"><th colspan="2">${name}</th></tr>`
+			for (var ca_item of arr) {
+				var myclass = '';
+				if (ca_item.ca == 2) myclass = 'table-success'
+				if (ca_item.data == null) {
+					s += `<tr class="row_combo table-danger" data-ids="${type}${ca_item.ca}"><th>Ca ${ca_item.ca}</th><td colspan="2">Không có dữ liệu</td></tr>`;
+				} else {
+					s += `<tr class="row_combo ${myclass}" data-ids="${type}${ca_item.ca}" valign="middle"><th rowspan="${ca_item.data.length}">Ca ${ca_item.ca}</th>`;
+					var stt = 0;
+					for (var item of ca_item.data) {
+						stt++;
+						if (stt > 1) s += `<tr class="row_combo ${myclass}" data-ids="${type}${ca_item.ca}">`;
+						s += `<td>${item.name} <span class="badge rounded-pill bg-primary">${item.sl}</span></td></tr>`;
+					}
+				}
+			}
+			return s;
+		}
+		function get_content_car(car, arr_congty) {			
+			if (car.ok) {
+				var json = JSON.parse(car.msg);
+				var list_congty = `<P>${json.msg} chở hàng đến các công ty:<UL>`;
+				for (var id_cty of arr_congty) {
+					for (var item of json_global.data) {
+						if (id_cty == item.id) {
+							list_congty += `<li>${item.id}. ${item.name}</li>`;
+							break;
+						}
+					}
+				}
+				list_congty+='</UL></P>'
+				return `<div class="table-responsive-sm">${list_congty}
+					<table width="100%" class="table table-bordered">
+					<thead>
+					<tr class="table-primary">
+					<th width="50px">Ca</th>
+					<th>Thống kê</th>
+					</tr></thead><tbody>`+
+					show_detail(json.suat, 'Thống kê theo Suất ăn', 's') +
+					show_detail(json.loai, 'Thống kê theo Loại', 'l') +
+					show_detail(json.don, 'Thống kê theo Đơn nguyên', 'd') +
+					'</tbody></table></div>';
+			} else {
+				return car.msg;
+			}
+		}
+		var json_car_chon = JSON.parse( json_setting['oto' + id_ca]);
+		var tk1 = get_content_car(json_car.car1, json_car_chon.car1);
+		var tk2 = get_content_car(json_car.car2, json_car_chon.car2);
+		var tk3 = get_content_car(json_car.car3, json_car_chon.car3);
+		var tk4 = get_content_car(json_car.car4, json_car_chon.car4);
+		var tk5 = get_content_car(json_car.car5, json_car_chon.car5);
+		var content = `<ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tabx-1" data-bs-toggle="tab" data-bs-target="#tabx-1-content" type="button" role="tab" aria-controls="tabx-1-content" aria-selected="true">Xe 1</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tabx-2" data-bs-toggle="tab" data-bs-target="#tabx-2-content" type="button" role="tab" aria-controls="tabx-2-content" aria-selected="true">Xe 2</button>
+      </li>      
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tabx-3" data-bs-toggle="tab" data-bs-target="#tabx-3-content" type="button" role="tab" aria-controls="tabx-3-content" aria-selected="true">Xe 3</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tabx-4" data-bs-toggle="tab" data-bs-target="#tabx-4-content" type="button" role="tab" aria-controls="tabx-4-content" aria-selected="true">Xe 4</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tabx-5" data-bs-toggle="tab" data-bs-target="#tabx-5-content" type="button" role="tab" aria-controls="tabx-5-content" aria-selected="true">Xe 5</button>
+      </li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="tabx-1-content" role="tabpanel" aria-labelledby="tabx-1" tabindex="0">${tk1}</div>
+      <div class="tab-pane fade show" id="tabx-2-content" role="tabpanel" aria-labelledby="tabx-2" tabindex="0">${tk2}</div>
+      <div class="tab-pane fade show" id="tabx-3-content" role="tabpanel" aria-labelledby="tabx-3" tabindex="0">${tk3}</div>
+      <div class="tab-pane fade show" id="tabx-4-content" role="tabpanel" aria-labelledby="tabx-4" tabindex="0">${tk4}</div>
+      <div class="tab-pane fade show" id="tabx-5-content" role="tabpanel" aria-labelledby="tabx-5" tabindex="0">${tk5}</div>
+    </div>`;
+		$('#list-tk-oto').html(content);
 	}
 	function company_order(item_company, ca, json) {
 		if (alert_not_login()) return;// cần login trước khi order
@@ -4486,7 +4571,6 @@
 	}
 	function apply_setting(json) {
 		if (json.ok) {
-			json_setting = json;
 			for (var item of json.data) {
 				json[item.key] = item.value;
 				switch (item.key) {
@@ -4501,6 +4585,7 @@
 						break;
 				}
 			}
+			json_setting = json;
 		}
 	}
 	function get_list_setting() {
@@ -4538,7 +4623,7 @@
 						'<th align=center>Change</th>' +
 						'</tr></thead><tbody>';
 					var stt = 0;
-					for (var item of json.data) {
+					for (var item of json.data) if (item.active) {
 						content += '<tr>' +
 							'<td align=center>' + (++stt) + '</td>' +
 							'<td align=left>' + item.key + '</span></td>' +
@@ -4841,6 +4926,12 @@
 	//--end login zone--
 
 	function manager_oto(id_ca) {
+		if (alert_not_login()) return;// cần login trước khi order
+		if (!(logined && (user_info.role == 3 || user_info.role == 100))) {
+			thong_bao_loi({ ok: 0, msg: 'Bạn không có quyền' });
+			return;
+		}
+
 		var dem_cty = 0;
 		var list_chon_oto = `<div class="table-responsive-sm">
                   <table width="100%" class="table table-bordered table-hover table-striped" id="table-list-cty-xe">
@@ -4848,18 +4939,19 @@
                   <tr class="table-info">
                   <th style="text-align:center">ID</th>
                   <th>Công ty</th>
-                  <th>Ca ${ca_name[id_ca]}</th>
                   <th style="text-align:center">Xe 1</th>
                   <th style="text-align:center">Xe 2</th>
                   <th style="text-align:center">Xe 3</th>
                   <th style="text-align:center">Xe 4</th>
                   <th style="text-align:center">Xe 5</th>
+                  <th>Ca ${ca_name[id_ca]}</th>
                   </tr></thead><tbody>`;
 		json_global.find_suat = {};
 		for (var item of json_global.suat) {
 			json_global.find_suat[item.id] = item;
 		}
-		var car = getLocal('car');
+		//var car = getLocal('car');
+		var car = json_setting['oto' + id_ca];
 		if (car) car = JSON.parse(car);
 		function chon_xe(id_xe, car, id) {
 			if (car) {
@@ -4899,13 +4991,13 @@
 				var x5 = chon_xe(5, car, item.id);
 				list_chon_oto += `<tr title="Công ty: ${item.name}" >
 					<td align="center" class="xoa-chon-pp" data-cid="${item.id}">${item.id}</td>
-					<td class="btn-company-order2" data-cid="${item.id}">${item.name}</td>
-					<td class="btn-company-order2" data-cid="${item.id}">${ca_items}</td>
+					<td class="btn-company-order2" data-cid="${item.id}" align="right">${item.name}</td>
 					<td class="chon-pp" align="center"><input class="oto oto1" type="radio" name="cty_${item.id}" value="${item.id}" ${x1}>1</td>
 					<td class="chon-pp" align="center"><input class="oto oto2" type="radio" name="cty_${item.id}" value="${item.id}" ${x2}>2</td>
 					<td class="chon-pp" align="center"><input class="oto oto3" type="radio" name="cty_${item.id}" value="${item.id}" ${x3}>3</td>
 					<td class="chon-pp" align="center"><input class="oto oto4" type="radio" name="cty_${item.id}" value="${item.id}" ${x4}>4</td>
 					<td class="chon-pp" align="center"><input class="oto oto5" type="radio" name="cty_${item.id}" value="${item.id}" ${x5}>5</td>
+					<td class="btn-company-order2" data-cid="${item.id}">${ca_items}</td>
 					</tr>`;
 			}
 		}
@@ -4921,7 +5013,7 @@
 			content = `
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active tab-thuc-don" id="tab-1" data-bs-toggle="tab" data-bs-target="#tab-1-content" type="button" role="tab" aria-controls="tab-1-content" aria-selected="true">ÔTô</button>
+        <button class="nav-link active tab-thuc-don" id="tab-1" data-bs-toggle="tab" data-bs-target="#tab-1-content" type="button" role="tab" aria-controls="tab-1-content" aria-selected="true">Phân xe</button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link tab-thuc-don" id="tab-2" data-bs-toggle="tab" data-bs-target="#tab-2-content" type="button" role="tab" aria-controls="tab-2-content" aria-selected="false">Thống kê</button>
@@ -4933,10 +5025,12 @@
         <div id="list-oto">${list_chon_oto}</div>
       </div>
       <div class="tab-pane fade" id="tab-2-content" role="tabpanel" aria-labelledby="tab-2" tabindex="1">
-        <p>Thống kê các nguyên đơn cho từng oto</p>
-        <div id="list-tk-oto">Loading...</div>
+	    <p>Chi tiết Xe nào chở đồ gì</p>
+        <div id="list-tk-oto">Hãy bấm nút thống kê</div>
       </div>
-    </div>`;
+    </div>
+	<P>HÃY KIỂM TRA ĐẦY ĐỦ TRƯỚC KHI XUẤT PHÁT</P>
+	`;
 		}
 		$.confirm({
 			animateFromElement: false,
@@ -4950,9 +5044,10 @@
 			escapeKey: 'cancel',
 			content: content,
 			buttons: {
-				next: {
+				report: {
 					text: '<i class="fa fa-flag-checkered"></i> Thống kê',
 					btnClass: 'btn-primary',
+					isHidden: dem_cty == 0,
 					action: function () {
 						var all_cty = [];
 						for (var item of json_global.data) if (item.id > 0) {
@@ -4966,6 +5061,7 @@
 							if (data_ca && data_ca.length > 0)
 								all_cty.push(item.id);
 						}
+						if (all_cty.length == 0) return false;
 						function removeItemOnce(arr, value) {
 							var index = arr.indexOf(value);
 							if (index > -1) {
@@ -4990,8 +5086,23 @@
 						car.car5 = timxe(5);
 						if (all_cty.length == 0) {
 							var str_car_ok = JSON.stringify(car);
-							setLocal('car', str_car_ok);
-							thong_bao_ok({ ok: 1, msg: 'Coding... <br>' + str_car_ok })
+							json_setting['oto' + id_ca] = str_car_ok;
+							$.post(api,
+								{
+									action: 'report_oto',
+									id_ca: id_ca,
+									key: 'oto' + id_ca,
+									value: str_car_ok
+								},
+								function (json) {
+									if (json.ok) {
+										$('#tab-2').click();
+										show_report_oto(id_ca, json);
+									} else {
+										thong_bao_loi(json, { w: 0, t: 1 });
+									}
+								}
+							);
 						}
 						else {
 							var list_cty_chua_chon = '<ul>';
