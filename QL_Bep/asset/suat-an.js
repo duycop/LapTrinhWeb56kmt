@@ -38,8 +38,7 @@
 		return null;
 	}
 	function eraseCookie(name) {
-		//document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-		document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+		document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 	}
 	function getLocal(name) {
 		return window.localStorage.getItem(name);
@@ -95,7 +94,7 @@
 	}
 	var Q = new Queue();
 	var Q_done = new Queue();
-	var gtts_playing = 0;               //biến đánh dấu xem có đang bận play ko
+	var gtts_playing = 0;
 
 	var last_mp3_id = getLocal('last_mp3_id')
 	if (last_mp3_id == null || last_mp3_id == "" || last_mp3_id == undefined) last_mp3_id = 0;
@@ -137,7 +136,7 @@
 		audio.addEventListener("ended", function () {
 			if (sanbay) {
 				audio2.addEventListener("ended", function () {
-					setTimeout(function () { gtts_playing = 0; }, json_setting.talk_delay * 1000);//nghỉ 5 giây mới nói tiếp
+					setTimeout(function () { gtts_playing = 0; }, json_setting.talk_delay * 1000);
 				});
 				audio2.play().then(() => {
 					gtts_playing = 1;
@@ -147,7 +146,7 @@
 					toastr["warning"]("Hãy bật loa và CLICK vào trình duyệt để cho phép nói ra loa nhé");
 				});
 			} else {
-				setTimeout(function () { gtts_playing = 0; }, json_setting.talk_delay * 1000);//nghỉ 5 giây mới nói tiếp
+				setTimeout(function () { gtts_playing = 0; }, json_setting.talk_delay * 1000);
 			}
 		});
 		audio.play().then(() => {
@@ -158,19 +157,17 @@
 			toastr["warning"]("Hãy bật loa và CLICK vào trình duyệt để cho phép nói ra loa nhé");
 		});
 	}//hết hàm playSound
-	function play_tts(text, sanbay = 1) {              //nhận txt là chuỗi cần tts
+	function play_tts(text, sanbay = 1) {
 		if (text == null || text == '') return;
-		$.post(mp3,  //gọi API tạo tts
-			{ text: text },                     //truyền lên chuỗi cần tts
-			function (tts) {             //nhận về tên file mp3
-				//var tts = JSON.parse(json);
-				//console.log(['play audio', Q, mp3 + tts.fn, text]);
+		$.post(mp3,
+			{ text: text },
+			function (tts) {
 				if (tts.ok)
-					playSound(mp3 + tts.fn, text, sanbay);  //play url=file này trong thư mục mp3
+					playSound(mp3 + tts.fn, text, sanbay);
 				else
 					toastr["warning"](tts.msg + '<br>' + tts.text);
 			}
-		);//end ajax post
+		);
 	}
 	function auto_play_in_queue() {
 		if (!gtts_playing && !Q.isEmpty()) {
@@ -181,18 +178,17 @@
 		};
 	}
 
-	/**/
 	//--end auto play mp3---
 	function monitor(action, callback, callback2) {
 		$.post(api,
 			{
-				action: action, //gửi đi action
+				action: action,
 			},
 			function (json) {
 				json_global = json;
 				callback(json, callback2);
 			},
-		);//end $.post
+		);
 	}
 
 	function alert_not_login() {
@@ -290,7 +286,6 @@
 					if (json.data.length > 10) {
 						sort_table('#table-list-history-order', "Log history", 20);
 					}
-					//btn-talk-log
 					$('#table-list-history-order tbody').on('click', '.btn-talk-log', function () {
 						var lid = $(this).data('lid');
 						var text = $('#log-content-' + lid).text();
@@ -337,7 +332,7 @@
 		});
 	}
 	function show_order_total_one_company(item_company) {
-		if (alert_not_login()) return;// cần login trước khi order
+		if (alert_not_login()) return;
 		if (!(logined && (user_info.role == 3 || user_info.role == 100))) {
 			thong_bao_loi({ ok: 0, msg: 'Bạn không có quyền' });
 			return;
@@ -431,7 +426,7 @@
 		});
 	}
 	function show_report_oto(id_ca, json_car) {
-		if (alert_not_login()) return;// cần login trước khi order
+		if (alert_not_login()) return;
 		if (!(logined && (user_info.role == 3 || user_info.role == 100))) {
 			thong_bao_loi({ ok: 0, msg: 'Bạn không có quyền' });
 			return;
@@ -456,7 +451,7 @@
 			}
 			return s;
 		}
-		function get_content_car(car, arr_congty) {			
+		function get_content_car(car, arr_congty) {
 			if (car.ok) {
 				var json = JSON.parse(car.msg);
 				var list_congty = `<P>${json.msg} chở hàng đến các công ty:<UL>`;
@@ -468,7 +463,7 @@
 						}
 					}
 				}
-				list_congty+='</UL></P>'
+				list_congty += '</UL></P>'
 				return `<div class="table-responsive-sm">${list_congty}
 					<table width="100%" class="table table-bordered">
 					<thead>
@@ -484,7 +479,7 @@
 				return car.msg;
 			}
 		}
-		var json_car_chon = JSON.parse( json_setting['oto' + id_ca]);
+		var json_car_chon = JSON.parse(json_setting['oto' + id_ca]);
 		var tk1 = get_content_car(json_car.car1, json_car_chon.car1);
 		var tk2 = get_content_car(json_car.car2, json_car_chon.car2);
 		var tk3 = get_content_car(json_car.car3, json_car_chon.car3);
@@ -517,7 +512,7 @@
 		$('#list-tk-oto').html(content);
 	}
 	function company_order(item_company, ca, json) {
-		if (alert_not_login()) return;// cần login trước khi order
+		if (alert_not_login()) return;
 		if (!(logined && (user_info.role == 3 || user_info.role == 100))) {
 			thong_bao_loi({ ok: 0, msg: 'Bạn không có quyền' });
 			return;
@@ -642,7 +637,7 @@
 					else
 						thong_bao_loi(json);
 				}
-			);//end $.post
+			);
 		}
 		function update_name_cty() {
 			var id_company = $('#edit-company').val();
@@ -700,7 +695,7 @@
 									else
 										thong_bao_loi(json);
 								}
-							);//end $.post
+							);
 						}
 					},
 					cancel: {
@@ -711,53 +706,6 @@
 				}
 			})
 		}
-		//function save_button() {
-		//  var id_suat = $('#edit-suat').val();
-		//  if (!id_suat) {
-		//    thong_bao_loi({ ok: 0, msg: 'Chưa chọn suất ăn!' }, { w: 1, t: 1 }, function () {
-		//      $('edit-suat').focus();
-		//    })
-		//    return;
-		//  }
-
-		//  var id_company = $('#edit-company').val();
-		//  var id_ca = $('#edit-ca').val();
-		//  var so_luong = $('#soluong-new').val();
-		//  if (so_luong == '' || so_luong <= 0) {
-		//    thong_bao_loi({ ok: 0, msg: 'Phải nhập số lượng suất ăn chứ!' }, { w: 1, t: 1 }, function () {
-		//      $('#soluong-new').focus();
-		//    })
-		//    return false;
-		//  }
-		//  $.post(api,
-		//    {
-		//      action: 'add_order',
-		//      id_company: id_company,
-		//      id_ca: id_ca,
-		//      id_suat: id_suat,
-		//      so_luong: so_luong
-		//    },
-		//    function (json) {
-
-		//      if (json.ok) {
-		//        thong_bao_ok(json, { w: 0, t: 1 });
-		//        $('#soluong-old').val(so_luong);
-		//        reload_order();
-		//      } else {
-		//        thong_bao_loi(json)
-		//      }
-		//    }
-		//  );//end $.post
-		//  return false;
-		//}
-		//function edit_button(id_suat, soluong) {
-		//  $('#edit-suat').val(id_suat);
-		//  $('#soluong-old').val(soluong);
-		//  if (soluong == 0) soluong = '';
-		//  $('#soluong-new').val(soluong);
-		//  $('#soluong-new').focus();
-		//}
-
 		function edit_hay_an(item_company) {
 			$.post(api, { action: 'get_company', id: item_company.id }, function (json) {
 				show_edit_company(item_company, json)
@@ -842,10 +790,6 @@
     ${row_order_nhanh}
     </table></div>
     `;
-		//<hr>
-		//<div class="table-responsive-sm" id="list-order-done">${list_order_done(item_company.id, ca)}</div>
-		//`;
-
 		dialog_order = $.confirm({
 			animateFromElement: false,
 			typeAnimated: false,
@@ -862,8 +806,6 @@
 					text: '<i class="fa fa-floppy-disk"></i> Save',
 					btnClass: 'btn-primary',
 					action: function () {
-						//lấy thông tin trên form
-						//gửi đi với action='save_order'
 						var order_id = [], order_sl = [];
 						$('.input_soluong_order').each(function (i, item) {
 							order_id.push($(item).data('sid'))
@@ -884,18 +826,14 @@
 							function (json) {
 								if (json.ok) {
 									thong_bao_ok(json, { w: 0, t: 1 });
-									mp3_hangdoi(json.id, json.mp3); //nhập xong là nói luôn
-									//đóng hộp thoại edit
+									mp3_hangdoi(json.id, json.mp3);
 									dialog_order.close();
-									//tải lại dữ liệu
 									reload_order();
 								} else {
 									thong_bao_loi(json);
 								}
 							}
-						);//end $.post
-
-
+						);
 						return false;
 					}
 				},
@@ -934,37 +872,8 @@
 				}
 			},
 			onContentReady: function () {
-				//$('.cbo-order').on('change', function () {
-				//  update_soluong();
-				//});
-				//$('#edit-company').on('change', function () {
-				//  update_name_cty();
-				//});
-				//$('#save-order').click(function () {
-				//  save_button(); //tại button#save-order
-				//});
-				//$('.btn-order-delete').click(function () {
-				//  var id_suat = $(this).data('suat');
-				//  var ten = $(this).data('name');
-				//  var sl = $(this).data('sl');
-				//  delete_button(id_suat, ten, sl);
-				//});
-				//$('.btn-order-edit').click(function () {
-				//  var id_suat = $(this).data('suat');
-				//  var sl = $(this).data('sl');
-				//  edit_button(id_suat, sl);
-				//});
 				update_soluong();
 				update_name_cty();
-				//$('#soluong-new').keyup(function (event) {
-				//  if (event.keyCode === 13) {
-				//    if ($('#soluong-new').val() == '')
-				//      $('#soluong-new').focus();
-				//    else
-				//      save_button(); //tại #soluong-new enter
-				//  }
-				//});
-				//$('#soluong-new').focus();
 			}
 		});
 	}
@@ -1051,7 +960,6 @@
 												}
 											}
 										);
-										//return false;//ko đóng dialog_confirm_copy
 									}
 								},
 								no: {
@@ -1346,7 +1254,6 @@
 					content += '</tbody></table></div>';
 					$('#list-suat-an').html(content);
 					sort_table('#table-list-suat-an', "Danh sách suất ăn", 20);
-					//$('.btn-edit-suat-an').click(function () {
 					$('#table-list-suat-an tbody').on('click', '.btn-edit-suat-an', function () {
 						var id = $(this).data('sid');
 						for (var item of json.data) {
@@ -2141,11 +2048,6 @@
 				}
 			},
 			onContentReady: function () {
-				//$('#edit-id').select2({
-				//  placeholder: 'Chọn đơn nguyên',
-				//  closeOnSelect: true,
-				//  allowClear: true,
-				//});
 				$('#edit-sl').focus();
 			}
 		});
@@ -2169,7 +2071,6 @@
 					btnClass: 'btn-red',
 					keys: ['enter'],
 					action: function () {
-						//gửi đi api: y/c xóa
 						$.post(api,
 							{
 								action: 'del_combo',
@@ -2566,7 +2467,6 @@
 			onContentReady: function () {
 				var dialog = this;
 				list_suat_an();
-				//list_don_nguyen();  //bỏ đi vì ko muốn popup thông báo
 				$.post(api, { action: 'list_don_nguyen' }, function (json) { if (json.ok) { json_don_nguyen = json; } });
 				$('button.tab-thuc-don').click(function () {
 					var id = $(this)[0].id;
@@ -4140,22 +4040,6 @@
 			content: content,
 			type: 'green',
 			buttons: {
-				//test: {
-				//  action: function () {
-				//    var selected = $('#cbo_default_order').find(':selected');
-				//    var data = []
-				//    for (var op of selected) {
-				//      var id = op.value;
-				//      var ngay = []
-				//      var thus = $(`#nhom-ngay-${ id }`).find('input:checked')
-				//      for (var thu of thus) {
-				//        ngay.push(thu.value);
-				//      }
-				//      data.push({ id: id, ngay: ngay });
-				//    }
-				//    console.log(data);
-				//  }
-				//},
 				ok: {
 					text: '<i class="fa fa-circle-check"></i> Cập nhật',
 					btnClass: 'btn-primary',
@@ -4253,23 +4137,6 @@
 				$('.noi-tieng-viet').click(function () {
 					play_tts($('#edit-tenviet').val(), 0); //ko san bay
 				});
-
-
-				//$('.add-row-suat-an').click(function () {
-				//  add_row_suat_an();
-				//  $('.pp-checkbox,.pp-checkbox input').unbind();
-				//  $('.pp-checkbox').click(function () {
-				//    var c = $(this).find('input');
-				//    var t = c.prop('checked');
-				//    c.prop('checked', !t);
-				//  });
-				//  $('.pp-checkbox input').click(function () {
-				//    var c = $(this);
-				//    var t = c.prop('checked');
-				//    c.prop('checked', !t);
-				//  });
-				//});
-
 				change_suat_an_select2();
 			}
 		});
@@ -4673,27 +4540,22 @@
 						var wait = 0;
 						for (var key in default_setting) {
 							var value = default_setting[key];
-							//var value_new = setting[key];
-							//if (value != value_new)
-							{
-								wait++;
-								$.post(api,
-									{
-										action: 'edit_setting',
-										key: key,
-										value: value,
-									},
-									function (json) {
-										if (json.ok) {
-											thong_bao_ok(json, { w: 0, t: 1 });
-											//toastr["info"]('[' + wait + '] ' + json.msg);
-										}
-										wait--;
-										if (wait == 0)
-											list_setting(); //sau khi reset
+							wait++;
+							$.post(api,
+								{
+									action: 'edit_setting',
+									key: key,
+									value: value,
+								},
+								function (json) {
+									if (json.ok) {
+										thong_bao_ok(json, { w: 0, t: 1 });
 									}
-								);//end $.post
-							}
+									wait--;
+									if (wait == 0)
+										list_setting(); //sau khi reset
+								}
+							);//end $.post
 						}
 						setTimeout(function () {
 							thong_bao_ok({ ok: 1, msg: 'Đã khôi phục giá trị mặc định' }, { t: 0, w: 1 })
@@ -4846,9 +4708,7 @@
 				$('#cmdLogin').removeClass("active");
 			},
 			onContentReady: function () {
-				//$('#cmdLogin').addClass("active");
 				let self = this;
-				let uid = get_store('uid');
 				if (uidck == '')
 					self.$content.find('.uid').focus();
 				else
@@ -4926,7 +4786,7 @@
 	//--end login zone--
 
 	function manager_oto(id_ca) {
-		if (alert_not_login()) return;// cần login trước khi order
+		if (alert_not_login()) return;
 		if (!(logined && (user_info.role == 3 || user_info.role == 100))) {
 			thong_bao_loi({ ok: 0, msg: 'Bạn không có quyền' });
 			return;
@@ -5194,7 +5054,6 @@
 						last_talk_id = json.mp3_talk.last_talk_id;
 						if (json.mp3_talk.ok) {
 							for (var item of json.mp3_talk.data) {
-								//console.log([item.id, item.message])
 								mp3_talk(item.id, item.message); //khi có dữ liệu mới
 							}
 						}
@@ -5204,26 +5063,9 @@
 			auto_play_in_queue();
 		}, 3000); //3s
 
-		//setInterval(function () {
-		//  $.post(api,
-		//    {
-		//      action: 'say_talk',
-		//      last_talk_id: last_talk_id
-		//    },
-		//    function (json) {
-		//      if (json.ok) {
-		//        for (var item of json.data) {
-		//          mp3_talk(item.id, item.message); //khi có dữ liệu mới
-		//        }
-		//      }
-		//    }
-		//  );
-		//}, 3000); //3s
-
 		$('.btn-thuc-don').click(function () { thuc_don(); });
 		$('#cmdLogin').click(function () { do_login() });
 		$('#cmdLogout').click(function () { do_logout(); });
-		$('.btn-het-gio').click(function () { het_gio_all() });
 		check_login(); //auto login
 	}
 	main_init();
