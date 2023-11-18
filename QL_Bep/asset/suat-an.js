@@ -17,6 +17,7 @@
 	var logined = false, user_info, all_quyen, ngay = '';
 	var json_global, json_suat_an, json_company, json_don_nguyen, json_setup_combo, json_loai, json_user, json_setting;
 
+
 	//--begin ck---
 	function setCookie(name, value, days) {
 		var expires = "";
@@ -57,6 +58,26 @@
 		return value;
 	}
 	//--end ck---
+
+	//cac ham dung chung
+	function get_datediff(date1, date2) {
+		const diffTime = (date2 - date1);
+		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+		return diffDays;
+	}
+	Date.prototype.vn = function () {
+		this.setHours(this.getHours() + 7);
+		return this;
+	}
+	function Date2() {
+		return new Date().vn();
+	}
+
+	var ngay = getCookie('ngay');
+	if (ngay == null || ngay == '') {
+		ngay = Date2().toISOString().split('T')[0];
+		setCookie('ngay', ngay, 1);
+	}
 
 	//--auto play mp3---
 
@@ -102,9 +123,9 @@
 	var last_talk_id = getLocal('last_talk_id')
 	if (last_talk_id == null || last_talk_id == "" || last_talk_id == undefined) last_talk_id = 0;
 
-	function mp3_talk(id, text) {
+	function mp3_talk(id, text, time) {
 		if (text == null || text == '') return;
-		var item = { id: id, text: text };
+		var item = { id: id, text: text, time: time };
 		//if (id >= last_talk_id) 
 		{
 			{
@@ -114,9 +135,9 @@
 			}
 		}
 	}
-	function mp3_hangdoi(id, text) {
+	function mp3_hangdoi(id, text, time) {
 		if (text == null || text == '') return;
-		var item = { id: id, text: json_setting.talk_begin + ' ' + text };
+		var item = { id: id, text: json_setting.talk_begin + ' ' + text, time: time };
 		if (!Q_done.checkExist(item)) {
 			if (id > last_mp3_id) {
 				{
@@ -127,7 +148,7 @@
 			}
 		}
 	}
-	function playSound(url, text, sanbay) {
+	function playSound(url, text, sanbay, time) {
 		if (gtts_playing) return;
 		var url2 = sanbay ? (mp3 + 'san_bay.mp3') : url;
 		var audio = new Audio(url2);
@@ -140,7 +161,7 @@
 				});
 				audio2.play().then(() => {
 					gtts_playing = 1;
-					toastr["info"]("<b>Thông báo đặt suất ăn:</b><br>" + text);
+					toastr["info"]("<b>Thông báo đặt suất ăn:</b><br>" + text + (time != '' ? '<br>Time: ' + time : ''));
 				}).catch(e => {
 					console.log(e);
 					toastr["warning"]("Hãy bật loa và CLICK vào trình duyệt để cho phép nói ra loa nhé");
@@ -157,15 +178,15 @@
 			toastr["warning"]("Hãy bật loa và CLICK vào trình duyệt để cho phép nói ra loa nhé");
 		});
 	}//hết hàm playSound
-	function play_tts(text, sanbay = 1) {
+	function play_tts(text, sanbay = 1, time = '') {
 		if (text == null || text == '') return;
 		$.post(mp3,
 			{ text: text },
 			function (tts) {
 				if (tts.ok)
-					playSound(mp3 + tts.fn, text, sanbay);
+					playSound(mp3 + tts.fn, text, sanbay, time);
 				else
-					toastr["warning"](tts.msg + '<br>' + tts.text);
+					toastr["warning"](tts.msg + '<br>' + tts.text + (time != '' ? '<br>Time: ' + time : ''));
 			}
 		);
 	}
@@ -174,7 +195,7 @@
 			var item = Q.dequeue();
 			Q_done.enqueue(item);
 			if (item.text != '')
-				play_tts(item.text, 1); //có tiếng sân bay
+				play_tts(item.text, 1, item.time); //có tiếng sân bay
 		};
 	}
 
@@ -378,16 +399,14 @@
 							function show_detail(arr, name, type) {
 								var s = `<tr class="table-info"><th colspan="2">${name}</th></tr>`
 								for (var ca_item of arr) {
-									var myclass = '';
-									if (ca_item.ca == 2) myclass = 'table-success'
 									if (ca_item.data == null) {
-										s += `<tr class="row_combo table-danger" data-ids="${type}${ca_item.ca}"><th>Ca ${ca_item.ca}</th><td colspan="2">Không có dữ liệu</td></tr>`;
+										s += `<tr class="row_combo table-danger" data-ids="${type}${ca_item.ca}"><th>${ca_name[ca_item.ca]}</th><td colspan="2">Không có dữ liệu</td></tr>`;
 									} else {
-										s += `<tr class="row_combo ${myclass}" data-ids="${type}${ca_item.ca}" valign="middle"><th rowspan="${ca_item.data.length}">Ca ${ca_item.ca}</th>`;
+										s += `<tr class="row_combo" data-ids="${type}${ca_item.ca}" valign="middle"><th rowspan="${ca_item.data.length}">${ca_name[ca_item.ca]}</th>`;
 										var stt = 0;
 										for (var item of ca_item.data) {
 											stt++;
-											if (stt > 1) s += `<tr class="row_combo ${myclass}" data-ids="${type}${ca_item.ca}">`;
+											if (stt > 1) s += `<tr class="row_combo" data-ids="${type}${ca_item.ca}">`;
 											s += `
                       <td>${item.name} <span class="badge rounded-pill bg-primary">${item.sl}</span></td>
                     </tr>`;
@@ -435,16 +454,14 @@
 		function show_detail(arr, name, type) {
 			var s = `<tr class="table-info"><th colspan="2">${name}</th></tr>`
 			for (var ca_item of arr) {
-				var myclass = '';
-				if (ca_item.ca == 2) myclass = 'table-success'
 				if (ca_item.data == null) {
-					s += `<tr class="row_combo table-danger" data-ids="${type}${ca_item.ca}"><th>Ca ${ca_item.ca}</th><td colspan="2">Không có dữ liệu</td></tr>`;
+					s += `<tr class="row_combo table-danger" data-ids="${type}${ca_item.ca}"><th>${ca_name[ca_item.ca]}</th><td colspan="2">Không có dữ liệu</td></tr>`;
 				} else {
-					s += `<tr class="row_combo ${myclass}" data-ids="${type}${ca_item.ca}" valign="middle"><th rowspan="${ca_item.data.length}">Ca ${ca_item.ca}</th>`;
+					s += `<tr class="row_combo" data-ids="${type}${ca_item.ca}" valign="middle"><th rowspan="${ca_item.data.length}">${ca_name[ca_item.ca]}</th>`;
 					var stt = 0;
 					for (var item of ca_item.data) {
 						stt++;
-						if (stt > 1) s += `<tr class="row_combo ${myclass}" data-ids="${type}${ca_item.ca}">`;
+						if (stt > 1) s += `<tr class="row_combo" data-ids="${type}${ca_item.ca}">`;
 						s += `<td>${item.name} <span class="badge rounded-pill bg-primary">${item.sl}</span></td></tr>`;
 					}
 				}
@@ -485,32 +502,65 @@
 		var tk3 = get_content_car(json_car.car3, json_car_chon.car3);
 		var tk4 = get_content_car(json_car.car4, json_car_chon.car4);
 		var tk5 = get_content_car(json_car.car5, json_car_chon.car5);
-		var content = `<ul class="nav nav-tabs" id="myTab" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="tabx-1" data-bs-toggle="tab" data-bs-target="#tabx-1-content" type="button" role="tab" aria-controls="tabx-1-content" aria-selected="true">Xe 1</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="tabx-2" data-bs-toggle="tab" data-bs-target="#tabx-2-content" type="button" role="tab" aria-controls="tabx-2-content" aria-selected="true">Xe 2</button>
-      </li>      
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="tabx-3" data-bs-toggle="tab" data-bs-target="#tabx-3-content" type="button" role="tab" aria-controls="tabx-3-content" aria-selected="true">Xe 3</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="tabx-4" data-bs-toggle="tab" data-bs-target="#tabx-4-content" type="button" role="tab" aria-controls="tabx-4-content" aria-selected="true">Xe 4</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="tabx-5" data-bs-toggle="tab" data-bs-target="#tabx-5-content" type="button" role="tab" aria-controls="tabx-5-content" aria-selected="true">Xe 5</button>
-      </li>
-    </ul>
+
+		var content = `<ul class="nav nav-tabs" id="myTab" role="tablist">`
+		var car_ok = [];
+		function have_only(i) {
+			if (i == 1) return json_car.car1.ok;
+			if (i == 2) return !json_car.car1.ok && json_car.car2.ok;
+			if (i == 3) return !json_car.car1.ok && !json_car.car2.ok && json_car.car3.ok;
+			if (i == 4) return !json_car.car1.ok && !json_car.car2.ok && !json_car.car3.ok && json_car.car4.ok;
+			if (i == 5) return !json_car.car1.ok && !json_car.car2.ok && !json_car.car3.ok && !json_car.car4.ok && json_car.car5.ok;
+		}
+		if (json_car.car1.ok) {
+			car_ok.push(1);
+			content += `<li class="nav-item" role="presentation">
+        <button class="nav-link ${have_only(1) ? 'active' : ''}" id="tabx-1" data-bs-toggle="tab" data-bs-target="#tabx-1-content" type="button" role="tab" aria-controls="tabx-1-content" aria-selected="true">Xe 1</button>
+      </li>`
+		}
+		if (json_car.car2.ok) {
+			car_ok.push(2);
+			content += `<li class="nav-item" role="presentation">
+        <button class="nav-link ${have_only(2) ? 'active' : ''}" id="tabx-2" data-bs-toggle="tab" data-bs-target="#tabx-2-content" type="button" role="tab" aria-controls="tabx-2-content" aria-selected="true">Xe 2</button>
+      </li>`
+		}
+		if (json_car.car3.ok) {
+			car_ok.push(3);
+			content += `<li class="nav-item" role="presentation">
+        <button class="nav-link ${have_only(3) ? 'active' : ''}" id="tabx-3" data-bs-toggle="tab" data-bs-target="#tabx-3-content" type="button" role="tab" aria-controls="tabx-3-content" aria-selected="true">Xe 3</button>
+      </li>`
+		}
+		if (json_car.car4.ok) {
+			car_ok.push(4);
+			content += `<li class="nav-item" role="presentation">
+        <button class="nav-link ${have_only(4) ? 'active' : ''}" id="tabx-4" data-bs-toggle="tab" data-bs-target="#tabx-4-content" type="button" role="tab" aria-controls="tabx-4-content" aria-selected="true">Xe 4</button>
+      </li>`
+		}
+		if (json_car.car5.ok) {
+			car_ok.push(5);
+			content += `<li class="nav-item" role="presentation">
+        <button class="nav-link ${have_only(5) ? 'active' : ''}" id="tabx-5" data-bs-toggle="tab" data-bs-target="#tabx-5-content" type="button" role="tab" aria-controls="tabx-5-content" aria-selected="true">Xe 5</button>
+      </li>`
+		}
+		content += `</ul>
     <div class="tab-content">
-      <div class="tab-pane fade show active" id="tabx-1-content" role="tabpanel" aria-labelledby="tabx-1" tabindex="0">${tk1}</div>
-      <div class="tab-pane fade show" id="tabx-2-content" role="tabpanel" aria-labelledby="tabx-2" tabindex="0">${tk2}</div>
-      <div class="tab-pane fade show" id="tabx-3-content" role="tabpanel" aria-labelledby="tabx-3" tabindex="0">${tk3}</div>
-      <div class="tab-pane fade show" id="tabx-4-content" role="tabpanel" aria-labelledby="tabx-4" tabindex="0">${tk4}</div>
-      <div class="tab-pane fade show" id="tabx-5-content" role="tabpanel" aria-labelledby="tabx-5" tabindex="0">${tk5}</div>
+      <div class="tab-pane fade show ${have_only(1) ? 'active' : ''}" id="tabx-1-content" role="tabpanel" aria-labelledby="tabx-1" tabindex="0">${tk1}</div>
+      <div class="tab-pane fade show ${have_only(2) ? 'active' : ''}" id="tabx-2-content" role="tabpanel" aria-labelledby="tabx-2" tabindex="0">${tk2}</div>
+      <div class="tab-pane fade show ${have_only(3) ? 'active' : ''}" id="tabx-3-content" role="tabpanel" aria-labelledby="tabx-3" tabindex="0">${tk3}</div>
+      <div class="tab-pane fade show ${have_only(4) ? 'active' : ''}" id="tabx-4-content" role="tabpanel" aria-labelledby="tabx-4" tabindex="0">${tk4}</div>
+      <div class="tab-pane fade show ${have_only(5) ? 'active' : ''}" id="tabx-5-content" role="tabpanel" aria-labelledby="tabx-5" tabindex="0">${tk5}</div>
     </div>`;
+		if (car_ok.length == null) content = 'KHÔNG CẦN XE NÀO';
 		$('#list-tk-oto').html(content);
+		$('tr.row_combo').hover(function () {
+			var ids = $(this).data('ids')
+			$(`tr.row_combo[data-ids= '${ids}']`).addClass('table-warning')
+		}, function () {
+			var ids = $(this).data('ids')
+			$(`tr.row_combo[data-ids= '${ids}']`).removeClass('table-warning')
+		});
 	}
+
 	function company_order(item_company, ca, json) {
 		if (alert_not_login()) return;
 		if (!(logined && (user_info.role == 3 || user_info.role == 100))) {
@@ -826,7 +876,7 @@
 							function (json) {
 								if (json.ok) {
 									thong_bao_ok(json, { w: 0, t: 1 });
-									mp3_hangdoi(json.id, json.mp3);
+									mp3_hangdoi(json.id, json.mp3, 'now');
 									dialog_order.close();
 									reload_order();
 								} else {
@@ -877,18 +927,7 @@
 			}
 		});
 	}
-	function get_datediff(date1, date2) {
-		const diffTime = (date2 - date1);
-		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-		return diffDays;
-	}
-	Date.prototype.vn = function () {
-		this.setHours(this.getHours() + 7);
-		return this;
-	}
-	function Date2() {
-		return new Date().vn();
-	}
+
 	function copy_order() {
 		var nay = Date2().toISOString().split('T')[0];
 		var mai = Date2();
@@ -1114,7 +1153,20 @@
 					}
 				}
 			});
+
 			$('.chon-ngay-monitor').click(function () {
+				function str_tinh_khoang_cach(ngay_chon) {
+					var ngay_chon = new Date(ngay_chon);
+					var hom_nay = Date2();
+					const diffDays = get_datediff(hom_nay, ngay_chon)
+					if (diffDays > 0)
+						return (`Ngày chọn <span class="badge rounded-pill bg-primary">sau</span> hôm nay: <span class="badge rounded-pill bg-primary">${diffDays}</span> ngày`);
+					else if (diffDays < 0)
+						return (`Ngày chọn <span class="badge rounded-pill bg-warning">trước</span> hôm nay: <span class="badge rounded-pill bg-danger">${-diffDays}</span> ngày`);
+					else
+						return (`Ngày chọn là <span class="badge rounded-pill bg-info">hôm nay</span>`);
+				}
+
 				var ngay_monitor = $(this).data("ngay");
 				var content = `
         <p>Hôm nay là ngày: <span class="badge rounded-pill bg-info">${Date2().toISOString().split('T')[0]}</span></p>
@@ -1125,8 +1177,9 @@
           <button class="btn btn-info nut_tang_giam" type="button" data-delta="0" title="Chọn ngày: ${Date2().toISOString().split('T')[0]}">Today</button>
           <button class="btn btn-success nut_tang_giam" data-delta="1" type="button">Next</button>
         </div>
-        <span id="khoang-cach-ngay">Tính khoảng cách...</span>
+        <span id="khoang-cach-ngay">${str_tinh_khoang_cach(ngay_monitor)}</span>
         `;
+
 				var dialog_chon_ngay = $.confirm({
 					animateFromElement: false,
 					typeAnimated: false,
@@ -1151,7 +1204,7 @@
 						copy: {
 							text: '<i class="fa fa-clone"></i> Copy',
 							btnClass: 'btn-info',
-							isHidden: true,
+							isHidden: !(logined && (user_info.role == 3 || user_info.role == 100)),
 							action: function () {
 								copy_order();
 								return false;
@@ -1202,10 +1255,7 @@
 						$('#txt-ngay-chon').on("change", function () {
 							tinh_khoang_cach();
 						});
-						tinh_khoang_cach();
-						if (logined && (user_info.role == 3 || user_info.role == 100)) {
-							this.buttons.copy.show();
-						}
+						//tinh_khoang_cach();
 					}
 				});
 			});
@@ -3589,22 +3639,22 @@
     <div class="table-responsive-sm">
     <table width="100%" id="table-control-panel">
     <tr>
-      <td width="25%" align="center" class="space-begin"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-change-pw">1. Đổi mật khẩu</button></div></td>
-      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-user">2. Quản lý User</button></div></td>
-      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-setting">3. Cấu hình</button></div></td>
-      <td width="25%" align="center" class="space-end"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-company">4. Công ty</button></div></td>
+      <td width="25%" align="center" class="space-begin" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-change-pw">1.&nbsp;Đổi&nbsp;mật&nbsp;khẩu</button></div></td>
+      <td width="25%" align="center" class="space" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-user">2.&nbsp;Quản&nbsp;lý&nbsp;User</button></div></td>
+      <td width="25%" align="center" class="space" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-setting">3.&nbsp;Cấu&nbsp;hình</button></div></td>
+      <td width="25%" align="center" class="space-end" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-company">4.&nbsp;Công&nbsp;ty</button></div></td>
     </tr>
     <tr>
-      <td width="25%" align="center" class="space-begin"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-suat">5. Suất ăn</button></div></td>
-      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-loai">6. Loại suất ăn</button></div></td>
-      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-don">7. Đơn nguyên</button></div></td>
-      <td width="25%" align="center" class="space-end"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-combo">8. Setup Combo</button></div></td>
+      <td width="25%" align="center" class="space-begin" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-suat">5.&nbsp;Suất&nbsp;ăn</button></div></td>
+      <td width="25%" align="center" class="space" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-loai">6.&nbsp;Loại&nbsp;suất&nbsp;ăn</button></div></td>
+      <td width="25%" align="center" class="space" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-don">7.&nbsp;Đơn&nbsp;nguyên</button></div></td>
+      <td width="25%" align="center" class="space-end" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-combo">8.&nbsp;Setup&nbsp;Combo</button></div></td>
     </tr>
      <tr>
-      <td width="25%" align="center" class="space-begin"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-order">9. Đặt đồ ăn</button></div></td>
-      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-talk">10. Hẹn giờ nói</button></div></td>
-      <td width="25%" align="center" class="space"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-log">11. Tra cứu log</button></div></td>
-      <td width="25%" align="center" class="space-end"><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-report">12. Thống kê</button></div></td>
+      <td width="25%" align="center" class="space-begin" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-order">9.&nbsp;Đặt&nbsp;đồ&nbsp;ăn</button></div></td>
+      <td width="25%" align="center" class="space" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-talk">10.&nbsp;Hẹn&nbsp;giờ&nbsp;nói</button></div></td>
+      <td width="25%" align="center" class="space" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-log">11.&nbsp;Tra&nbsp;cứu&nbsp;log</button></div></td>
+      <td width="25%" align="center" class="space-end" nowarp><div class="d-grid"><button type="button" class="btn btn-block btn-primary" id="btn-manager-report">12.&nbsp;Thống&nbsp;kê</button></div></td>
     </tr>
     </table>
     </div>`;
@@ -5048,13 +5098,13 @@
 						if (json.mp3_short.ok) {
 							monitor('monitor', draw_init);
 							for (var item of json.mp3_short.data) {
-								mp3_hangdoi(item.id, item.mp3); //khi có dữ liệu mới
+								mp3_hangdoi(item.id, item.mp3, item.time); //khi có dữ liệu mới
 							}
 						}
 						last_talk_id = json.mp3_talk.last_talk_id;
 						if (json.mp3_talk.ok) {
 							for (var item of json.mp3_talk.data) {
-								mp3_talk(item.id, item.message); //khi có dữ liệu mới
+								mp3_talk(item.id, item.message, item.time_say); //khi có dữ liệu mới
 							}
 						}
 					}
